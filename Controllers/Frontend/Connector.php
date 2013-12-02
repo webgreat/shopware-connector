@@ -13,4 +13,3 @@ class Shopware_Controllers_Frontend_Jtlconnector extends Enlight_Controller_Acti
         echo "huhu";
     }
 }
-

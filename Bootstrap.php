@@ -65,4 +65,3 @@ class Shopware_Plugins_Frontend_Jtlconnector_Bootstrap extends Shopware_Componen
         return dirname(__FILE__) . '/Controllers/Frontend/Connector.php';
     }
 }
-?>
