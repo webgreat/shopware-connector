@@ -10,6 +10,7 @@ class Shopware_Controllers_Frontend_Jtlconnector extends Enlight_Controller_Acti
 
     public function indexAction()
     {
-        echo "huhu";
+        define('APP_DIR', realpath(__DIR__ . '/../../src/'));
+        include_once(APP_DIR . '/bootstrap.php');
     }
 }

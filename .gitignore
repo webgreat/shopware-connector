@@ -1,0 +1,6 @@
+build/**
+composer.lock
+composer
+vendor/**
+*.sublime-project
+*.sublime-workspace
