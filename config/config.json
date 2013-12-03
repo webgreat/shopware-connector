@@ -1,5 +1,5 @@
 {
-    "platform_root": "\/var\/www\/virtual",
-    "connector_root": "\/var\/www\/virtual\/cspoo",
+    "platform_root": "\/var",
+    "connector_root": "\/var\/www",
     "auth_token": "aewie7AefaHai4aing9ucoh7saengoh1"
 }

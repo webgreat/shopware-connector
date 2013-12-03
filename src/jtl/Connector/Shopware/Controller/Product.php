@@ -50,6 +50,8 @@ class Product extends DataController
             foreach ($products['data'] as $productSW) {
                 $container = new ProductContainer();
 
+                $productSW = $articleResource->getOne($productSW['id']);
+
                 $product = Mmc::getModel('Product');
                 $product->map(true, $productSW);
 
