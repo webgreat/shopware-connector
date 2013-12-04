@@ -57,8 +57,8 @@ class DataModel
         };
 
         foreach ($original->getFields() as $connectorField => $platformField) {
-            if (strlen($platformField) == 0) continue;
-            
+            if (strlen($platformField) == 0 && !is_array($platformField)) continue;
+
             if ($toConnector) {
                 if (is_array($platformField)) {
                     $value = $getValue($platformField, $obj);
