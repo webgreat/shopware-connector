@@ -57,14 +57,16 @@ class DataModel
         };
 
         foreach ($original->getFields() as $connectorField => $platformField) {
+            if (strlen($platformField) == 0) continue;
+            
             if ($toConnector) {
                 if (is_array($platformField)) {
                     $value = $getValue($platformField, $obj);
-                    $this->$connectorField = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
+                    $original->$connectorField = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
                 }
                 else {
-                    $this->$connectorField = $obj->$platformField;
-                    $this->$connectorField = DateUtil::check($obj->$platformField) ? DateUtil::map($obj->$platformField) : $obj->$platformField;
+                    $original->$connectorField = $obj->$platformField;
+                    $original->$connectorField = DateUtil::check($obj->$platformField) ? DateUtil::map($obj->$platformField) : $obj->$platformField;
                 }
             }
             else {

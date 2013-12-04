@@ -36,7 +36,7 @@ class Product extends ProductModel
         "_manufacturerId" => "supplierId",
         "_deliveryStatusId" => "",
         "_unitId" => array("mainDetail", "unitId"),
-        "_basePriceUnitId" = "",
+        "_basePriceUnitId" => "",
         "_shippingClassId" => "",
         "_taxClassId" => array("tax", "id"),
         "_sku" => array("mainDetail", "number"),

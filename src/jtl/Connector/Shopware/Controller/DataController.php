@@ -6,48 +6,69 @@
 
 namespace jtl\Connector\Shopware\Controller;
 
-use \Shopware\Components\Api\Manager as ShopwareManager;
+use \jtl\Core\Controller\Controller as CoreController;
+use \jtl\Connector\Result\Action;
+use \jtl\Core\Rpc\Error;
 
 /**
  * Product Controller
  * @access public
  */
-abstract class DataController
+abstract class DataController extends CoreController
 {
     /**
-     * Add Item to Container
-     * 
-     * @param \jtl\Connector\ModelContainer\CoreContainer $container
-     * @param string $type
-     * @param multiple: mixed $kvs
-     * @param multiple: mixed $members
+     * Statistic
+     *
+     * @params mixed $params
+     * @return \jtl\Connector\Result\Action
      */
-    protected function addContainerPos(CoreContainer &$container, $type, $swType, array $kvs = null, array $subItems = null)
+    public function statistic($params)
     {
-        if (isset($container->items[$type][0])) {
-            $class = $container->items[$type][0];
-            $resource = ShopwareManager::getResource($swType);
-            $objs = $resource->getList();
+        $action = new Action();
+        $action->setHandled(true);
+        
+        return $action;
+    }
 
-            if ($objs !== null && is_array($objs)) {
-                $config = $this->getConfig();
-                foreach ($objs as $obj) {                    
-                    $model = Mmc::getModel($class);
-                    $model->map(true, $obj);
+    /**
+     * Insert or update
+     *
+     * @params mixed $params
+     * @return \jtl\Connector\Result\Action
+     */
+    public function push($params)
+    {
+        $action = new Action();
+        $action->setHandled(true);
 
-                    // Sub Item
-                    if ($subItems !== null) {
-                        foreach ($subItems as $subType => $members) {
-                            $member = $members[0];
-                            $subKvs = array($members[1] => $model->{$member});
+        return $action;
+    }
+    
+    /**
+     * Select
+     *
+     * @params mixed $params
+     * @return \jtl\Connector\Result\Action
+     */
+    public function pull($params)
+    {        
+        $action = new Action();
+        $action->setHandled(true);
+    
+        return $action;
+    }
+    
+    /**
+     * Delete
+     *
+     * @params mixed $params
+     * @return \jtl\Connector\Result\Action
+     */
+    public function delete($params)
+    {
+        $action = new Action();
+        $action->setHandled(true);
 
-                            $this->addContainerPos($container, $subType, $subKvs);
-                        }
-                    }
-
-                    $container->add($type, $model->getPublic(array("_fields", "_isEncrypted")), false);
-                }
-            }
-        }
+        return $action;
     }
 }

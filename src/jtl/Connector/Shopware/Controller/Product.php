@@ -12,6 +12,7 @@ use \Shopware\Components\Api\Manager as ShopwareManager;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
+use \jtl\Connector\ModelContainer\ProductContainer;
 
 /**
  * Product Controller
@@ -58,8 +59,10 @@ class Product extends DataController
 
                 $container->add("product", $product->getPublic(array("_fields", "_isEncrypted")), false);
 
-                $result[] = $container;
+                $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
             }
+
+            $action->setResult($result);
         }
         catch (\Exception $exc) {
             $err = new Error();
