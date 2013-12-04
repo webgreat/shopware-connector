@@ -7,6 +7,7 @@
 namespace jtl\Connector\Shopware\Model;
 
 use \jtl\Core\Model\DataModel as MainDataModel;
+use \jtl\Connector\Shopware\Utilities\Date as DateUtil;
 
 /**
  * DataModel Class
@@ -26,34 +27,54 @@ class DataModel
         if (!$toConnector) {
             $obj = new \stdClass();
         }
-        
-        foreach ($original->getFields() as $platformField => $connectorField) {
-            if ($toConnector) {
-                if (strlen($platformField) > 0 && isset($obj->$platformField)) {
-                    if (DateUtil::check($obj->$platformField)) {
-                        $original->$connectorField = DateUtil::map($obj->$platformField);
-                    }
-                    else {
-                        if ($obj->$platformField === null) {
-                            $original->$connectorField = null;
-                        }
-                        else {
-                            $original->$connectorField = $obj->$platformField;
-                        }
-                    }
-                }
+
+        $getValue = function (array $platformFields, \stdClass $data) use (&$getValue) {
+            if (count($platformFields) > 1) {
+                $value = array_shift($platformFields);
+                
+                return is_object($data->$value) ? $getValue($platformFields, $data->$value) : $data->$value;
             }
-            else if (strlen($platformField) > 0) {
-                if (DateUtil::check($platformField)) {
-                    $obj->$platformField = DateUtil::map(null, $original->$connectorField);
+            else {
+                $value = array_shift($platformFields);
+                
+                return $data->$value;
+            }
+        };
+
+        $setValue = function (array $platformFields, $value, \stdClass $obj) use (&$setValue) {
+            if (count($platformFields) > 1) {
+                $field = array_shift($platformFields);
+                $obj->$field = new \stdClass;
+                
+                return $setValue($platformFields, $value, $obj->$field);
+            }
+            else {
+                $field = array_shift($platformFields);
+                $obj->$field = $value;
+                
+                return $obj;
+            }
+        };
+
+        foreach ($original->getFields() as $connectorField => $platformField) {
+            if ($toConnector) {
+                if (is_array($platformField)) {
+                    $value = $getValue($platformField, $obj);
+                    $this->$connectorField = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
                 }
                 else {
-                    if ($original->$connectorField === null) {
-                        $obj->$platformField = null;
-                    }
-                    else {
-                        $obj->$platformField = $original->$connectorField;
-                    }
+                    $this->$connectorField = $obj->$platformField;
+                    $this->$connectorField = DateUtil::check($obj->$platformField) ? DateUtil::map($obj->$platformField) : $obj->$platformField;
+                }
+            }
+            else {
+                if (is_array($platformField)) {
+                    // TODO: Date Check
+                    $setValue($platformField, $original->$connectorField, $obj);
+                }
+                else {
+                    // TODO: Date Check                    
+                    $obj->$platformField = $original->$connectorField;
                 }
             }
         }

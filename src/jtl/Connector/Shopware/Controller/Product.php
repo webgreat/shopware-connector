@@ -11,6 +11,7 @@ use \jtl\Core\Rpc\Error;
 use \Shopware\Components\Api\Manager as ShopwareManager;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \jtl\Core\Utilities\DataConverter;
 
 /**
  * Product Controller
@@ -53,7 +54,7 @@ class Product extends DataController
                 $productSW = $articleResource->getOne($productSW['id']);
 
                 $product = Mmc::getModel('Product');
-                $product->map(true, $productSW);
+                $product->map(true, DataConverter::toObject($productSW));
 
                 $container->add("product", $product->getPublic(array("_fields", "_isEncrypted")), false);
 

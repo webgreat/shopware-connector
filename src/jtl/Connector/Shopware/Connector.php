@@ -1,9 +1,9 @@
 <?php
 /**
- * 
  * @copyright 2010-2013 JTL-Software GmbH
  * @package jtl\Connector\Shopware
  */
+
 namespace jtl\Connector\Shopware;
 
 use \jtl\Core\Config\Config;
