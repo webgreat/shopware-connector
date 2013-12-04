@@ -65,7 +65,6 @@ class DataModel
                     $original->$connectorField = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
                 }
                 else {
-                    $original->$connectorField = $obj->$platformField;
                     $original->$connectorField = DateUtil::check($obj->$platformField) ? DateUtil::map($obj->$platformField) : $obj->$platformField;
                 }
             }

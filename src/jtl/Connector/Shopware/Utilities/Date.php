@@ -15,15 +15,23 @@ final class Date
     
     public static function check($platformValue)
     {
-        return ($platformValue instanceof DateTime);
+        return (($platformValue instanceof DateTime) || (is_object($platformValue) && isset($platformValue->date)));
     }
     
     public static function map($platformValue = null, $connectorValue = null)
     {        
-        if ($platformValue !== null && self::check($platformValue)) {
+        if ($platformValue !== null) {
             $targetformat = 'Y-m-d H:i:s';
 
-            return CoreDate::map($platformValue->format($targetformat), $targetformat);
+            $value = null;
+            if ($platformValue instanceof DateTime) {
+                $value = $platformValue->format($targetformat);
+            }
+            else {
+                $value = $platformValue->date;
+            }
+
+            return CoreDate::map($value, $targetformat);
         }
         
         if ($connectorValue !== null) {
