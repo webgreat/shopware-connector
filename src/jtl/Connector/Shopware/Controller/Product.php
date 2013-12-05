@@ -66,11 +66,11 @@ class Product extends DataController
                 for ($i = 1; $i <= 20; $i++) {
                     if (isset($productSW['mainDetail']['attribute']["attr{$i}"]) && strlen($productSW['mainDetail']['attribute']["attr{$i}"]) > 0) {
                         $attributeExists = true;
-                        $productFunctionAttr = Mmc::getModel('ProductFunctionAttr');
-                        $productFunctionAttr->map(true, DataConverter::toObject($productSW['mainDetail']['attribute']));
-                        $productFunctionAttr->_key = "attr{$i}";
-                        $productFunctionAttr->_value = $productSW['mainDetail']['attribute']["attr{$i}"];
-                        $container->add('product_function_attr', $productFunctionAttr->getPublic(array("_fields", "_isEncrypted")), false);
+                        $productAttrI18n = Mmc::getModel('ProductAttrI18n');
+                        $productAttrI18n->map(true, DataConverter::toObject($productSW['mainDetail']['attribute']));
+                        $productAttrI18n->_key = "attr{$i}";
+                        $productAttrI18n->_value = $productSW['mainDetail']['attribute']["attr{$i}"];
+                        $container->add('product_attr_i18n', $productAttrI18n->getPublic(array("_fields", "_isEncrypted")), false);
                     }
                 }
 
