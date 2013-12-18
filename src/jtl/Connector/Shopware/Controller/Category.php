@@ -59,6 +59,37 @@ class Category extends DataController
                 $category = Mmc::getModel('Category');
                 $category->map(true, DataConverter::toObject($categorySW));
 
+                if ($catTmp = $categoryResource->getRepository()->find($category->_id)) {
+                    $category->_level = $catTmp->getLevel();
+
+                    if ($attr = $catTmp->getAttribute()) {
+                        for ($i = 1; $i <= 6; $i++) {
+                            $member = "getAttribute{$i}";
+                            if (strlen(trim($attr->$member())) > 0) {
+                                $categoryAttr = Mmc::getModel('CategoryAttr');
+                                $categoryAttr->_id = $attr->getId() . "_{$i}";
+                                $categoryAttr->_categoryId = $attr->getCategoryId();
+                                $categoryAttr->_localeName = Shopware()->Locale()->toString();
+
+                                $categoryAttr->_name = "Attribute{$i}";
+                                $categoryAttr->_value = $attr->$member();
+
+                                $container->add('category_attr', $categoryAttr->getPublic(array('_fields', '_isEncrypted')), false);
+                            }
+                        }
+                    }
+
+                    if ($customerGroups = $catTmp->getCustomerGroups()) {
+                        foreach ($customerGroups as $customerGroup) {
+                            $categoryVisibility = Mmc::getModel('CategoryVisibility');
+                            $categoryVisibility->_customerGroupId = $customerGroup->getId();
+                            $categoryVisibility->_categoryId = $category->_id;
+
+                            $container->add('category_visibility', $categoryVisibility->getPublic(array('_fields', '_isEncrypted')), false);
+                        }
+                    }
+                }
+
                 $this->addContainerPos($container, 'category_i18n', $categorySW);
 
                 $container->add('category', $category->getPublic(array('_fields', '_isEncrypted')), false);
