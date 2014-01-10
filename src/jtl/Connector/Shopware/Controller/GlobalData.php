@@ -111,7 +111,7 @@ class GlobalData extends DataController
 
                 $customerGroupI18n->_localeName = $locale->getLocale();
                 $customerGroupI18n->_customerGroupId = $customerGroup->_id;
-                $customerGroupI18n->_name = $customerGroup->_name;
+                $customerGroupI18n->_name = $customerGroupSW['name'];
 
                 $container->add('customer_group_i18n', $customerGroupI18n->getPublic(array('_fields', '_isEncrypted')), false);
             }
@@ -120,7 +120,7 @@ class GlobalData extends DataController
 
             // CrossSellingGroups
 
-            // Units
+            // Units            
             $units = $builder->select(array('units'))
                 ->from('Shopware\Models\Article\Unit', 'units')
                 ->getQuery()->getResult();

@@ -16,7 +16,6 @@ class CustomerGroup extends CustomerGroupModel
 {
     protected $_fields = array(
         '_id' => 'id',
-        '_name' => 'name',
         '_discount' => 'discount',
         '_isDefault' => '',
         '_applyNetPrice' => 'taxInput'
