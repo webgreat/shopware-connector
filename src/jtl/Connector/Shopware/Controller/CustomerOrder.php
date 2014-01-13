@@ -161,18 +161,36 @@ class CustomerOrder extends DataController
                 //$orderShipping->_eMail = $orderSW->getShipping()->getId();
 
                 $container->add('customer_order_shipping_address', $orderShipping->getPublic(array('_fields', '_isEncrypted')), false);
-            }
 
-            // CustomerOrderAttrs
+                // CustomerOrderAttrs
+                $attributeSW = $orderSW->getAttribute();
+
+                // CustomerOrderPaymentInfos
+                /*
+                $paymentSW = $orderSW->getPayment();
+                $paymentInfo = Mmc::getModel('CustomerOrderPaymentInfos');
+
+                $paymentInfo->_id = $paymentSW->getId();
+                $paymentInfo->_customerOrderId = $orderSW->getId();
+                $paymentInfo->_bankName = 
+                $paymentInfo->_bankCode = 
+                $paymentInfo->_accountHolder = 
+                $paymentInfo->_accountNumber = 
+                $paymentInfo->_iban = 
+                $paymentInfo->_bic = 
+                $paymentInfo->_creditCardNumber = 
+                $paymentInfo->_creditCardVerificationNumber = 
+                $paymentInfo->_creditCardExpiration = 
+                $paymentInfo->_creditCardType = 
+                $paymentInfo->_creditCardHolder = 
+
+                $container->add('customer_order_payment_info', $paymentInfo->getPublic(array('_fields', '_isEncrypted')), false);
+                */
+            }
 
             // CustomerOrderItemVariations
 
-            // CustomerOrderPaymentInfos
-
-            // CustomerOrderShippingAddresss
-
             
-
             /*
             "customer_order" => array("CustomerOrder", "CustomerOrders"),
             "customer_order_attr" => array("CustomerOrderAttr", "CustomerOrderAttrs"),
