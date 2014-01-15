@@ -54,142 +54,60 @@ class CustomerOrder extends DataController
 
             $builder = Shopware()->Models()->createQueryBuilder();
 
-            $orders = $builder->select(array('orders'))
+            $orders = $builder->select(array(
+                    'orders',
+                    'customer',
+                    'attribute',
+                    'details',
+                    'tax',
+                    'billing',
+                    'shipping',
+                    'countryS',
+                    'countryB'
+                ))
                 ->from('Shopware\Models\Order\Order', 'orders')
-                ->getQuery()->getResult();
+                ->leftJoin('orders.customer', 'customer')
+                ->leftJoin('orders.attribute', 'attribute')
+                ->leftJoin('orders.details', 'details')
+                ->leftJoin('details.tax', 'tax')
+                ->leftJoin('orders.billing', 'billing')
+                ->leftJoin('orders.shipping', 'shipping')
+                ->leftJoin('billing.country', 'countryS')
+                ->leftJoin('shipping.country', 'countryB')
+                ->setFirstResult($offset)
+                ->setMaxResults($limit)
+                ->getQuery()
+                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
 
             foreach ($orders as $orderSW) {
 
                 // CustomerOrders
                 $order = Mmc::getModel('CustomerOrder');
+                $order->map(true, DataConverter::toObject($orderSW));
 
-                $order->_id = $orderSW->getId();
-                $order->_customerId = $orderSW->getCustomer()->getId();
-                $order->_shippingAddressId = $orderSW->getShipping()->getId();
-                $order->_billingAddressId = $orderSW->getBilling()->getId();
-                //$order->_shippingMethodId = 
-                //$order->_localeName = Shopware()->Shop()->getLocale()->getLocale();
-                $order->_localeName = $orderSW->getLanguageIso();
-                $order->_currencyIso = $orderSW->getCurrency();
-                //$order->_estimatedDeliveryDate = 
-                //$order->_credit = 
-                $order->_totalSum = $orderSW->getInvoiceAmountNet();
-                //$order->_session = 
-                //$order->_shippingMethodName = 
-                $order->_orderNumber = $orderSW->getNumber(); 
-                //$order->_shippingInfo = 
-                //$order->_shippingDate = 
-                //$order->_paymentDate = 
-                //$order->_ratingNotificationDate = 
-                $order->_tracking = $orderSW->getTrackingCode();
-                $order->_note = $orderSW->getCustomerComment();
-                //$order->_logistic = 
-                //$order->_trackingURL = 
-                $order->_ip = $orderSW->getRemoteAddress();
-                //$order->_isFetched = 
-                //$order->_status = // TODO: Status Mapper
-                $order->_created = $orderSW->getOrderTime()->format('Y-m-d H:i:s');
-                //$order->_paymentModuleId = // TODO: Payment Mapper
+                $this->addContainerPos($container, 'customer_order_item', $orderSW['details'], true);
+                $this->addContainerPos($container, 'customer_order_billing_address', $orderSW['billing']);
+                $this->addContainerPos($container, 'customer_order_shipping_address', $orderSW['shipping']);
+
+                // Attributes
+                $attributeExists = false;
+                for ($i = 1; $i <= 6; $i++) {
+                    if (isset($orderSW['attribute']["attribute{$i}"]) && strlen($orderSW['attribute']["attribute{$i}"]) > 0) {
+                        $attributeExists = true;
+                        $customerOrderAttr = Mmc::getModel('CustomerOrderAttrs');
+                        $customerOrderAttr->map(true, DataConverter::toObject($orderSW['attribute']));
+                        $customerOrderAttr->_key = "attribute{$i}";
+                        $customerOrderAttr->_value = $orderSW['attribute']["attribute{$i}"];
+                        $container->add('customer_order_attr', $customerOrderAttr->getPublic(array("_fields", "_isEncrypted")), false);
+                    }
+                }
 
                 $container->add('customer_order', $order->getPublic(array('_fields', '_isEncrypted')), false);
 
-                // CustomerOrderItems
-                foreach ($orderSW->getdetails() as $detailSW) {
-                    $orderItem = Mmc::getModel('CustomerOrderItem');
-
-                    $orderItem->_id = $detailSW->getId();
-                    //$orderItem->_basketId = 
-                    $orderItem->_productId = $detailSW->getArticleId();
-                    //$orderItem->_shippingClassId = 
-                    $orderItem->_customerOrderId = $detailSW->getOrder()->getId();
-                    $orderItem->_name = $detailSW->getArticleName();
-                    $orderItem->_sku = $detailSW->getNumber();
-                    $orderItem->_price = $detailSW->getPrice();
-                    $orderItem->_vat = $detailSW->getTax()->getTax();
-                    $orderItem->_quantity = $detailSW->getQuantity();
-                    //$orderItem->_type =
-                    //$orderItem->_unique =
-                    //$orderItem->_configItemId =
-
-                    $container->add('customer_order_item', $orderItem->getPublic(array('_fields', '_isEncrypted')), false);
-                }
-
-                // CustomerOrderBillingAddress
-                $orderBilling = Mmc::getModel('CustomerOrderBillingAddress');
-
-                $orderBilling->_id = $orderSW->getBilling()->getId();
-                $orderBilling->_customerId = $orderSW->getBilling()->getCustomer()->getId();
-                $orderBilling->_salutation = $orderSW->getBilling()->getSalutation();
-                $orderBilling->_firstName = $orderSW->getBilling()->getFirstName();
-                $orderBilling->_lastName = $orderSW->getBilling()->getLastName();
-                //$orderBilling->_title = $orderSW->getBilling()->getId();
-                $orderBilling->_company = $orderSW->getBilling()->getCompany();
-                //$orderBilling->_deliveryInstruction = $orderSW->getBilling()->getId();
-                $orderBilling->_street = $orderSW->getBilling()->getStreet() . ' ' . $orderSW->getBilling()->getStreetNumber();
-                //$orderBilling->_extraAddressLine = $orderSW->getBilling()->getId();
-                $orderBilling->_zipCode = $orderSW->getBilling()->getZipCode();
-                $orderBilling->_city = $orderSW->getBilling()->getCity();
-                //$orderBilling->_state = $orderSW->getBilling()->getId();
-                $orderBilling->_countryIso = $orderSW->getBilling()->getCountry()->getIso();
-                $orderBilling->_phone = $orderSW->getBilling()->getPhone();
-                //$orderBilling->_mobile = $orderSW->getBilling()->getId();
-                $orderBilling->_fax = $orderSW->getBilling()->getFax();
-                //$orderBilling->_eMail = $orderSW->getBilling()->getId();
-
-                $container->add('customer_order_billing_address', $orderBilling->getPublic(array('_fields', '_isEncrypted')), false);
-
-                // CustomerOrderShippingAddress
-                $orderShipping = Mmc::getModel('CustomerOrderShippingAddress');
-
-                $orderShipping->_id = $orderSW->getShipping()->getId();
-                $orderShipping->_customerId = $orderSW->getShipping()->getCustomer()->getId();
-                $orderShipping->_salutation = $orderSW->getShipping()->getSalutation();
-                $orderShipping->_firstName = $orderSW->getShipping()->getFirstName();
-                $orderShipping->_lastName = $orderSW->getShipping()->getLastName();
-                //$orderShipping->_title = $orderSW->getShipping()->getId();
-                $orderShipping->_company = $orderSW->getShipping()->getCompany();
-                //$orderShipping->_deliveryInstruction = $orderSW->getShipping()->getId();
-                $orderShipping->_street = $orderSW->getShipping()->getStreet() . ' ' . $orderSW->getShipping()->getStreetNumber();
-                //$orderShipping->_extraAddressLine = $orderSW->getShipping()->getId();
-                $orderShipping->_zipCode = $orderSW->getShipping()->getZipCode();
-                $orderShipping->_city = $orderSW->getShipping()->getCity();
-                //$orderShipping->_state = $orderSW->getShipping()->getId();
-                $orderShipping->_countryIso = $orderSW->getShipping()->getCountry()->getIso();
-                //$orderShipping->_phone = $orderSW->getShipping()->getPhone();
-                //$orderShipping->_mobile = $orderSW->getShipping()->getId();
-                //$orderShipping->_fax = $orderSW->getShipping()->getFax();
-                //$orderShipping->_eMail = $orderSW->getShipping()->getId();
-
-                $container->add('customer_order_shipping_address', $orderShipping->getPublic(array('_fields', '_isEncrypted')), false);
-
-                // CustomerOrderAttrs
-                $attributeSW = $orderSW->getAttribute();
+                // CustomerOrderItemVariations
 
                 // CustomerOrderPaymentInfos
-                /*
-                $paymentSW = $orderSW->getPayment();
-                $paymentInfo = Mmc::getModel('CustomerOrderPaymentInfos');
-
-                $paymentInfo->_id = $paymentSW->getId();
-                $paymentInfo->_customerOrderId = $orderSW->getId();
-                $paymentInfo->_bankName = 
-                $paymentInfo->_bankCode = 
-                $paymentInfo->_accountHolder = 
-                $paymentInfo->_accountNumber = 
-                $paymentInfo->_iban = 
-                $paymentInfo->_bic = 
-                $paymentInfo->_creditCardNumber = 
-                $paymentInfo->_creditCardVerificationNumber = 
-                $paymentInfo->_creditCardExpiration = 
-                $paymentInfo->_creditCardType = 
-                $paymentInfo->_creditCardHolder = 
-
-                $container->add('customer_order_payment_info', $paymentInfo->getPublic(array('_fields', '_isEncrypted')), false);
-                */
             }
-
-            // CustomerOrderItemVariations
-
             
             /*
             "customer_order" => array("CustomerOrder", "CustomerOrders"),

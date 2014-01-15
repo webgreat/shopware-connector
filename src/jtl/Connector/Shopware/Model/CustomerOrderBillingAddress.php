@@ -15,23 +15,23 @@ use \jtl\Connector\Model\CustomerOrderBillingAddress as CustomerOrderBillingAddr
 class CustomerOrderBillingAddress extends CustomerOrderBillingAddressModel
 {
     protected $_fields = array(
-        '_id' => '',
-        '_customerId' => '',
-        '_salutation' => '',
-        '_firstName' => '',
-        '_lastName' => '',
+        '_id' => 'id',
+        '_customerId' => 'customerId',
+        '_salutation' => 'salutation',
+        '_firstName' => 'firstName',
+        '_lastName' => 'lastName',
         '_title' => '',
         '_company' => '',
         '_deliveryInstruction' => '',
-        '_street' => '',
-        '_extraAddressLine' => '',
-        '_zipCode' => '',
-        '_city' => '',
+        '_street' => 'street',
+        '_extraAddressLine' => 'streetNumber',
+        '_zipCode' => 'zipCode',
+        '_city' => 'city',
         '_state' => '',
-        '_countryIso' => '',
-        '_phone' => '',
+        '_countryIso' => array('country', 'iso'),
+        '_phone' => 'phone',
         '_mobile' => '',
-        '_fax' => '',
+        '_fax' => 'fax',
         '_eMail' => ''
     );
     
