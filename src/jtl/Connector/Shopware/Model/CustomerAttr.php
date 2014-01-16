@@ -15,7 +15,7 @@ use \jtl\Connector\Model\CustomerAttr as CustomerAttrModel;
 class CustomerAttr extends CustomerAttrModel
 {
     protected $_fields = array(
-        '_id' => '',
+        '_id' => 'id',
         '_customerId' => '',
         '_key' => '',
         '_value' => ''

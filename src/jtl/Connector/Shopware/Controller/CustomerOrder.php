@@ -12,7 +12,6 @@ use \jtl\Core\Exception\TransactionException;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
 use \jtl\Core\Exception\DatabaseException;
-use \Shopware\Components\Api\Manager as ShopwareManager;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\ModelContainer\CustomerOrderContainer;
@@ -50,8 +49,6 @@ class CustomerOrder extends DataController
                 $limit = $filter->getLimit();
             }
 
-            $container = new CustomerOrderContainer();
-
             $builder = Shopware()->Models()->createQueryBuilder();
 
             $orders = $builder->select(array(
@@ -80,6 +77,7 @@ class CustomerOrder extends DataController
                 ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
 
             foreach ($orders as $orderSW) {
+                $container = new CustomerOrderContainer();
 
                 // CustomerOrders
                 $order = Mmc::getModel('CustomerOrder');
@@ -107,19 +105,9 @@ class CustomerOrder extends DataController
                 // CustomerOrderItemVariations
 
                 // CustomerOrderPaymentInfos
-            }
-            
-            /*
-            "customer_order" => array("CustomerOrder", "CustomerOrders"),
-            "customer_order_attr" => array("CustomerOrderAttr", "CustomerOrderAttrs"),
-            "customer_order_item" => array("CustomerOrderItem", "CustomerOrderItems"),
-            "customer_order_item_variation" => array("CustomerOrderItemVariation", "CustomerOrderItemVariations"),
-            "customer_order_payment_info" => array("CustomerOrderPaymentInfo", "CustomerOrderPaymentInfos"),
-            "customer_order_shipping_address" => array("CustomerOrderShippingAddress", "CustomerOrderShippingAddresss"),
-            "customer_order_billing_address" => array("CustomerOrderBillingAddress", "CustomerOrderBillingAddresss")
-            */
 
-            $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
+                $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
+            }
 
             $action->setResult($result);
         }

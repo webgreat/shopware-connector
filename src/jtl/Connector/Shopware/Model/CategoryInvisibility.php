@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @copyright 2010-2013 JTL-Software GmbH
  * @package jtl\Connector\Shopware\Model
@@ -15,7 +15,7 @@ use \jtl\Connector\Model\CategoryInvisibility as CategoryInvisibilityModel;
 class CategoryInvisibility extends CategoryInvisibilityModel
 {
     protected $_fields = array(
-        '_customerGroupId' => '',
+        '_customerGroupId' => 'id',
         '_categoryId' => ''
     );
     

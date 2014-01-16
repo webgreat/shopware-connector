@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @copyright 2010-2013 JTL-Software GmbH
  * @package jtl\Connector\Shopware\Model
@@ -16,7 +16,7 @@ class CategoryAttrI18n extends CategoryAttrI18nModel
 {
     protected $_fields = array(
         '_localeName' => '',
-        '_categoryAttrId' => '',
+        '_categoryAttrId' => 'id',
         '_key' => '',
         '_value' => ''
     );

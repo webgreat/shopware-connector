@@ -50,43 +50,64 @@ class Category extends DataController
                 $limit = $filter->getLimit();
             }
 
-            $categoryResource = ShopwareManager::getResource('Category');
-            $categories = $categoryResource->getList($offset, $limit, $filter->getFilters());
+            $builder = Shopware()->Models()->createQueryBuilder();
 
-            foreach ($categories['data'] as $categorySW) {
+            $categories = $builder->select(array(
+                    'category',
+                    'parent',
+                    'attribute',
+                    'customergroup'
+                ))
+                ->from('Shopware\Models\Category\Category', 'category')
+                ->leftJoin('category.parent', 'parent')
+                ->leftJoin('category.attribute', 'attribute')
+                ->leftJoin('category.customerGroups', 'customergroup')
+                ->setFirstResult($offset)
+                ->setMaxResults($limit)
+                ->getQuery()
+                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+
+            foreach ($categories as $categorySW) {
                 $container = new CategoryContainer();
 
                 $category = Mmc::getModel('Category');
                 $category->map(true, DataConverter::toObject($categorySW));
 
-                if ($catTmp = $categoryResource->getRepository()->find($category->_id)) {
-                    $category->_level = $catTmp->getLevel();
+                $categoryObj = Shopware()->Models()->getRepository('Shopware\Models\Category\Category')
+                    ->findOneById($categorySW['id']);
 
-                    if ($attr = $catTmp->getAttribute()) {
-                        for ($i = 1; $i <= 6; $i++) {
-                            $member = "getAttribute{$i}";
-                            if (strlen(trim($attr->$member())) > 0) {
-                                $categoryAttr = Mmc::getModel('CategoryAttr');
-                                $categoryAttr->_id = $attr->getId() . "_{$i}";
-                                $categoryAttr->_categoryId = $attr->getCategoryId();
-                                $categoryAttr->_localeName = Shopware()->Locale()->toString();
+                $category->_level = $categoryObj->getLevel();
 
-                                $categoryAttr->_name = "Attribute{$i}";
-                                $categoryAttr->_value = $attr->$member();
+                // Attributes
+                $attributeExists = false;
+                if (isset($categorySW['attribute']) && is_array($categorySW['attribute'])) {
+                    $attributeExists = true;
+                    for ($i = 1; $i <= 6; $i++) {
+                        if (isset($categorySW['attribute']["attribute{$i}"]) && strlen(trim($categorySW['attribute']["attribute{$i}"]))) {
+                            $categoryAttr = Mmc::getModel('CategoryAttr');
+                            $categoryAttr->map(true, DataConverter::toObject($categorySW['attribute']));                            
 
-                                $container->add('category_attr', $categoryAttr->getPublic(array('_fields', '_isEncrypted')), false);
-                            }
+                            $container->add('category_attr', $categoryAttr->getPublic(array("_fields", "_isEncrypted")), false);
+
+                            $categoryAttrI18n = Mmc::getModel('CategoryAttrI18n');
+                            $categoryAttrI18n->map(true, DataConverter::toObject($categorySW['attribute']));
+                            $categoryAttrI18n->_localName = Shopware()->Shop()->getLocale()->getLocale();
+                            $categoryAttrI18n->_key = "attribute{$i}";
+                            $categoryAttrI18n->_value = $categorySW['attribute']["attribute{$i}"];
+
+                            $container->add('category_attr_i18n', $categoryAttrI18n->getPublic(array("_fields", "_isEncrypted")), false);
                         }
                     }
+                }
 
-                    if ($customerGroups = $catTmp->getCustomerGroups()) {
-                        foreach ($customerGroups as $customerGroup) {
-                            $categoryVisibility = Mmc::getModel('CategoryVisibility');
-                            $categoryVisibility->_customerGroupId = $customerGroup->getId();
-                            $categoryVisibility->_categoryId = $category->_id;
+                // Invisibility
+                if (isset($categorySW['customerGroups']) && is_array($categorySW['customerGroups'])) {
+                    foreach ($categorySW['customerGroups'] as $customerGroup) {
+                        $categoryInvisibility = Mmc::getModel('CategoryInvisibility');
+                        $categoryInvisibility->_customerGroupId = $customerGroup['id'];
+                        $categoryInvisibility->_categoryId = $category->_id;
 
-                            $container->add('category_visibility', $categoryVisibility->getPublic(array('_fields', '_isEncrypted')), false);
-                        }
+                        $container->add('category_invisibility', $categoryInvisibility->getPublic(array('_fields', '_isEncrypted')), false);
                     }
                 }
 

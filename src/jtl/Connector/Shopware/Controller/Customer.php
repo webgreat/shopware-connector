@@ -12,7 +12,6 @@ use \jtl\Core\Exception\TransactionException;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
 use \jtl\Core\Exception\DatabaseException;
-use \Shopware\Components\Api\Manager as ShopwareManager;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\ModelContainer\CustomerContainer;
@@ -50,54 +49,54 @@ class Customer extends DataController
                 $limit = $filter->getLimit();
             }
 
-            $customerResource = ShopwareManager::getResource('Customer');
-            $customers = $customerResource->getList($offset, $limit, $filter->getFilters());
+            $builder = Shopware()->Models()->createQueryBuilder();
 
-            foreach ($customers['data'] as $customerSW) {
+            $customers = $builder->select(array(
+                    'customer',
+                    'billing',
+                    'shipping',
+                    'customergroup',
+                    'attribute',
+                    'shop',
+                    'locale'
+                ))
+                ->from('Shopware\Models\Customer\Customer', 'customer')
+                ->leftJoin('customer.billing', 'billing')
+                ->leftJoin('customer.shipping', 'shipping')
+                ->leftJoin('customer.group', 'customergroup')
+                ->leftJoin('billing.attribute', 'attribute')
+                ->leftJoin('customer.languageSubShop', 'shop')
+                ->leftJoin('shop.locale', 'locale')
+                ->setFirstResult($offset)
+                ->setMaxResults($limit)
+                ->getQuery()
+                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+
+            foreach ($customers as $customerSW) {
                 $container = new CustomerContainer();
 
                 $customer = Mmc::getModel('Customer');
                 $customer->map(true, DataConverter::toObject($customerSW));
 
-                if ($customerTmp = $customerResource->getRepository()->find($customer->_id)) {
-                    $customerGroupResource = ShopwareManager::getResource('CustomerGroup');
-                    if ($customerGroup = $customerGroupResource->getRepository()->findOneBy(array('key' => $customerSW['groupKey']))) {
-                        $customer->_customerGroupId = $customerGroup->getId();
-                    }
+                $country = Shopware()->Models()->getRepository('Shopware\Models\Country\Country')
+                    ->findOneById($customerSW['billing']['countryId']);
 
-                    if ($billing = $customerTmp->getBilling()) {
-                        if ($country = $customerResource->getManager()->getRepository('\Shopware\Models\Country\Country')->findOneBy(array('id' => $billing->getCountryId()))) {
-                            $customer->_countryIso = $country->getIso();
+                $customer->_countryIso = $country->getIso();
+
+                // Attributes
+                $attributeExists = false;
+                if (isset($customerSW['billing']['attribute']) && is_array($customerSW['billing']['attribute'])) {
+                    $attributeExists = true;
+                    for ($i = 1; $i <= 6; $i++) {
+                        if (isset($customerSW['billing']['attribute']["text{$i}"]) && strlen(trim($customerSW['billing']['attribute']["text{$i}"]))) {
+                            $customerAttr = Mmc::getModel('CustomerAttr');
+                            $customerAttr->map(true, DataConverter::toObject($customerSW['billing']['attribute']));
+                            $customerAttr->_customerId = $customer->_id;
+                            $customerAttr->_key = "text{$i}";
+                            $customerAttr->_value = $customerSW['billing']['attribute']["text{$i}"];
+
+                            $container->add('customer_attr', $customerAttr->getPublic(array("_fields", "_isEncrypted")), false);
                         }
-
-                        if ($billingAttr = $billing->getAttribute()) {
-                            for ($i = 1; $i <= 6; $i++) {
-                                $member = "getText{$i}";
-                                if (strlen(trim($billingAttr->$member())) > 0) {
-                                    $customerAttr = Mmc::getModel('CustomerAttr');
-                                    $customerAttr->_id = $billingAttr->getId() . "_{$i}";
-                                    $customerAttr->_customerId = $customer->_id;
-                                    $customerAttr->_key = "Text{$i}";
-                                    $customerAttr->_value = $billingAttr->$member();
-
-                                    $container->add('customer_attr', $customerAttr->getPublic(array('_fields', '_isEncrypted')), false);
-                                }
-                            }
-                        }
-
-                        $customer->_customerNumber = $billing->getNumber();
-                        $customer->_salutation = $billing->getSalutation();
-                        $customer->_firstName = $billing->getFirstName();
-                        $customer->_lastName = $billing->getLastName();
-                        $customer->_company = $billing->getCompany();
-                        $customer->_street = $billing->getStreet();
-                        $customer->_streetNumber = $billing->getStreetNumber();
-                        $customer->_zipCode = $billing->getZipCode();
-                        $customer->_city = $billing->getCity();
-                        $customer->_phone = $billing->getPhone();
-                        $customer->_fax = $billing->getFax();
-                        $customer->_vatNumber = $billing->getVatId();
-                        $customer->_birthday = $billing->getBirthday();
                     }
                 }
 
