@@ -11,10 +11,10 @@ use \jtl\Connector\Transaction\Handler as TransactionHandler;
 use \jtl\Core\Exception\TransactionException;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
-use \Shopware\Components\Api\Manager as ShopwareManager;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
+use \jtl\Core\Utilities\DataInjector;
 use \jtl\Connector\ModelContainer\ProductContainer;
 
 /**
@@ -49,19 +49,60 @@ class Product extends DataController
                 $limit = $filter->getLimit();
             }
 
-            $articleResource = ShopwareManager::getResource('Article');
-            $products = $articleResource->getList($offset, $limit, $filter->getFilters());
+            $builder = Shopware()->Models()->createQueryBuilder();
 
-            foreach ($products['data'] as $productSW) {
+            $products = $builder->select(array(
+                    'article',
+                    'tax',
+                    'categories',
+                    'details',
+                    'maindetail',
+                    'detailprices',
+                    'prices',
+                    'links',
+                    'attribute',
+                    'downloads',
+                    'supplier',
+                    'related',
+                    'pricegroup',
+                    'customergroups',
+                    'configuratorset',
+                    'configuratorgroups',
+                    'configuratoroptions'
+                ))
+                ->from('Shopware\Models\Article\Article', 'article')
+                ->leftJoin('article.tax', 'tax')
+                ->leftJoin('article.categories', 'categories')
+                ->leftJoin('article.details', 'details')
+                ->leftJoin('article.mainDetail', 'maindetail')
+                ->leftJoin('details.prices', 'detailprices')
+                ->leftJoin('maindetail.prices', 'prices')
+                ->leftJoin('article.links', 'links')
+                ->leftJoin('article.attribute', 'attribute')
+                ->leftJoin('article.downloads', 'downloads')
+                ->leftJoin('article.supplier', 'supplier')
+                ->leftJoin('article.related', 'related')
+                ->leftJoin('article.priceGroup', 'pricegroup')
+                ->leftJoin('article.customerGroups', 'customergroups')
+                ->leftJoin('article.configuratorSet', 'configuratorset')
+                ->leftJoin('configuratorset.groups', 'configuratorgroups')
+                ->leftJoin('configuratorset.options', 'configuratoroptions')
+                ->setFirstResult($offset)
+                ->setMaxResults($limit)
+                ->getQuery()
+                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+
+            foreach ($products as $productSW) {
                 $container = new ProductContainer();
-
-                $productSW = $articleResource->getOne($productSW['id']);
 
                 $product = Mmc::getModel('Product');
                 $product->map(true, DataConverter::toObject($productSW));
 
                 $this->addContainerPos($container, 'product_i18n', $productSW);
                 $this->addContainerPos($container, 'product_price', $productSW['mainDetail']['prices'], true);
+
+                // Product2Categories
+                DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['categories'], 'articleId', $product->_id, true);
                 $this->addContainerPos($container, 'product2_category', $productSW['categories'], true);
 
                 // Attributes
@@ -81,18 +122,39 @@ class Product extends DataController
                     $this->addContainerPos($container, 'product_attr', $productSW['mainDetail']['attribute']);
                 }
 
-                // Product2Categories
-                $product2Categories = $container->get('product2_category');
-                if ($product2Categories !== null) {
-                    foreach ($product2Categories as $product2Category) {
-                        $product2Category->_productId = $product->_id;
-                    }
+                // ProductInvisibility
+                DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['customerGroups'], 'articleId', $product->_id, true);
+                $this->addContainerPos($container, 'product_invisibility', $productSW['customerGroups'], true);
+
+                // ProductVariation
+                if (is_array($productSW['configuratorSet'])) {
+                    $configuratorSet = $productSW['configuratorSet'];
+                    DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+                    DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'articleId', $product->_id, true);
+                    DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['options'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+
+                    $this->addContainerPos($container, 'product_variation', $configuratorSet['groups'], true);
+                    $this->addContainerPos($container, 'product_variation_i18n', $configuratorSet['groups'], true);
+
+                    $this->addContainerPos($container, 'product_variation_value', $configuratorSet['options'], true);
+                    $this->addContainerPos($container, 'product_variation_value_i18n', $configuratorSet['options'], true);
                 }
 
                 $container->add('product', $product->getPublic(array('_fields', '_isEncrypted')), false);
 
                 $result[] = $container->getPublic(array('items'), array('_fields', '_isEncrypted'));
             }
+
+            /*
+            "product_file_download" => array("ProductFileDownload", "ProductFileDownloads"),            
+            "product_special_price" => array("ProductSpecialPrice", "ProductSpecialPrices"),
+            "product_variation_invisibility" => array("ProductVariationInvisibility", "ProductVariationInvisibilities"),
+            "product_variation_value_extra_charge" => array("ProductVariationValueExtraCharge", "ProductVariationValueExtraCharges"),
+            "product_variation_value_invisibility" => array("ProductVariationValueInvisibility", "ProductVariationValueInvisibilities"),
+            "product_variation_value_dependency" => array("ProductVariationValueDependency", "ProductVariationValueDependencies"),
+            "product_var_combination" => array("ProductVarCombination", "ProductVarCombinations"),
+            "product_specific" => array("ProductSpecific", "ProductSpecifics"),
+            */
 
             $action->setResult($result);
         }

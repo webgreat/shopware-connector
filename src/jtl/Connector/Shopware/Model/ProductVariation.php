@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @copyright 2010-2013 JTL-Software GmbH
  * @package jtl\Connector\Shopware\Model
@@ -15,8 +15,8 @@ use \jtl\Connector\Model\ProductVariation as ProductVariationModel;
 class ProductVariation extends ProductVariationModel
 {
     protected $_fields = array(
-        '_id' => '',
-        '_productId' => '',
+        '_id' => 'id',
+        '_productId' => 'articleId',
         '_type' => '',
         '_sort' => ''
     );

@@ -17,7 +17,7 @@ class Product2Category extends Product2CategoryModel
     protected $_fields = array(
         '_id' => '',
         '_categoryId' => 'id',
-        '_productId' => ''
+        '_productId' => 'articleId'
     );
     
     /**

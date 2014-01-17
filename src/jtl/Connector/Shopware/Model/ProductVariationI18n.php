@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @copyright 2010-2013 JTL-Software GmbH
  * @package jtl\Connector\Shopware\Model
@@ -15,9 +15,9 @@ use \jtl\Connector\Model\ProductVariationI18n as ProductVariationI18nModel;
 class ProductVariationI18n extends ProductVariationI18nModel
 {
     protected $_fields = array(
-        '_localeName' => '',
-        '_productVariationId' => '',
-        '_name' => ''
+        '_localeName' => 'localeName',
+        '_productVariationId' => 'id',
+        '_name' => 'name'
     );
     
     /**
