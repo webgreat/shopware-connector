@@ -15,10 +15,10 @@ use \jtl\Connector\Model\TaxRate as TaxRateModel;
 class TaxRate extends TaxRateModel
 {
     protected $_fields = array(
-        '_id' => '',
+        '_id' => 'id',
         '_taxZoneId' => '',
         '_taxClassId' => '',
-        '_rate' => '',
+        '_rate' => 'tax',
         '_priority' => ''
     );
     

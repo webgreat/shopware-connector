@@ -15,9 +15,9 @@ use \jtl\Connector\Model\Unit as UnitModel;
 class Unit extends UnitModel
 {
     protected $_fields = array(
-        '_id' => '',
-        '_localeName' => '',
-        '_name' => ''
+        '_id' => 'id',
+        '_localeName' => 'localeName',
+        '_name' => 'name'
     );
     
     /**

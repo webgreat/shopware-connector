@@ -15,9 +15,9 @@ use \jtl\Connector\Model\CustomerGroupI18n as CustomerGroupI18nModel;
 class CustomerGroupI18n extends CustomerGroupI18nModel
 {
     protected $_fields = array(
-        '_localeName' => '',
-        '_customerGroupId' => '',
-        '_name' => ''
+        '_localeName' => 'localeName',
+        '_customerGroupId' => 'id',
+        '_name' => 'name'
     );
     
     /**

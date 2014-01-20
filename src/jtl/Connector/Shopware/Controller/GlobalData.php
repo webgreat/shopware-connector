@@ -15,6 +15,7 @@ use \jtl\Core\Exception\DatabaseException;
 use \Shopware\Components\Api\Manager as ShopwareManager;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
+use \jtl\Core\Utilities\DataInjector;
 use \jtl\Connector\ModelContainer\GlobalDataContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 
@@ -96,25 +97,24 @@ class GlobalData extends DataController
             }
 
             // CustomerGroups
-            $customerGroupResource = ShopwareManager::getResource('CustomerGroup');
-            $customerGroups = $customerGroupResource->getList($offset, $limit, $filter->getFilters());
+            $customerGroups = $builder->select(array(
+                    'customergroup',
+                    'attribute'
+                ))
+                ->from('Shopware\Models\Customer\Group', 'customergroup')
+                ->leftJoin('customergroup.attribute', 'attribute')
+                ->setFirstResult($offset)
+                ->setMaxResults($limit)
+                ->getQuery()
+                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
 
-            foreach ($customerGroups['data'] as $customerGroupSW) {
-                $customerGroup = Mmc::getModel('CustomerGroup');
-                $customerGroup->map(true, DataConverter::toObject($customerGroupSW));
-                $customerGroup->_applyNetPrice = !$customerGroup->_applyNetPrice;
-
-                $container->add('customer_group', $customerGroup->getPublic(array('_fields', '_isEncrypted')), false);
-
-                // CustomerGroupI18ns
-                $customerGroupI18n = Mmc::getModel('CustomerGroupI18n');
-
-                $customerGroupI18n->_localeName = $locale->getLocale();
-                $customerGroupI18n->_customerGroupId = $customerGroup->_id;
-                $customerGroupI18n->_name = $customerGroupSW['name'];
-
-                $container->add('customer_group_i18n', $customerGroupI18n->getPublic(array('_fields', '_isEncrypted')), false);
+            for ($i = 0; $i < count($customerGroups); $i++) {
+                $customerGroups[$i]['taxInput'] = !(bool)$customerGroups[$i]['taxInput'];
             }
+
+            DataInjector::inject(DataInjector::TYPE_ARRAY, $customerGroups, 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+            $this->addContainerPos($container, 'customer_group', $customerGroups, true);
+            $this->addContainerPos($container, 'customer_group_i18n', $customerGroups, true);
 
             // CustomerGroupAttrs
 
@@ -123,17 +123,13 @@ class GlobalData extends DataController
             // Units            
             $units = $builder->select(array('units'))
                 ->from('Shopware\Models\Article\Unit', 'units')
-                ->getQuery()->getResult();
+                ->setFirstResult($offset)
+                ->setMaxResults($limit)
+                ->getQuery()
+                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
 
-            foreach ($units as $unitSW) {
-                $unit = Mmc::getModel('Unit');
-
-                $unit->_id = $unitSW->getId();
-                $unit->_localeName = $locale->getLocale();
-                $unit->_name = $unitSW->getName();
-
-                $container->add('unit', $unit->getPublic(array('_fields', '_isEncrypted')), false);
-            }
+            DataInjector::inject(DataInjector::TYPE_ARRAY, $customerGroups, 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+            $this->addContainerPos($container, 'unit', $units, true);
 
             // TaxZones
 
@@ -144,19 +140,12 @@ class GlobalData extends DataController
             // TaxRates
             $taxes = $builder->select(array('taxes'))
                 ->from('Shopware\Models\Tax\Tax', 'taxes')
-                ->getQuery()->getResult();
+                ->setFirstResult($offset)
+                ->setMaxResults($limit)
+                ->getQuery()
+                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
 
-            foreach ($taxes as $tax) {
-                $taxRate = Mmc::getModel('TaxRate');
-
-                $taxRate->_id = $tax->getId();
-                //$taxRate->_taxZoneId = 
-                //$taxRate->_taxClassId = 
-                $taxRate->_rate = $tax->getTax();
-                //$taxRate->_priority = 
-
-                $container->add('tax_rate', $taxRate->getPublic(array('_fields', '_isEncrypted')), false);
-            }
+            $this->addContainerPos($container, 'tax_rate', $taxes, true);
 
             // ShippingClasss
             
