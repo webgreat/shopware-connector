@@ -50,22 +50,8 @@ class Category extends DataController
                 $limit = $filter->getLimit();
             }
 
-            $builder = Shopware()->Models()->createQueryBuilder();
-
-            $categories = $builder->select(array(
-                    'category',
-                    'parent',
-                    'attribute',
-                    'customergroup'
-                ))
-                ->from('Shopware\Models\Category\Category', 'category')
-                ->leftJoin('category.parent', 'parent')
-                ->leftJoin('category.attribute', 'attribute')
-                ->leftJoin('category.customerGroups', 'customergroup')
-                ->setFirstResult($offset)
-                ->setMaxResults($limit)
-                ->getQuery()
-                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+            $mapper = Mmc::getMapper('Category');
+            $categories = $mapper->findAll($offset, $limit);
 
             foreach ($categories as $categorySW) {
                 $container = new CategoryContainer();

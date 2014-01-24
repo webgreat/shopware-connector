@@ -49,28 +49,8 @@ class Customer extends DataController
                 $limit = $filter->getLimit();
             }
 
-            $builder = Shopware()->Models()->createQueryBuilder();
-
-            $customers = $builder->select(array(
-                    'customer',
-                    'billing',
-                    'shipping',
-                    'customergroup',
-                    'attribute',
-                    'shop',
-                    'locale'
-                ))
-                ->from('Shopware\Models\Customer\Customer', 'customer')
-                ->leftJoin('customer.billing', 'billing')
-                ->leftJoin('customer.shipping', 'shipping')
-                ->leftJoin('customer.group', 'customergroup')
-                ->leftJoin('billing.attribute', 'attribute')
-                ->leftJoin('customer.languageSubShop', 'shop')
-                ->leftJoin('shop.locale', 'locale')
-                ->setFirstResult($offset)
-                ->setMaxResults($limit)
-                ->getQuery()
-                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+            $mapper = Mmc::getMapper('Customer');
+            $customers = $mapper->findAll($offset, $limit);
 
             foreach ($customers as $customerSW) {
                 $container = new CustomerContainer();

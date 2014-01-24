@@ -14,7 +14,6 @@ use \jtl\Core\Rpc\Error;
 use \jtl\Core\Exception\DatabaseException;
 use \Shopware\Components\Api\Manager as ShopwareManager;
 use \jtl\Core\Model\QueryFilter;
-use \jtl\Core\Utilities\DataConverter;
 use \jtl\Core\Utilities\DataInjector;
 use \jtl\Connector\ModelContainer\GlobalDataContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
@@ -97,16 +96,8 @@ class GlobalData extends DataController
             }
 
             // CustomerGroups
-            $customerGroups = $builder->select(array(
-                    'customergroup',
-                    'attribute'
-                ))
-                ->from('Shopware\Models\Customer\Group', 'customergroup')
-                ->leftJoin('customergroup.attribute', 'attribute')
-                ->setFirstResult($offset)
-                ->setMaxResults($limit)
-                ->getQuery()
-                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+            $mapper = Mmc::getMapper('CustomerGroup');
+            $customerGroups = $mapper->findAll($offset, $limit);
 
             for ($i = 0; $i < count($customerGroups); $i++) {
                 $customerGroups[$i]['taxInput'] = !(bool)$customerGroups[$i]['taxInput'];
@@ -120,13 +111,9 @@ class GlobalData extends DataController
 
             // CrossSellingGroups
 
-            // Units            
-            $units = $builder->select(array('units'))
-                ->from('Shopware\Models\Article\Unit', 'units')
-                ->setFirstResult($offset)
-                ->setMaxResults($limit)
-                ->getQuery()
-                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+            // Units
+            $mapper = Mmc::getMapper('Unit');
+            $units = $mapper->findAll($offset, $limit);
 
             DataInjector::inject(DataInjector::TYPE_ARRAY, $customerGroups, 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
             $this->addContainerPos($container, 'unit', $units, true);
@@ -138,12 +125,8 @@ class GlobalData extends DataController
             // TaxClasss
 
             // TaxRates
-            $taxes = $builder->select(array('taxes'))
-                ->from('Shopware\Models\Tax\Tax', 'taxes')
-                ->setFirstResult($offset)
-                ->setMaxResults($limit)
-                ->getQuery()
-                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+            $mapper = Mmc::getMapper('TaxRate');
+            $taxes = $mapper->findAll($offset, $limit);
 
             $this->addContainerPos($container, 'tax_rate', $taxes, true);
 

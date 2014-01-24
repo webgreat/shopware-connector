@@ -11,7 +11,10 @@ use \jtl\Core\Controller\Controller as CoreController;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
+use \jtl\Connector\Model\Statistic;
+use \jtl\Core\Utilities\ClassName;
 
 /**
  * Product Controller
@@ -30,6 +33,30 @@ abstract class DataController extends CoreController
         $action = new Action();
         $action->setHandled(true);
         
+        try {
+            $class = ClassName::getFromNS(get_called_class());
+            
+            $statModel = new Statistic();
+            $mapper = Mmc::getMapper($class);
+
+            $statModel->_available = $mapper->fetchCount();
+
+            $statModel->_pending = 0;
+            if (is_callable(array($mapper, 'fetchPendingCount'))) {
+                $statModel->_pending = $mapper->fetchPendingCount();
+            }
+
+            $statModel->_controllerName = lcfirst($class);
+
+            $action->setResult($statModel->getPublic(array("_fields", "_isEncrypted")));
+        }
+        catch (\Exception $exc) {
+            $err = new Error();
+            $err->setCode($exc->getCode());
+            $err->setMessage($exc->getMessage());
+            $action->setError($err);
+        }
+
         return $action;
     }
 
@@ -57,7 +84,43 @@ abstract class DataController extends CoreController
     {        
         $action = new Action();
         $action->setHandled(true);
-    
+        
+        try {
+            $result = array();
+            $filter = new QueryFilter();
+            $filter->set($params);
+
+            $offset = 0;
+            $limit = 100;
+            if ($filter->isOffset()) {
+                $offset = $filter->getOffset();
+            }
+
+            if ($filter->isLimit()) {
+                $limit = $filter->getLimit();
+            }
+
+            $class = ClassName::getFromNS(get_called_class());
+
+            $mapper = Mmc::getMapper($class);
+            $models = $mapper->findAll($offset, $limit);
+
+            foreach ($models as $modelSW) {
+                $model = Mmc::getModel($class);
+                $model->map(true, DataConverter::toObject($modelSW));
+
+                $result[] = $model->getPublic(array("_fields", "_isEncrypted"));
+            }
+
+            $action->setResult($result);
+        }
+        catch (\Exception $exc) {
+            $err = new Error();
+            $err->setCode($exc->getCode());
+            $err->setMessage($exc->getMessage());
+            $action->setError($err);
+        }
+
         return $action;
     }
     

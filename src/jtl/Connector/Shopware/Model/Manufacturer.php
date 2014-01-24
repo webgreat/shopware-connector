@@ -15,9 +15,9 @@ use \jtl\Connector\Model\Manufacturer as ManufacturerModel;
 class Manufacturer extends ManufacturerModel
 {
     protected $_fields = array(
-        '_id' => '',
-        '_name' => '',
-        '_www' => '',
+        '_id' => 'id',
+        '_name' => 'name',
+        '_www' => 'link',
         '_sort' => '',
         '_urlPath' => ''
     );

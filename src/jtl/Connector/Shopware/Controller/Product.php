@@ -49,48 +49,8 @@ class Product extends DataController
                 $limit = $filter->getLimit();
             }
 
-            $builder = Shopware()->Models()->createQueryBuilder();
-
-            $products = $builder->select(array(
-                    'article',
-                    'tax',
-                    'categories',
-                    'details',
-                    'maindetail',
-                    'detailprices',
-                    'prices',
-                    'links',
-                    'attribute',
-                    'downloads',
-                    'supplier',
-                    'related',
-                    'pricegroup',
-                    'customergroups',
-                    'configuratorset',
-                    'configuratorgroups',
-                    'configuratoroptions'
-                ))
-                ->from('Shopware\Models\Article\Article', 'article')
-                ->leftJoin('article.tax', 'tax')
-                ->leftJoin('article.categories', 'categories')
-                ->leftJoin('article.details', 'details')
-                ->leftJoin('article.mainDetail', 'maindetail')
-                ->leftJoin('details.prices', 'detailprices')
-                ->leftJoin('maindetail.prices', 'prices')
-                ->leftJoin('article.links', 'links')
-                ->leftJoin('article.attribute', 'attribute')
-                ->leftJoin('article.downloads', 'downloads')
-                ->leftJoin('article.supplier', 'supplier')
-                ->leftJoin('article.related', 'related')
-                ->leftJoin('article.priceGroup', 'pricegroup')
-                ->leftJoin('article.customerGroups', 'customergroups')
-                ->leftJoin('article.configuratorSet', 'configuratorset')
-                ->leftJoin('configuratorset.groups', 'configuratorgroups')
-                ->leftJoin('configuratorset.options', 'configuratoroptions')
-                ->setFirstResult($offset)
-                ->setMaxResults($limit)
-                ->getQuery()
-                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+            $mapper = Mmc::getMapper('Product');
+            $products = $mapper->findAll($offset, $limit);
 
             foreach ($products as $productSW) {
                 $container = new ProductContainer();

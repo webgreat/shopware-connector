@@ -49,32 +49,8 @@ class CustomerOrder extends DataController
                 $limit = $filter->getLimit();
             }
 
-            $builder = Shopware()->Models()->createQueryBuilder();
-
-            $orders = $builder->select(array(
-                    'orders',
-                    'customer',
-                    'attribute',
-                    'details',
-                    'tax',
-                    'billing',
-                    'shipping',
-                    'countryS',
-                    'countryB'
-                ))
-                ->from('Shopware\Models\Order\Order', 'orders')
-                ->leftJoin('orders.customer', 'customer')
-                ->leftJoin('orders.attribute', 'attribute')
-                ->leftJoin('orders.details', 'details')
-                ->leftJoin('details.tax', 'tax')
-                ->leftJoin('orders.billing', 'billing')
-                ->leftJoin('orders.shipping', 'shipping')
-                ->leftJoin('billing.country', 'countryS')
-                ->leftJoin('shipping.country', 'countryB')
-                ->setFirstResult($offset)
-                ->setMaxResults($limit)
-                ->getQuery()
-                ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+            $mapper = Mmc::getMapper('CustomerOrder');
+            $orders = $mapper->findAll($offset, $limit);
 
             foreach ($orders as $orderSW) {
                 $container = new CustomerOrderContainer();

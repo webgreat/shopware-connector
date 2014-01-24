@@ -12,6 +12,7 @@ namespace jtl\Connector\Shopware\Utilities;
 final class Mmc
 {
     const NAMESPACE_MODEL = "\\jtl\\Connector\\Shopware\\Model\\";
+    const NAMESPACE_MAPPER = "\\jtl\\Connector\\Shopware\\Mapper\\";
     const NAMESPACE_CONTROLLER = "\\jtl\\Connector\\Shopware\\Controller\\";
 
     private function __construct() { }
@@ -34,6 +35,30 @@ final class Mmc
                 $class = self::NAMESPACE_MODEL . $class;
                 
                 return new $class();
+            }
+        }
+        
+        throw new \Exception("Class '" . self::NAMESPACE_MODEL . $class . "' not found");
+    }
+
+    /**
+     * Mapper Getter
+     *
+     * @param string $class
+     * @param boolean $useNamespace
+     * @throws \Exception
+     * @return string|mixed
+     */
+    public static function getMapper($class, $useNamespace = false)
+    {
+        if (class_exists(self::NAMESPACE_MAPPER . $class)) {
+            if ($useNamespace) {
+                return self::NAMESPACE_MAPPER . $class;
+            }
+            else {
+                $class = self::NAMESPACE_MAPPER . $class;
+        
+                return $class::getInstance();
             }
         }
         
