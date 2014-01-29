@@ -7,7 +7,6 @@
 namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Connector\Drawing\ImageRelationType;
-use \Doctrine\ORM\EntityManager;
 
 class Image extends DataMapper
 {

@@ -1,0 +1,593 @@
+{
+    "objects": [
+        {
+            "name": "Category",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "ParentCategoryId"
+                ]
+            }
+        },
+        {
+            "name": "CategoryI18n",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "LocaleName",
+                    "CategoryId",
+                    "Name"
+                ]
+            }
+        },
+        {
+            "name": "CategoryAttr",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "CategoryId"
+                ]
+            }
+        },
+        {
+            "name": "CategoryAttrI18n",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "LocaleName",
+                    "CategoryAttrId",
+                    "Key",
+                    "Value"
+                ]
+            }
+        },
+        {
+            "name": "CategoryInvisibility",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "CustomerGroupId",
+                    "CategoryId"
+                ]
+            }
+        },
+        {
+            "name": "Customer",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "CustomerGroupId",
+                    "LocaleName",
+                    "CustomerNumber",
+                    "Password",
+                    "Salutation",
+                    "FirstName",
+                    "LastName",
+                    "Company",
+                    "Street",
+                    "ZipCode",
+                    "City",
+                    "CountryIso",
+                    "Phone",
+                    "EMail",
+                    "HasNewsletterSubscription",
+                    "Created",
+                    "IsActive",
+                    "IsFetched",
+                    "HasCustomerAccount"
+                ]
+            }
+        },
+        {
+            "name": "CustomerAttr",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "CustomerId",
+                    "Key",
+                    "Value"
+                ]
+            }
+        },
+        {
+            "name": "CustomerOrder",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "CustomerId",
+                    "ShippingAddressId",
+                    "BillingAddressId",
+                    "LocaleName",
+                    "CurrencyIso",
+                    "TotalSum",
+                    "OrderNumber",
+                    "Ip",
+                    "Status",
+                    "Created"
+                ]
+            }
+        },
+        {
+            "name": "CustomerOrderAttr",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "CustomerOrderId",
+                    "Key",
+                    "Value"
+                ]
+            }
+        },
+        {
+            "name": "CustomerOrderItem",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "ProductId",
+                    "ShippingClassId",
+                    "CustomerOrderId",
+                    "Name",
+                    "Sku",
+                    "Price",
+                    "Vat",
+                    "Quantity"
+                ]
+            }
+        },
+        {
+            "name": "CustomerOrderBillingAddress",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "CustomerId",
+                    "Salutation",
+                    "FirstName",
+                    "LastName",
+                    "Company",
+                    "Street",
+                    "ZipCode",
+                    "City",
+                    "CountryIso",
+                    "Phone"
+                ]
+            }
+        },
+        {
+            "name": "CustomerOrderShippingAddress",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "CustomerId",
+                    "Salutation",
+                    "FirstName",
+                    "LastName",
+                    "Company",
+                    "Street",
+                    "ZipCode",
+                    "City",
+                    "CountryIso"
+                ]
+            }
+        },
+        {
+            "name": "Manufacturer",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "Name"
+                ]
+            }
+        },
+        {
+            "name": "ManufacturerI18n",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "ManufacturerId",
+                    "LocaleName"
+                ]
+            }
+        },
+        {
+            "name": "Image",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "RelationType",
+                    "ForeignKey",
+                    "Filename"
+                ]
+            }
+        },
+        {
+            "name": "Product",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "ManufacturerId",
+                    "UnitId",
+                    "Sku",
+                    "StockLevel",
+                    "Vat",
+                    "MinimumOrderQuantity",
+                    "Ean",
+                    "ProductWeight",
+                    "Keywords",
+                    "Created",
+                    "AvailableFrom",
+                    "TakeOffQuantity"
+                ]
+            }
+        },
+        {
+            "name": "ProductI18n",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "LocaleName",
+                    "ProductId",
+                    "Name",
+                    "Description",
+                    "ShortDescription"
+                ]
+            }
+        },
+        {
+            "name": "ProductAttr",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "ProductId"
+                ]
+            }
+        },
+        {
+            "name": "ProductAttrI18n",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "LocaleName",
+                    "ProductAttrId",
+                    "Key",
+                    "Value"
+                ]
+            }
+        },
+        {
+            "name": "ProductPrice",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "CustomerGroupId",
+                    "ProductId",
+                    "NetPrice",
+                    "Quantity"
+                ]
+            }
+        },
+        {
+            "name": "Product2Category",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "CategoryId",
+                    "ProductId"
+                ]
+            }
+        },
+        {
+            "name": "ProductInvisibility",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "CustomerGroupId",
+                    "ProductId"
+                ]
+            }
+        },
+        {
+            "name": "ProductVariation",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "ProductId"
+                ]
+            }
+        },
+        {
+            "name": "ProductVariationI18n",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "LocaleName",
+                    "ProductVariationId",
+                    "Name"
+                ]
+            }
+        },
+        {
+            "name": "ProductVariationValue",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "ProductVariationId"
+                ]
+            }
+        },
+        {
+            "name": "ProductVariationValueI18n",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "LocaleName",
+                    "ProductVariationValueId",
+                    "Name"
+                ]
+            }
+        },
+        {
+            "name": "Company",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Name",
+                    "Street",
+                    "EMail",
+                    "VatNumber",
+                    "TaxIdNumber"
+                ]
+            }
+        },
+        {
+            "name": "Language",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "NameEnglish",
+                    "NameGerman",
+                    "LocaleName",
+                    "IsDefault"
+                ]
+            }
+        },
+        {
+            "name": "Currency",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "Name",
+                    "Iso",
+                    "NameHtml",
+                    "Factor",
+                    "IsDefault",
+                    "HasCurrencySignBeforeValue"
+                ]
+            }
+        },
+        {
+            "name": "CustomerGroup",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "Discount",
+                    "ApplyNetPrice"
+                ]
+            }
+        },
+        {
+            "name": "CustomerGroupI18n",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "LocaleName",
+                    "CustomerGroupId",
+                    "Name"
+                ]
+            }
+        },
+        {
+            "name": "Unit",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "LocaleName",
+                    "Name"
+                ]
+            }
+        },
+        {
+            "name": "TaxRate",
+            "push": {
+                "supported": true,
+                "comment": ""
+            },
+            "pull": {
+                "supported": true,
+                "comment": "",
+                "properties": [
+                    "Id",
+                    "Rate"
+                ]
+            }
+        }
+    ]
+}
