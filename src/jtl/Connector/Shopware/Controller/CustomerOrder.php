@@ -53,36 +53,39 @@ class CustomerOrder extends DataController
             $orders = $mapper->findAll($offset, $limit);
 
             foreach ($orders as $orderSW) {
-                $container = new CustomerOrderContainer();
+                try {
+                    $container = new CustomerOrderContainer();
 
-                // CustomerOrders
-                $order = Mmc::getModel('CustomerOrder');
-                $order->map(true, DataConverter::toObject($orderSW));
+                    // CustomerOrders
+                    $order = Mmc::getModel('CustomerOrder');
+                    $order->map(true, DataConverter::toObject($orderSW));
 
-                $this->addContainerPos($container, 'customer_order_item', $orderSW['details'], true);
-                $this->addContainerPos($container, 'customer_order_billing_address', $orderSW['billing']);
-                $this->addContainerPos($container, 'customer_order_shipping_address', $orderSW['shipping']);
+                    $this->addContainerPos($container, 'customer_order_item', $orderSW['details'], true);
+                    $this->addContainerPos($container, 'customer_order_billing_address', $orderSW['billing']);
+                    $this->addContainerPos($container, 'customer_order_shipping_address', $orderSW['shipping']);
 
-                // Attributes
-                $attributeExists = false;
-                for ($i = 1; $i <= 6; $i++) {
-                    if (isset($orderSW['attribute']["attribute{$i}"]) && strlen($orderSW['attribute']["attribute{$i}"]) > 0) {
-                        $attributeExists = true;
-                        $customerOrderAttr = Mmc::getModel('CustomerOrderAttrs');
-                        $customerOrderAttr->map(true, DataConverter::toObject($orderSW['attribute']));
-                        $customerOrderAttr->_key = "attribute{$i}";
-                        $customerOrderAttr->_value = $orderSW['attribute']["attribute{$i}"];
-                        $container->add('customer_order_attr', $customerOrderAttr->getPublic(array("_fields", "_isEncrypted")), false);
+                    // Attributes
+                    $attributeExists = false;
+                    for ($i = 1; $i <= 6; $i++) {
+                        if (isset($orderSW['attribute']["attribute{$i}"]) && strlen($orderSW['attribute']["attribute{$i}"]) > 0) {
+                            $attributeExists = true;
+                            $customerOrderAttr = Mmc::getModel('CustomerOrderAttrs');
+                            $customerOrderAttr->map(true, DataConverter::toObject($orderSW['attribute']));
+                            $customerOrderAttr->_key = "attribute{$i}";
+                            $customerOrderAttr->_value = $orderSW['attribute']["attribute{$i}"];
+                            $container->add('customer_order_attr', $customerOrderAttr->getPublic(array("_fields", "_isEncrypted")), false);
+                        }
                     }
+
+                    $container->add('customer_order', $order->getPublic(array('_fields', '_isEncrypted')), false);
+
+                    // CustomerOrderItemVariations
+
+                    // CustomerOrderPaymentInfos
+
+                    $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
                 }
-
-                $container->add('customer_order', $order->getPublic(array('_fields', '_isEncrypted')), false);
-
-                // CustomerOrderItemVariations
-
-                // CustomerOrderPaymentInfos
-
-                $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
+                catch (\Exception $exc) { }
             }
 
             $action->setResult($result);

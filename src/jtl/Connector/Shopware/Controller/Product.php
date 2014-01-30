@@ -53,56 +53,63 @@ class Product extends DataController
             $products = $mapper->findAll($offset, $limit);
 
             foreach ($products as $productSW) {
-                $container = new ProductContainer();
+                try {
+                    $container = new ProductContainer();
 
-                $product = Mmc::getModel('Product');
-                $product->map(true, DataConverter::toObject($productSW));
+                    $product = Mmc::getModel('Product');
+                    $product->map(true, DataConverter::toObject($productSW));
 
-                $this->addContainerPos($container, 'product_i18n', $productSW);
-                $this->addContainerPos($container, 'product_price', $productSW['mainDetail']['prices'], true);
+                    $this->addContainerPos($container, 'product_i18n', $productSW);
+                    $this->addContainerPos($container, 'product_price', $productSW['mainDetail']['prices'], true);
 
-                // Product2Categories
-                DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['categories'], 'articleId', $product->_id, true);
-                $this->addContainerPos($container, 'product2_category', $productSW['categories'], true);
-
-                // Attributes
-                $attributeExists = false;
-                for ($i = 1; $i <= 20; $i++) {
-                    if (isset($productSW['mainDetail']['attribute']["attr{$i}"]) && strlen($productSW['mainDetail']['attribute']["attr{$i}"]) > 0) {
-                        $attributeExists = true;
-                        $productAttrI18n = Mmc::getModel('ProductAttrI18n');
-                        $productAttrI18n->map(true, DataConverter::toObject($productSW['mainDetail']['attribute']));
-                        $productAttrI18n->_key = "attr{$i}";
-                        $productAttrI18n->_value = $productSW['mainDetail']['attribute']["attr{$i}"];
-                        $container->add('product_attr_i18n', $productAttrI18n->getPublic(array("_fields", "_isEncrypted")), false);
+                    // Product2Categories
+                    if (isset($productSW['categories'])) {
+                        DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['categories'], 'articleId', $product->_id, true);
+                        $this->addContainerPos($container, 'product2_category', $productSW['categories'], true);
                     }
+
+                    // Attributes
+                    $attributeExists = false;
+                    for ($i = 1; $i <= 20; $i++) {
+                        if (isset($productSW['mainDetail']['attribute']["attr{$i}"]) && strlen($productSW['mainDetail']['attribute']["attr{$i}"]) > 0) {
+                            $attributeExists = true;
+                            $productAttrI18n = Mmc::getModel('ProductAttrI18n');
+                            $productAttrI18n->map(true, DataConverter::toObject($productSW['mainDetail']['attribute']));
+                            $productAttrI18n->_key = "attr{$i}";
+                            $productAttrI18n->_value = $productSW['mainDetail']['attribute']["attr{$i}"];
+                            $container->add('product_attr_i18n', $productAttrI18n->getPublic(array("_fields", "_isEncrypted")), false);
+                        }
+                    }
+
+                    if ($attributeExists) {
+                        $this->addContainerPos($container, 'product_attr', $productSW['mainDetail']['attribute']);
+                    }
+
+                    // ProductInvisibility
+                    if (isset($productSW['customerGroups'])) {
+                        DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['customerGroups'], 'articleId', $product->_id, true);
+                        $this->addContainerPos($container, 'product_invisibility', $productSW['customerGroups'], true);
+                    }
+
+                    // ProductVariation
+                    if (is_array($productSW['configuratorSet'])) {
+                        $configuratorSet = $productSW['configuratorSet'];
+                        DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+                        DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'articleId', $product->_id, true);
+                        DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['options'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+
+                        $this->addContainerPos($container, 'product_variation', $configuratorSet['groups'], true);
+                        $this->addContainerPos($container, 'product_variation_i18n', $configuratorSet['groups'], true);
+
+                        $this->addContainerPos($container, 'product_variation_value', $configuratorSet['options'], true);
+                        $this->addContainerPos($container, 'product_variation_value_i18n', $configuratorSet['options'], true);
+                    }
+
+                    $container->add('product', $product->getPublic(array('_fields', '_isEncrypted')), false);
+
+                    $result[] = $container->getPublic(array('items'), array('_fields', '_isEncrypted'));
                 }
-
-                if ($attributeExists) {
-                    $this->addContainerPos($container, 'product_attr', $productSW['mainDetail']['attribute']);
-                }
-
-                // ProductInvisibility
-                DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['customerGroups'], 'articleId', $product->_id, true);
-                $this->addContainerPos($container, 'product_invisibility', $productSW['customerGroups'], true);
-
-                // ProductVariation
-                if (is_array($productSW['configuratorSet'])) {
-                    $configuratorSet = $productSW['configuratorSet'];
-                    DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
-                    DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'articleId', $product->_id, true);
-                    DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['options'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
-
-                    $this->addContainerPos($container, 'product_variation', $configuratorSet['groups'], true);
-                    $this->addContainerPos($container, 'product_variation_i18n', $configuratorSet['groups'], true);
-
-                    $this->addContainerPos($container, 'product_variation_value', $configuratorSet['options'], true);
-                    $this->addContainerPos($container, 'product_variation_value_i18n', $configuratorSet['options'], true);
-                }
-
-                $container->add('product', $product->getPublic(array('_fields', '_isEncrypted')), false);
-
-                $result[] = $container->getPublic(array('items'), array('_fields', '_isEncrypted'));
+                catch (\Exception $exc) { }
             }
 
             /*

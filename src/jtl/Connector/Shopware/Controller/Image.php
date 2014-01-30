@@ -80,7 +80,7 @@ class Image extends DataController
 
                                 $model->_id = $imageSW['id'];
                                 $model->_relationType = $relationType;
-                                $model->_foreignKey = $imageSW['articleId'];                                
+                                $model->_foreignKey = $imageSW['articleId'];
                                 $model->_filename = sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $imageSW['media']['path']);
 
                                 $result[] = $model->getPublic(array("_fields", "_isEncrypted"));

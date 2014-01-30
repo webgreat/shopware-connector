@@ -53,36 +53,39 @@ class Customer extends DataController
             $customers = $mapper->findAll($offset, $limit);
 
             foreach ($customers as $customerSW) {
-                $container = new CustomerContainer();
+                try {
+                    $container = new CustomerContainer();
 
-                $customer = Mmc::getModel('Customer');
-                $customer->map(true, DataConverter::toObject($customerSW));
+                    $customer = Mmc::getModel('Customer');
+                    $customer->map(true, DataConverter::toObject($customerSW));
 
-                $country = Shopware()->Models()->getRepository('Shopware\Models\Country\Country')
-                    ->findOneById($customerSW['billing']['countryId']);
+                    $country = Shopware()->Models()->getRepository('Shopware\Models\Country\Country')
+                        ->findOneById($customerSW['billing']['countryId']);
 
-                $customer->_countryIso = $country->getIso();
+                    $customer->_countryIso = $country->getIso();
 
-                // Attributes
-                $attributeExists = false;
-                if (isset($customerSW['billing']['attribute']) && is_array($customerSW['billing']['attribute'])) {
-                    $attributeExists = true;
-                    for ($i = 1; $i <= 6; $i++) {
-                        if (isset($customerSW['billing']['attribute']["text{$i}"]) && strlen(trim($customerSW['billing']['attribute']["text{$i}"]))) {
-                            $customerAttr = Mmc::getModel('CustomerAttr');
-                            $customerAttr->map(true, DataConverter::toObject($customerSW['billing']['attribute']));
-                            $customerAttr->_customerId = $customer->_id;
-                            $customerAttr->_key = "text{$i}";
-                            $customerAttr->_value = $customerSW['billing']['attribute']["text{$i}"];
+                    // Attributes
+                    $attributeExists = false;
+                    if (isset($customerSW['billing']['attribute']) && is_array($customerSW['billing']['attribute'])) {
+                        $attributeExists = true;
+                        for ($i = 1; $i <= 6; $i++) {
+                            if (isset($customerSW['billing']['attribute']["text{$i}"]) && strlen(trim($customerSW['billing']['attribute']["text{$i}"]))) {
+                                $customerAttr = Mmc::getModel('CustomerAttr');
+                                $customerAttr->map(true, DataConverter::toObject($customerSW['billing']['attribute']));
+                                $customerAttr->_customerId = $customer->_id;
+                                $customerAttr->_key = "text{$i}";
+                                $customerAttr->_value = $customerSW['billing']['attribute']["text{$i}"];
 
-                            $container->add('customer_attr', $customerAttr->getPublic(array("_fields", "_isEncrypted")), false);
+                                $container->add('customer_attr', $customerAttr->getPublic(array("_fields", "_isEncrypted")), false);
+                            }
                         }
                     }
+
+                    $container->add('customer', $customer->getPublic(array('_fields', '_isEncrypted')), false);
+
+                    $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
                 }
-
-                $container->add('customer', $customer->getPublic(array('_fields', '_isEncrypted')), false);
-
-                $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
+                catch (\Exception $exc) { }
             }
 
             $action->setResult($result);

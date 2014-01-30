@@ -148,7 +148,7 @@ abstract class DataController extends CoreController
      */
     protected function addContainerPos(CoreContainer &$container, $type, $data, $isSeveral = false)
     {
-        if (isset($container->items[$type][0])) {
+        if (isset($container->items[$type][0]) && $data !== null) {
             $class = $container->items[$type][0];
 
             if ($isSeveral) {

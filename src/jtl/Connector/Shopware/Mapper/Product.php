@@ -24,10 +24,7 @@ class Product extends DataMapper
             'supplier',
             'related',
             'pricegroup',
-            'customergroups',
-            'configuratorset',
-            'configuratorgroups',
-            'configuratoroptions'
+            'customergroups'
         ))
         ->from('Shopware\Models\Article\Article', 'article')
         ->leftJoin('article.tax', 'tax')
@@ -43,12 +40,19 @@ class Product extends DataMapper
         ->leftJoin('article.related', 'related')
         ->leftJoin('article.priceGroup', 'pricegroup')
         ->leftJoin('article.customerGroups', 'customergroups')
-        ->leftJoin('article.configuratorSet', 'configuratorset')
-        ->leftJoin('configuratorset.groups', 'configuratorgroups')
-        ->leftJoin('configuratorset.options', 'configuratoroptions')
         ->setFirstResult($offset)
         ->setMaxResults($limit)
         ->getQuery();
+
+        /*
+            'configuratorset',
+            'configuratorgroups',
+            'configuratoroptions'
+
+            ->leftJoin('article.configuratorSet', 'configuratorset')
+            ->leftJoin('configuratorset.groups', 'configuratorgroups')
+            ->leftJoin('configuratorset.options', 'configuratoroptions')
+        */
 
         if ($count) {
             $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query);
