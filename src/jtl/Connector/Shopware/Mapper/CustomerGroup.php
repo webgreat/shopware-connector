@@ -10,7 +10,7 @@ class CustomerGroup extends DataMapper
 {
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
-        $query = $this->builder->select(array(
+        $query = $this->Manager()->createQueryBuilder()->select(array(
             'customergroup',
             'attribute'
         ))
@@ -33,5 +33,10 @@ class CustomerGroup extends DataMapper
     public function fetchCount($offset = 0, $limit = 100)
     {
         return $this->findAll($offset, $limit, true);
+    }
+
+    public function save(array $array)
+    {
+        return parent::save('\Shopware\Models\Customer\Group', $array);
     }
 }

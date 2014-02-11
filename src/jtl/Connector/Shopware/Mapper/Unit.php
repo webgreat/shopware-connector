@@ -10,7 +10,7 @@ class Unit extends DataMapper
 {
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
-        $query = $this->builder->select(array(
+        $query = $this->Manager()->createQueryBuilder()->select(array(
             'unit'
         ))
         ->from('Shopware\Models\Article\Unit', 'unit')
@@ -31,5 +31,10 @@ class Unit extends DataMapper
     public function fetchCount($offset = 0, $limit = 100)
     {
         return $this->findAll($offset, $limit, true);
+    }
+
+    public function save(array $array)
+    {
+        return parent::save('\Shopware\Models\Article\Unit', $array);
     }
 }

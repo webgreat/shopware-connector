@@ -41,10 +41,13 @@ class DataModel
             }
         };
 
-        $setValue = function (array $platformFields, $value, \stdClass $obj) use (&$setValue) {
+        $setValue = function (array $platformFields, $value, \stdClass $obj) use (&$setValue) {            
             if (count($platformFields) > 1) {
                 $field = array_shift($platformFields);
-                $obj->$field = new \stdClass;
+
+                if (!isset($obj->$field)) {
+                    $obj->$field = new \stdClass;
+                }
                 
                 return $setValue($platformFields, $value, $obj->$field);
             }
@@ -76,8 +79,8 @@ class DataModel
                     // TODO: Date Check
                     $setValue($platformField, $original->$connectorField, $obj);
                 }
-                else {
-                    // TODO: Date Check                    
+                else if (strlen($platformField) > 0) {
+                    // TODO: Date Check
                     $obj->$platformField = $original->$connectorField;
                 }
             }

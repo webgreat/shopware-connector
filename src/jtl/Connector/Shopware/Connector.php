@@ -40,6 +40,7 @@ class Connector extends BaseConnector
     protected function __construct()
     {
         $this->initializeConfiguration();
+        $this->setModelNamespace("\\jtl\\Connector\\Shopware\\Model");
     }
     
     protected function initializeConfiguration()

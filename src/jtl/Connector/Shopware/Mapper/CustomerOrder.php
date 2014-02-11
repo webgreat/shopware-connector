@@ -10,7 +10,7 @@ class CustomerOrder extends DataMapper
 {
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
-        $query = $this->builder->select(array(
+        $query = $this->Manager()->createQueryBuilder()->select(array(
             'orders',
             'customer',
             'attribute',

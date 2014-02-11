@@ -15,6 +15,8 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Model\Statistic;
 use \jtl\Core\Utilities\ClassName;
+use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Transaction\Handler as TransactionHandler;
 
 /**
  * Product Controller
@@ -70,6 +72,30 @@ abstract class DataController extends CoreController
     {
         $action = new Action();
         $action->setHandled(true);
+
+        try {
+            $class = ClassName::getFromNS(get_called_class());
+            
+            $obj = Mmc::getModel($class);
+            $obj->setOptions($params);
+
+            $array = DataConverter::toArray($obj->map());
+
+            $mapper = Mmc::getMapper($class);
+            $result = $mapper->save($array);
+            if ($result->getErrno() > 0) {
+                throw new DatabaseException($result->getError(), $result->getErrno());
+            }
+            else {
+                $action->setResult($result->getPublic(array("_errno", "_error")));
+            }
+        }
+        catch (\Exception $exc) {
+            $err = new Error();
+            $err->setCode($exc->getCode());
+            $err->setMessage($exc->getMessage());
+            $action->setError($err);
+        }
 
         return $action;
     }
@@ -136,6 +162,38 @@ abstract class DataController extends CoreController
         $action->setHandled(true);
 
         return $action;
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \jtl\Core\ModelContainer\IModelContainer::insert()
+     */
+    public function insert(ModelContainer $container)
+    {
+        if (TransactionHandler::isMain($this->getMethod()->getController())) {
+            $config = $this->getConfig();
+            $item = array();
+            foreach ($container->items as $items) {
+                $getter = "get" . ucfirst($items[1]);
+                $class = $items[0];
+                
+                $sub = array();
+                foreach ($container->$getter() as $model) {
+                    $sub = array_merge($sub, DataConverter::toArray(DataModel::map(false, null, $model)));
+                }
+
+                $item = array_merge($item, $sub);
+            }
+
+            $class = ClassName::getFromNS(get_called_class());
+
+            $mapper = Mmc::getMapper($class);
+            var_dump($mapper->save($item));
+                    
+            return true;
+        }
+        
+        return false;
     }
 
     /**
