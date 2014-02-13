@@ -112,32 +112,32 @@ class Image extends DataMapper
             throw new \InvalidArgumentException("RelationType '{$relationType}' is not supported");
         }
 
-        $this->Manager()->createQueryBuilder()->select($data[$relationType]['select'])
+        $builder = $this->Manager()->createQueryBuilder();
+
+        $builder->select($data[$relationType]['select'])
             ->from($data[$relationType]['from']['model'], $data[$relationType]['from']['alias']);
 
         if (isset($data[$relationType]['innerJoin'])) {
             foreach ($data[$relationType]['innerJoin'] as $innerJoin) {
-                $this->Manager()->createQueryBuilder()->innerJoin($innerJoin['join'], $innerJoin['alias']);
+                $builder->innerJoin($innerJoin['join'], $innerJoin['alias']);
             }
         }
 
         if (isset($data[$relationType]['leftJoin'])) {
             foreach ($data[$relationType]['leftJoin'] as $leftJoin) {
-                $this->Manager()->createQueryBuilder()->leftJoin($leftJoin['join'], $leftJoin['alias']);
+                $builder->leftJoin($leftJoin['join'], $leftJoin['alias']);
             }
         }
 
         if ($offset !== null) {
-            $this->Manager()->createQueryBuilder()->setFirstResult($offset);
+            $builder->setFirstResult($offset);
         }
         
         if ($limit !== null) {
-            $this->Manager()->createQueryBuilder()->setMaxResults($limit);
+            $builder->setMaxResults($limit);
         }
 
-        $query = $this->Manager()->createQueryBuilder()->getQuery();
-
-        $this->initBuilder();
+        $query = $builder->getQuery();
 
         return $query;
     }
