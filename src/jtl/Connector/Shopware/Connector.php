@@ -85,9 +85,9 @@ class Connector extends BaseConnector
         $class = "\\jtl\\Connector\\Shopware\\Controller\\{$controller}";
         if (class_exists($class)) {
             $this->_controller = $class::getInstance();
-            $this->_action = $this->getMethod()->getAction();
+            $this->_action = RpcMethod::buildAction($this->getMethod()->getAction());
 
-            return method_exists($this->_controller, $this->_action);
+            return is_callable(array($this->_controller, $this->_action));
         }
 
         return false;
@@ -109,10 +109,10 @@ class Connector extends BaseConnector
         $this->_controller->setMethod($this->getMethod());
         
         // Transaction Commit work around
-        if (($this->getMethod()->getAction() != "commit")) {
+        if (($this->_action !== "commit")) {
             return $this->_controller->{$this->_action}($requestpacket->getParams());
         }
-        else if (TransactionHandler::exists($requestpacket) && TransactionHandler::isMain($this->getMethod()->getController()) && $this->getMethod()->getAction() == "commit") {
+        else if (TransactionHandler::exists($requestpacket) && TransactionHandler::isMain($this->getMethod()->getController()) && $this->_action === "commit") {
             return $this->_controller->{$this->_action}($requestpacket->getParams(), $requestpacket->getGlobals()->getTransaction()->getId());
         }
         else {

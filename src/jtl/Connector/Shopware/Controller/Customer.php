@@ -76,12 +76,12 @@ class Customer extends DataController
                                 $customerAttr->_key = "text{$i}";
                                 $customerAttr->_value = $customerSW['billing']['attribute']["text{$i}"];
 
-                                $container->add('customer_attr', $customerAttr->getPublic(array("_fields", "_isEncrypted")), false);
+                                $container->add('customer_attr', $customerAttr, false);
                             }
                         }
                     }
 
-                    $container->add('customer', $customer->getPublic(array('_fields', '_isEncrypted')), false);
+                    $container->add('customer', $customer, false);
 
                     $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
                 }

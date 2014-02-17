@@ -30,6 +30,17 @@ class Product extends ProductModel
         parent::__set($name, $value);
     }
 
+    public function setTaxClassId($taxClassId)
+    {
+        $this->_taxClassId = $taxClassId;
+        return $this;
+    }
+
+    public function getTaxClassId()
+    {
+        return $this->_taxClassId;
+    }
+
     protected $_fields = array(
         '_id' => 'id',
         '_masterProductId' => '',

@@ -60,28 +60,34 @@ class DataModel
         };
 
         foreach ($original->getFields() as $connectorField => $platformField) {
+            $property = ucfirst(substr($connectorField, 1));
+            $setter = 'set' . $property;
+            $getter = 'get' . $property;
+
             if ($connectorField !== '_localeName' && strlen($platformField) == 0 && !is_array($platformField)) continue;
 
             if ($toConnector) {
                 if (is_array($platformField)) {
                     $value = $getValue($platformField, $obj);
-                    $original->$connectorField = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
+                    $value = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
+                    $original->$setter($value);
                 }
                 else if ($connectorField == '_localeName') {
-                    $original->$connectorField = Shopware()->Locale()->toString();
+                    $original->$setter(Shopware()->Locale()->toString());
                 }
                 else {
-                    $original->$connectorField = DateUtil::check($obj->$platformField) ? DateUtil::map($obj->$platformField) : $obj->$platformField;
+                    $value = DateUtil::check($obj->$platformField) ? DateUtil::map($obj->$platformField) : $obj->$platformField;
+                    $original->$setter($value);
                 }
             }
             else {
                 if (is_array($platformField)) {
                     // TODO: Date Check
-                    $setValue($platformField, $original->$connectorField, $obj);
+                    $setValue($platformField, $original->$getter(), $obj);
                 }
                 else if (strlen($platformField) > 0) {
                     // TODO: Date Check
-                    $obj->$platformField = $original->$connectorField;
+                    $obj->$platformField = $original->$getter();
                 }
             }
         }
