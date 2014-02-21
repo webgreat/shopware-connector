@@ -39,8 +39,12 @@ abstract class DataMapper extends Singleton
         }
     }
 
-    public function save($namespace, array $array)
+    protected function save(array $array, $namespace)
     {
+        if ($namespace === null || !class_exists($class)) {
+            throw new \InvalidArgumentException("The namespace ({$namespace}) can not be null, and the class must exist");
+        }
+
         $model = new $namespace();
         $model->fromArray($array);
 

@@ -13,6 +13,7 @@ use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
 use \jtl\Core\Exception\DatabaseException;
 use \Shopware\Components\Api\Manager as ShopwareManager;
+use \Shopware\Models\Category\Category as CategoryShopware;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\ModelContainer\CategoryContainer;
@@ -53,6 +54,18 @@ class Category extends DataController
             $mapper = Mmc::getMapper('Category');
             $categories = $mapper->findAll($offset, $limit);
 
+            $shopMapper = Mmc::getMapper('Shop');
+            $shops = $shopMapper->findAll(null, null);
+            $rootCategories = array();
+            $rootCategoryIds = array();
+            foreach ($shops as $shop) {
+                $rootCategory = Shopware()->Models()->getRepository('Shopware\Models\Category\Category')
+                        ->findOneById($shop['category']['id']);
+
+                $rootCategories[$shop['locale']['locale']] = $rootCategory;
+                $rootCategoryIds[] = $rootCategory->getId();
+            }
+
             foreach ($categories as $categorySW) {
                 try {
                     $container = new CategoryContainer();
@@ -74,7 +87,7 @@ class Category extends DataController
                                 $categoryAttr = Mmc::getModel('CategoryAttr');
                                 $categoryAttr->map(true, DataConverter::toObject($categorySW['attribute']));                            
 
-                                $container->add('category_attr', $categoryAttr->getPublic(array("_fields", "_isEncrypted")), false);
+                                $container->add('category_attr', $categoryAttr, false);
 
                                 $categoryAttrI18n = Mmc::getModel('CategoryAttrI18n');
                                 $categoryAttrI18n->map(true, DataConverter::toObject($categorySW['attribute']));
@@ -82,7 +95,7 @@ class Category extends DataController
                                 $categoryAttrI18n->_key = "attribute{$i}";
                                 $categoryAttrI18n->_value = $categorySW['attribute']["attribute{$i}"];
 
-                                $container->add('category_attr_i18n', $categoryAttrI18n->getPublic(array("_fields", "_isEncrypted")), false);
+                                $container->add('category_attr_i18n', $categoryAttrI18n, false);
                             }
                         }
                     }
@@ -94,13 +107,33 @@ class Category extends DataController
                             $categoryInvisibility->_customerGroupId = $customerGroup['id'];
                             $categoryInvisibility->_categoryId = $category->_id;
 
-                            $container->add('category_invisibility', $categoryInvisibility->getPublic(array('_fields', '_isEncrypted')), false);
+                            $container->add('category_invisibility', $categoryInvisibility, false);
                         }
+                    }
+
+                    // CategoryI18n
+                    if ($categoryObj->getParent() === null) {
+                        $categorySW['localeName'] = Shopware()->Locale()->toString();
+                    }
+                    else if (in_array($categoryObj->getId(), $rootCategoryIds)) {
+                        foreach ($rootCategories as $localeName => $rootCategory) {
+                            if ($categoryObj->getId() == $rootCategory->getId()) {
+                                $categorySW['localeName'] = $localeName;
+                            }
+                        }
+                    }
+                    else {
+                        foreach ($rootCategories as $localeName => $rootCategory) {
+                            if ($this->isChildOf($categoryObj, $rootCategory)) {
+                                $categorySW['localeName'] = $localeName;
+                                break;
+                            }
+                        }                     
                     }
 
                     $this->addContainerPos($container, 'category_i18n', $categorySW);
 
-                    $container->add('category', $category->getPublic(array('_fields', '_isEncrypted')), false);
+                    $container->add('category', $category, false);
 
                     $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
                 }
@@ -117,6 +150,19 @@ class Category extends DataController
         }
 
         return $action;
+    }
+
+    protected function isChildOf(CategoryShopware $category, CategoryShopware $parent)
+    {
+        if (!($category->getParent() instanceof CategoryShopware)) {
+            return false;
+        }
+
+        if ($category->getParent()->getId() === $parent->getId()) {
+            return true;
+        }
+
+        return $this->isChildOf($category->getParent(), $parent);
     }
 
     /**

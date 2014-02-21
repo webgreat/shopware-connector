@@ -48,4 +48,9 @@ class CustomerOrder extends DataMapper
     {
         return $this->findAll($offset, $limit, true);
     }
+
+    public function save(array $array, $namespace = '\Shopware\Models\Order\Order')
+    {
+        return parent::save($array, $namespace);
+    }
 }

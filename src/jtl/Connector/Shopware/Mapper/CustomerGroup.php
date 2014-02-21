@@ -35,8 +35,8 @@ class CustomerGroup extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function save(array $array)
+    public function save(array $array, $namespace = '\Shopware\Models\Customer\Group')
     {
-        return parent::save('\Shopware\Models\Customer\Group', $array);
+        return parent::save($array, $namespace);
     }
 }

@@ -33,8 +33,8 @@ class Unit extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function save(array $array)
+    public function save(array $array, $namespace = '\Shopware\Models\Article\Unit')
     {
-        return parent::save('\Shopware\Models\Article\Unit', $array);
+        return parent::save($array, $namespace);
     }
 }

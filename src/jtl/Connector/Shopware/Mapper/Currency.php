@@ -6,19 +6,21 @@
 
 namespace jtl\Connector\Shopware\Mapper;
 
-class Manufacturer extends DataMapper
+class Currency extends DataMapper
 {
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
-        $query = $this->Manager()->createQueryBuilder()->select(array(
-            'supplier',
-            'attribute'
+        $builder = $this->Manager()->createQueryBuilder()->select(array(
+            'currency'
         ))
-        ->from('Shopware\Models\Article\Supplier', 'supplier')
-        ->leftJoin('supplier.attribute', 'attribute')
-        ->setFirstResult($offset)
-        ->setMaxResults($limit)
-        ->getQuery();
+        ->from('Shopware\Models\Shop\Currency', 'currency');
+
+        if ($offset !== null && $limit !== null) {
+            $builder->setFirstResult($offset)
+                ->setMaxResults($limit);
+        }
+
+        $query = $builder->getQuery();
 
         if ($count) {
             $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query);
@@ -35,8 +37,8 @@ class Manufacturer extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function save(array $array, $namespace = '\Shopware\Models\Article\Supplier')
+    public function save(array $array)
     {
-        return parent::save($array, $namespace);
+        return parent::save('\Shopware\Models\Shop\Currency', $array);
     }
 }

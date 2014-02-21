@@ -37,7 +37,7 @@ class Connector extends DataController
             'Image',
             'Product',
             'Manufacturer',
-            'Specific'
+            //'Specific'
         );
 
         $excludes = array(
@@ -57,9 +57,9 @@ class Connector extends DataController
                 {
                     if (!in_array($mainController, $excludes)) {
                         $controller = Mmc::getController($mainController);
-                        $action = $controller->statistic($params);
-                        if ($action !== null && $action->isHandled()) {
-                            $results[] = $action->getResult();
+                        $result = $controller->statistic($params);
+                        if ($result !== null && $result->isHandled() && !$result->isError()) {
+                            $results[] = $result->getResult();
                         }
                     }
                 }
@@ -77,9 +77,9 @@ class Connector extends DataController
                     $class = str_replace(array($path, '.php'), '', $filename);
                     if (!in_array($class, $excludes)) {
                         $controller = Mmc::getController(str_replace(array($path, '.php'), '', $filename));
-                        $action = $controller->statistic($params);
-                        if ($action !== null && $action->isHandled()) {
-                            $results[] = $action->getResult();
+                        $result = $controller->statistic($params);
+                        if ($result !== null && $result->isHandled() && !$result->isError()) {
+                            $results[] = $result->getResult();
                         }
                     }
                 }

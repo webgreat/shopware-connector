@@ -50,7 +50,7 @@ abstract class DataController extends CoreController
 
             $statModel->_controllerName = lcfirst($class);
 
-            $action->setResult($statModel->getPublic(array("_fields", "_isEncrypted")));
+            $action->setResult($statModel->getPublic());
         }
         catch (\Exception $exc) {
             $err = new Error();
@@ -87,7 +87,7 @@ abstract class DataController extends CoreController
                 throw new DatabaseException($result->getError(), $result->getErrno());
             }
             else {
-                $action->setResult($result->getPublic(array("_errno", "_error")));
+                $action->setResult($result->getPublic());
             }
         }
         catch (\Exception $exc) {
@@ -135,7 +135,7 @@ abstract class DataController extends CoreController
                 $model = Mmc::getModel($class);
                 $model->map(true, DataConverter::toObject($modelSW));
 
-                $result[] = $model->getPublic(array("_fields", "_isEncrypted"));
+                $result[] = $model->getPublic();
             }
 
             $action->setResult($result);
@@ -213,13 +213,13 @@ abstract class DataController extends CoreController
                 foreach ($data as $swArr) {
                     $model = Mmc::getModel($class);
                     $model->map(true, DataConverter::toObject($swArr));
-                    $container->add($type, $model->getPublic(array("_fields", "_isEncrypted")), false);
+                    $container->add($type, $model, false);
                 }
             }
             else {
                 $model = Mmc::getModel($class);
                 $model->map(true, DataConverter::toObject($data));
-                $container->add($type, $model->getPublic(array("_fields", "_isEncrypted")), false);
+                $container->add($type, $model, false);
             }
         }
     }

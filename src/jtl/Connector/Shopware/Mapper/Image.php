@@ -50,7 +50,7 @@ class Image extends DataMapper
             }
         }
 
-        $this->initBuilder();
+        //$this->initBuilder();
 
         return $count;
     }

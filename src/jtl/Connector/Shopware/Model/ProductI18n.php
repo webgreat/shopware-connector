@@ -18,7 +18,7 @@ class ProductI18n extends ProductI18nModel
         '_localeName' => '',
         '_productId' => 'id',
         '_name' => 'name',
-        '_url' => '',
+        '_urlPath' => '',
         '_description' => 'descriptionLong',
         '_shortDescription' => 'description'
     );

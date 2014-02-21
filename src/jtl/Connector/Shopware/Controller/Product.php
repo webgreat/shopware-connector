@@ -59,7 +59,20 @@ class Product extends DataController
                     $product = Mmc::getModel('Product');
                     $product->map(true, DataConverter::toObject($productSW));
 
+                    // ProductI18n
                     $this->addContainerPos($container, 'product_i18n', $productSW);
+                    if (isset($productSW['translations'])) {
+                        foreach ($productSW['translations'] as $localeName => $translation) {
+                            $productI18n = Mmc::getModel('ProductI18n');
+                            $productI18n->setLocaleName($localeName)
+                                ->setProductId($product->getId())
+                                ->setName($translation['name'])
+                                ->setDescription($translation['descriptionLong']);
+
+                            $container->add('product_i18n', $productI18n, false);
+                        }
+                    }
+
                     $this->addContainerPos($container, 'product_price', $productSW['mainDetail']['prices'], true);
 
                     // Product2Categories
@@ -92,20 +105,52 @@ class Product extends DataController
                     }
 
                     // ProductVariation
-                    if (is_array($productSW['configuratorSet'])) {
-                        $configuratorSet = $productSW['configuratorSet'];
-                        DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
-                        DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'articleId', $product->_id, true);
-                        DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['options'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+                    $configuratorSetMapper = Mmc::getMapper('ConfiguratorSet');
+                    $configuratorSets = $configuratorSetMapper->findByProductId($productSW['id']);
+                    if (is_array($configuratorSets)) {
+                        foreach ($configuratorSets as $cs) {
+                            $configuratorSet = $cs['configuratorSet'];
+                            DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+                            //DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'articleId', $product->_id, true);
+                            DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['options'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
 
-                        $this->addContainerPos($container, 'product_variation', $configuratorSet['groups'], true);
-                        $this->addContainerPos($container, 'product_variation_i18n', $configuratorSet['groups'], true);
+                            $this->addContainerPos($container, 'product_variation', $configuratorSet['groups'], true);
 
-                        $this->addContainerPos($container, 'product_variation_value', $configuratorSet['options'], true);
-                        $this->addContainerPos($container, 'product_variation_value_i18n', $configuratorSet['options'], true);
+                            // ProductVariationI18n
+                            $this->addContainerPos($container, 'product_variation_i18n', $configuratorSet['groups'], true);
+                            foreach ($configuratorSet['groups'] as $group) {
+                                if (isset($group['translations'])) {
+                                    foreach ($group['translations'] as $localeName => $translation) {
+                                        $productVariationI18n = Mmc::getModel('ProductVariationI18n');
+                                        $productVariationI18n->setLocaleName($localeName)
+                                            ->setProductVariationId($translation['groupId'])
+                                            ->setName($translation['name']);
+
+                                        $container->add('product_variation_i18n', $productVariationI18n, false);
+                                    }
+                                }
+                            }
+
+                            $this->addContainerPos($container, 'product_variation_value', $configuratorSet['options'], true);
+
+                            // ProductVariationValueI18n
+                            $this->addContainerPos($container, 'product_variation_value_i18n', $configuratorSet['options'], true);
+                            foreach ($configuratorSet['options'] as $option) {
+                                if (isset($option['translations'])) {
+                                    foreach ($option['translations'] as $localeName => $translation) {
+                                        $productVariationValueI18n = Mmc::getModel('ProductVariationValueI18n');
+                                        $productVariationValueI18n->setLocaleName($localeName)
+                                            ->setProductVariationValueId($translation['optionId'])
+                                            ->setName($translation['name']);
+
+                                        $container->add('product_variation_value_i18n', $productVariationValueI18n, false);
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    $container->add('product', $product->getPublic(array('_fields', '_isEncrypted')), false);
+                    $container->add('product', $product, false);
 
                     $result[] = $container->getPublic(array('items'), array('_fields', '_isEncrypted'));
                 }
@@ -113,7 +158,7 @@ class Product extends DataController
             }
 
             /*
-            "product_file_download" => array("ProductFileDownload", "ProductFileDownloads"),            
+            "product_file_download" => array("ProductFileDownload", "ProductFileDownloads"),
             "product_special_price" => array("ProductSpecialPrice", "ProductSpecialPrices"),
             "product_variation_invisibility" => array("ProductVariationInvisibility", "ProductVariationInvisibilities"),
             "product_variation_value_extra_charge" => array("ProductVariationValueExtraCharge", "ProductVariationValueExtraCharges"),

@@ -64,7 +64,7 @@ class DataModel
             $setter = 'set' . $property;
             $getter = 'get' . $property;
 
-            if ($connectorField !== '_localeName' && strlen($platformField) == 0 && !is_array($platformField)) continue;
+            if ($connectorField !== '_localeName' && !is_array($platformField) && strlen($platformField) == 0) continue;
 
             if ($toConnector) {
                 if (is_array($platformField)) {
@@ -72,10 +72,10 @@ class DataModel
                     $value = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
                     $original->$setter($value);
                 }
-                else if ($connectorField == '_localeName') {
+                else if ($connectorField == '_localeName' && strlen($platformField) == 0) {
                     $original->$setter(Shopware()->Locale()->toString());
                 }
-                else {
+                else if (isset($obj->$platformField)) {
                     $value = DateUtil::check($obj->$platformField) ? DateUtil::map($obj->$platformField) : $obj->$platformField;
                     $original->$setter($value);
                 }

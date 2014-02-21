@@ -17,6 +17,7 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataInjector;
 use \jtl\Connector\ModelContainer\GlobalDataContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \jtl\Core\Utilities\DataConverter;
 
 /**
  * GlobalData Controller
@@ -52,6 +53,9 @@ class GlobalData extends DataController
 
             $container = new GlobalDataContainer();
 
+            $shopMapper = Mmc::getMapper('Shop');
+            $shops = $shopMapper->findAll(null, null);
+
             $builder = Shopware()->Models()->createQueryBuilder();
 
             // Companys
@@ -64,35 +68,30 @@ class GlobalData extends DataController
             $company->_taxIdNumber = Shopware()->Config()->get('taxNumber');
             $company->_vatNumber = Shopware()->Config()->get('vatcheckadvancednumber');
 
-            $container->add('company', $company->getPublic(array('_fields', '_isEncrypted')), false);
+            $container->add('company', $company, false);
 
-            // Languages
-            $language = Mmc::getModel('Language');
+            foreach ($shops as $shop) {
 
-            $locale = Shopware()->Shop()->getLocale();
-            $language->_id = $locale->getId();
-            $language->_nameEnglish = $locale->getLanguage();
-            $language->_nameGerman = $locale->getLanguage();
-            $language->_localeName = $locale->getLocale();
-            $language->_isDefault = true;
+                $shop['locale']['default'] = (intval($shop['default']) == 1);
+                $shop['customerGroup']['localeName'] = $shop['locale']['locale'];
 
-            $container->add('language', $language->getPublic(array('_fields', '_isEncrypted')), false);
+                // Languages
+                $language = Mmc::getModel('Language');
+                $language->map(true, DataConverter::toObject($shop['locale']));
 
-            // Currencies
-            $currencies = Shopware()->Shop()->getCurrencies();
+                $container->add('language', $language, false);
 
-            foreach ($currencies as $i => $currSW) {
-                $currency = Mmc::getModel('Currency');
+                // Currencies
+                if (isset($shop['currencies']) && is_array($shop['currencies'])) {
+                    foreach ($shop['currencies'] as $currencySW) {
+                        $currencySW['hasCurrencySignBeforeValue'] = ($currencySW['position'] == 32) ? true : false;
 
-                $currency->_id = $currSW->getId();
-                $currency->_name = $currSW->getName();
-                $currency->_iso = $currSW->getCurrency();
-                $currency->_nameHtml = $currSW->getSymbol();
-                $currency->_factor = $currSW->getFactor();
-                $currency->_isDefault = $currSW->getDefault();
-                $currency->_hasCurrencySignBeforeValue = ($currSW->getPosition() == 32) ? true : false;
+                        $currency = Mmc::getModel('Currency');
+                        $currency->map(true, DataConverter::toObject($currencySW));
 
-                $container->add('currency', $currency->getPublic(array('_fields', '_isEncrypted')), false);
+                        $container->add('currency', $currency, false);
+                    }
+                }
             }
 
             // CustomerGroups
@@ -115,7 +114,7 @@ class GlobalData extends DataController
             $mapper = Mmc::getMapper('Unit');
             $units = $mapper->findAll($offset, $limit);
 
-            DataInjector::inject(DataInjector::TYPE_ARRAY, $customerGroups, 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+            //DataInjector::inject(DataInjector::TYPE_ARRAY, $customerGroups, 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
             $this->addContainerPos($container, 'unit', $units, true);
 
             // TaxZones

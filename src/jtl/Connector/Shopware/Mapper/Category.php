@@ -6,18 +6,26 @@
 
 namespace jtl\Connector\Shopware\Mapper;
 
+use \jtl\Connector\Shopware\Utilities\Mmc;
+
 class Category extends DataMapper
 {
+    public function findById($id)
+    {
+        
+    }
+
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
+        //'parent',
+
         $query = $this->Manager()->createQueryBuilder()->select(array(
-            'category',
-            'parent',
+            'category',            
             'attribute',
             'customergroup'
         ))
         ->from('Shopware\Models\Category\Category', 'category')
-        ->leftJoin('category.parent', 'parent')
+        //->leftJoin('category.parent', 'parent')
         ->leftJoin('category.attribute', 'attribute')
         ->leftJoin('category.customerGroups', 'customergroup')
         ->setFirstResult($offset)
@@ -39,8 +47,8 @@ class Category extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function save(array $array)
+    public function save(array $array, $namespace = '\Shopware\Models\Category\Category')
     {
-        return parent::save('\Shopware\Models\Category\Category', $array);
+        return parent::save($array, $namespace);
     }
 }

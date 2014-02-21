@@ -6,6 +6,8 @@
 
 namespace jtl\Connector\Shopware\Mapper;
 
+use \jtl\Connector\Shopware\Utilities\Mmc;
+
 class Product extends DataMapper
 {
     protected $relations = array(
@@ -77,7 +79,22 @@ class Product extends DataMapper
             return $paginator->count();
         }
         else {
-            return $query->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+            $products = $query->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+            $shopMapper = Mmc::getMapper('Shop');
+            $shops = $shopMapper->findAll(null, null);
+
+            $translationReader = new \Shopware_Components_Translation();
+            for ($i = 0; $i < count($products); $i++) {
+                foreach ($shops as $shop) {
+                    $translation = $translationReader->read($shop['locale']['id'], 'article', $products[$i]['id']);
+                    if (!empty($translation)) {
+                        $translation['shopId'] = $shop['id'];
+                        $products[$i]['translations'][$shop['locale']['locale']] = $translation;
+                    }
+                }
+            }
+
+            return $products;
         }
     }
 
@@ -86,7 +103,7 @@ class Product extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function save(array $array)
+    public function save(array $array, $namespace = '\Shopware\Models\Article\Article')
     {
         die(print_r($array, 1));
 
@@ -98,6 +115,6 @@ class Product extends DataMapper
             }   
         }
 
-        return parent::save('\Shopware\Models\Article\Article', $array);
+        return parent::save($array, $namespace);
     }
 }
