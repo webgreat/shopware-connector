@@ -15,7 +15,6 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Core\Utilities\DataInjector;
-use \jtl\Core\Utilities\ArrayExt;
 use \jtl\Connector\ModelContainer\ProductContainer;
 
 /**
@@ -147,6 +146,13 @@ class Product extends DataController
                                 $option['groupId'] = "{$product->_id}_" . $option['groupId'];
 
                                 $this->addContainerPos($container, 'product_variation_value', $option, false);
+
+                                $productVarCombination = Mmc::getModel('ProductVarCombination');
+                                $productVarCombination->setProductId($product->_id)
+                                    ->setProductVariationId($option['groupId'])
+                                    ->setProductVariationValueId($option['id']);
+
+                                $container->add('product_var_combination', $productVarCombination, false);
 
                                 // Main Language
                                 $productVariationValueI18n = Mmc::getModel('ProductVariationValueI18n');
