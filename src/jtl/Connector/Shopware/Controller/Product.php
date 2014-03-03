@@ -15,6 +15,7 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Core\Utilities\DataInjector;
+use \jtl\Core\Utilities\ArrayExt;
 use \jtl\Connector\ModelContainer\ProductContainer;
 
 /**
@@ -110,20 +111,28 @@ class Product extends DataController
                     if (is_array($configuratorSets)) {
                         foreach ($configuratorSets as $cs) {
                             $configuratorSet = $cs['configuratorSet'];
-                            DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
-                            //DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['groups'], 'articleId', $product->_id, true);
-                            DataInjector::inject(DataInjector::TYPE_ARRAY, $configuratorSet['options'], 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
-
-                            $this->addContainerPos($container, 'product_variation', $configuratorSet['groups'], true);
 
                             // ProductVariationI18n
-                            $this->addContainerPos($container, 'product_variation_i18n', $configuratorSet['groups'], true);
                             foreach ($configuratorSet['groups'] as $group) {
+                                $group['localeName'] = Shopware()->Shop()->getLocale()->getLocale();
+                                $group['id'] = "{$product->_id}_" . $group['id'];
+                                $group['articleId'] = $product->_id;
+
+                                $this->addContainerPos($container, 'product_variation', $group, false);
+
+                                // Main Language
+                                $productVariationI18n = Mmc::getModel('ProductVariationI18n');
+                                $productVariationI18n->setLocaleName(Shopware()->Shop()->getLocale()->getLocale())
+                                    ->setProductVariationId($group['id'])
+                                    ->setName($group['name']);
+
+                                $container->add('product_variation_i18n', $productVariationI18n, false);
+
                                 if (isset($group['translations'])) {
                                     foreach ($group['translations'] as $localeName => $translation) {
                                         $productVariationI18n = Mmc::getModel('ProductVariationI18n');
                                         $productVariationI18n->setLocaleName($localeName)
-                                            ->setProductVariationId($translation['groupId'])
+                                            ->setProductVariationId($group['id'])
                                             ->setName($translation['name']);
 
                                         $container->add('product_variation_i18n', $productVariationI18n, false);
@@ -131,16 +140,27 @@ class Product extends DataController
                                 }
                             }
 
-                            $this->addContainerPos($container, 'product_variation_value', $configuratorSet['options'], true);
-
                             // ProductVariationValueI18n
-                            $this->addContainerPos($container, 'product_variation_value_i18n', $configuratorSet['options'], true);
                             foreach ($configuratorSet['options'] as $option) {
+                                $id = $option['id'];
+                                $option['id'] = "{$product->_id}_" . $option['groupId'] . '_' . $option['id'];
+                                $option['groupId'] = "{$product->_id}_" . $option['groupId'];
+
+                                $this->addContainerPos($container, 'product_variation_value', $option, false);
+
+                                // Main Language
+                                $productVariationValueI18n = Mmc::getModel('ProductVariationValueI18n');
+                                $productVariationValueI18n->setLocaleName(Shopware()->Shop()->getLocale()->getLocale())
+                                    ->setProductVariationValueId($option['id'])
+                                    ->setName($option['name']);
+
+                                $container->add('product_variation_value_i18n', $productVariationValueI18n, false);
+
                                 if (isset($option['translations'])) {
                                     foreach ($option['translations'] as $localeName => $translation) {
                                         $productVariationValueI18n = Mmc::getModel('ProductVariationValueI18n');
                                         $productVariationValueI18n->setLocaleName($localeName)
-                                            ->setProductVariationValueId($translation['optionId'])
+                                            ->setProductVariationValueId($option['id'])
                                             ->setName($translation['name']);
 
                                         $container->add('product_variation_value_i18n', $productVariationValueI18n, false);
