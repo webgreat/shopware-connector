@@ -190,7 +190,6 @@ class Product extends DataController
             "product_variation_value_extra_charge" => array("ProductVariationValueExtraCharge", "ProductVariationValueExtraCharges"),
             "product_variation_value_invisibility" => array("ProductVariationValueInvisibility", "ProductVariationValueInvisibilities"),
             "product_variation_value_dependency" => array("ProductVariationValueDependency", "ProductVariationValueDependencies"),
-            "product_var_combination" => array("ProductVarCombination", "ProductVarCombinations"),
             "product_specific" => array("ProductSpecific", "ProductSpecifics"),
             */
 

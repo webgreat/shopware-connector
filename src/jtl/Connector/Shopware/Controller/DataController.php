@@ -172,6 +172,8 @@ abstract class DataController extends CoreController
     {
         if (TransactionHandler::isMain($this->getMethod()->getController())) {
             $config = $this->getConfig();
+
+            /*
             $item = array();
             foreach ($container->items as $items) {
                 $getter = "get" . ucfirst($items[1]);
@@ -180,15 +182,19 @@ abstract class DataController extends CoreController
                 $sub = array();
                 foreach ($container->$getter() as $model) {
                     $sub = array_merge($sub, DataConverter::toArray(DataModel::map(false, null, $model)));
+                    echo $class . "\n\n";
+                    print_r($sub);
                 }
 
                 $item = array_merge($item, $sub);
             }
+            */
 
             $class = ClassName::getFromNS(get_called_class());
 
             $mapper = Mmc::getMapper($class);
-            var_dump($mapper->save($item));
+            $data = $mapper->prepareData($container);
+            var_dump($mapper->save($data));
                     
             return true;
         }

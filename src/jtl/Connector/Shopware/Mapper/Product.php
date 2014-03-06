@@ -7,6 +7,10 @@
 namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \jtl\Connector\ModelContainer\ProductContainer;
+use \Shopware\Components\Api\Exception as ApiException;
+use \jtl\Core\Utilities\DataConverter;
+use \jtl\Connector\Shopware\Model\DataModel;
 
 class Product extends DataMapper
 {
@@ -103,18 +107,33 @@ class Product extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
+    public function prepareData(ProductContainer $container)
+    {
+        foreach ($container->items as $items) {
+            $getter = "get" . ucfirst($items[1]);
+            $class = $items[0];
+            
+            $data = array();
+            foreach ($container->$getter() as $model) {
+                switch ($items[0]) {
+
+                    case 'Product':
+                        $arr = DataConverter::toArray(DataModel::map(false, null, $model));
+                        
+                        break;
+                }
+            }
+        }
+    }
+
     public function save(array $array, $namespace = '\Shopware\Models\Article\Article')
     {
-        die(print_r($array, 1));
+        $articleResource = \Shopware\Components\Api\Manager::getResource('Article');
 
-        foreach ($array as $key => $value) {
-            if (is_array($value) && isset($this->relations[$key])) {
-                $ns = $this->relations[$key];
-
-                parent::save($ns, $value);
-            }   
+        try {
+            return $articleResource->update($array['id'], $array);
+        } catch (ApiException\NotFoundException $exc) {
+            return $articleResource->create($array);
         }
-
-        return parent::save($array, $namespace);
     }
 }

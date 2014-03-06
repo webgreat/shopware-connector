@@ -15,9 +15,9 @@ use \jtl\Connector\Model\ManufacturerI18n as ManufacturerI18nModel;
 class ManufacturerI18n extends ManufacturerI18nModel
 {
     protected $_fields = array(
-        '_manufacturerId' => '',
+        '_manufacturerId' => 'id',
         '_localeName' => '',
-        '_description' => '',
+        '_description' => 'description',
         '_metaDescription' => '',
         '_metaKeywords' => '',
         '_titleTag' => ''
