@@ -109,21 +109,51 @@ class Product extends DataMapper
 
     public function prepareData(ProductContainer $container)
     {
-        foreach ($container->items as $items) {
-            $getter = "get" . ucfirst($items[1]);
-            $class = $items[0];
-            
-            $data = array();
-            foreach ($container->$getter() as $model) {
-                switch ($items[0]) {
+        $articleResource = \Shopware\Components\Api\Manager::getResource('Article');
+        $products = $container->getProducts();
+        $product = $products[0];
 
-                    case 'Product':
-                        $arr = DataConverter::toArray(DataModel::map(false, null, $model));
-                        
-                        break;
-                }
+        //$productSW = $this->Manager()->getRepository('Shopware\Models\Article\Article')->find($products[0]->getId());
+        $productSW = $this->Manager()->getRepository('Shopware\Models\Article\Article')->find($product->getId());
+
+        // Product
+        $data = DataConverter::toArray(DataModel::map(false, null, $product));
+
+        // ProductI18n
+        foreach ($container->getProductI18ns() as $productI18n) {
+
+            // Main language
+            if ($productI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                $data = array_merge($data, DataConverter::toArray(DataModel::map(false, null, $productI18n)));
             }
         }
+
+        // ProductPrice
+        $data['mainDetail']['prices'] = array();
+        foreach ($container->getProductPrices() as $productPrice) {
+            $data = array_merge($data, DataConverter::toArray(DataModel::map(false, null, $product)));
+            $data['mainDetail']['prices'][] = DataConverter::toArray(DataModel::map(false, null, $productPrice));
+        }
+
+        $articleResource->update($product->getId(), $data);
+
+        die(print_r($data, 1));
+
+        $productSW->fromArray($data);
+
+        // Product2Categories
+
+        // Attributes
+
+        // ProductInvisibility
+
+        // ProductVariation
+
+        // ProductVariationI18n
+
+        // ProductVariationValue
+
+        // ProductVariationValueI18n
     }
 
     public function save(array $array, $namespace = '\Shopware\Models\Article\Article')

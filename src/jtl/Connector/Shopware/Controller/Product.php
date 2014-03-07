@@ -145,6 +145,7 @@ class Product extends DataController
                                 $option['id'] = "{$product->_id}_" . $option['groupId'] . '_' . $option['id'];
                                 $option['groupId'] = "{$product->_id}_" . $option['groupId'];
 
+                                // ProductVariationValue
                                 $this->addContainerPos($container, 'product_variation_value', $option, false);
 
                                 $productVarCombination = Mmc::getModel('ProductVarCombination');
