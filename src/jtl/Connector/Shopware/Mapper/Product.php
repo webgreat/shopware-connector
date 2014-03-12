@@ -81,8 +81,7 @@ class Product extends DataMapper
             $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query);
 
             return $paginator->count();
-        }
-        else {
+        } else {
             $products = $query->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
             $shopMapper = Mmc::getMapper('Shop');
             $shops = $shopMapper->findAll(null, null);
@@ -109,11 +108,9 @@ class Product extends DataMapper
 
     public function prepareData(ProductContainer $container)
     {
-        $articleResource = \Shopware\Components\Api\Manager::getResource('Article');
         $products = $container->getProducts();
         $product = $products[0];
 
-        //$productSW = $this->Manager()->getRepository('Shopware\Models\Article\Article')->find($products[0]->getId());
         $productSW = $this->Manager()->getRepository('Shopware\Models\Article\Article')->find($product->getId());
 
         // Product
@@ -135,35 +132,85 @@ class Product extends DataMapper
             $data['mainDetail']['prices'][] = DataConverter::toArray(DataModel::map(false, null, $productPrice));
         }
 
-        $articleResource->update($product->getId(), $data);
-
-        die(print_r($data, 1));
-
-        $productSW->fromArray($data);
-
         // Product2Categories
+        foreach ($container->getProduct2Categories() as $product2Category) {
+            $data['categories'][] = DataConverter::toArray(DataModel::map(false, null, $product2Category));
+        }
 
         // Attributes
+        foreach ($container->getProductAttrs() as $productAttr) {
+            //$data['attribute'][] = DataConverter::toArray(DataModel::map(false, null, $product2Category));
+        }
 
         // ProductInvisibility
 
         // ProductVariation
+        if (count($container->getProductVariations()) > 0) {
+            $data['configuratorSet'] = array();
 
-        // ProductVariationI18n
+            foreach ($container->getProductVariations() as $productVariation) {
+                list($productId, $groupId) = explode('_', $productVariation->getId());
 
-        // ProductVariationValue
+                $data['configuratorSet']['groups'][$groupId] = DataConverter::toArray(DataModel::map(false, null, $productVariation));
+            }
 
-        // ProductVariationValueI18n
+            // ProductVariationI18n
+            foreach ($container->getProductVariationI18ns() as $productVariationI18n) {
+                list($productId, $groupId) = explode('_', $productVariationI18n->getProductVariationId());
+
+                // Main language
+                if ($productVariationI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                    $data['configuratorSet']['groups'][$groupId]['name'] = $productVariationI18n->getName();
+                } else {
+                    if (!isset($data['configuratorSet']['groups'][$groupId]['translations'])) {
+                        $data['configuratorSet']['groups'][$groupId]['translations'] = array();
+                    }
+
+                    $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()] = array();
+                    $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['name'] = $productVariationI18n->getName();
+                    $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['groupId'] = $groupId;
+                }
+
+                $data['configuratorSet']['groups'][$groupId]['id'] = $groupId;
+            }
+
+            // ProductVariationValue
+            foreach ($container->getProductVariationValues() as $productVariationValue) {
+                list($productId, $groupId, $optionId) = explode('_', $productVariationValue->getId());
+
+                $data['configuratorSet']['options'][$optionId]['id'] = $optionId;
+                $data['configuratorSet']['options'][$optionId]['groupId'] = $groupId;
+            }
+
+            // ProductVariationValueI18n
+            foreach ($container->getProductVariationValueI18ns() as $productVariationValueI18n) {
+                list($productId, $groupId, $optionId) = explode('_', $productVariationValueI18n->getProductVariationValueId());
+
+                if ($productVariationValueI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                    $data['configuratorSet']['options'][$optionId]['name'] = $productVariationValueI18n->getName();
+                } else {
+                    if (!isset($data['configuratorSet']['options'][$optionId]['translations'])) {
+                        $data['configuratorSet']['options'][$optionId]['translations'] = array();
+                    }
+
+                    $data['configuratorSet']['options'][$optionId]['translations'][$productVariationValueI18n->getLocaleName()] = array();
+                    $data['configuratorSet']['options'][$optionId]['translations'][$productVariationValueI18n->getLocaleName()]['name'] = $productVariationValueI18n->getName();
+                    $data['configuratorSet']['options'][$optionId]['translations'][$productVariationValueI18n->getLocaleName()]['optionId'] = $optionId;
+                }
+            }
+        }
+
+        return $data;
     }
 
-    public function save(array $array, $namespace = '\Shopware\Models\Article\Article')
+    public function save(array $data, $namespace = '\Shopware\Models\Article\Article')
     {
         $articleResource = \Shopware\Components\Api\Manager::getResource('Article');
 
         try {
-            return $articleResource->update($array['id'], $array);
+            return $articleResource->update($data['id'], $data);
         } catch (ApiException\NotFoundException $exc) {
-            return $articleResource->create($array);
+            return $articleResource->create($data);
         }
     }
 }

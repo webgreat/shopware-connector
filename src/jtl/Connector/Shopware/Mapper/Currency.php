@@ -37,8 +37,8 @@ class Currency extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function save(array $array)
+    public function save(array $data, $namespace = '\Shopware\Models\Shop\Currency')
     {
-        return parent::save('\Shopware\Models\Shop\Currency', $array);
+        return parent::save($data, $namespace);
     }
 }

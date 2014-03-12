@@ -74,8 +74,8 @@ class ConfiguratorSet extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function save(array $array, $namespace = '\Shopware\Models\Article\Configurator\Set')
+    public function save(array $data, $namespace = '\Shopware\Models\Article\Configurator\Set')
     {
-        return parent::save($array, $namespace);
+        return parent::save($data, $namespace);
     }
 }

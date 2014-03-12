@@ -33,8 +33,8 @@ class TaxRate extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function save(array $array, $namespace = '\Shopware\Models\Tax\Tax')
+    public function save(array $data, $namespace = '\Shopware\Models\Tax\Tax')
     {
-        return parent::save($array, $namespace);
+        return parent::save($data, $namespace);
     }
 }
