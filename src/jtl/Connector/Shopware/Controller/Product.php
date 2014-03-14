@@ -6,7 +6,7 @@
 
 namespace jtl\Connector\Shopware\Controller;
 
-use \jtl\Core\Result\Transaction as TransactionResult;
+use \jtl\Connector\Result\Transaction as TransactionResult;
 use \jtl\Connector\Transaction\Handler as TransactionHandler;
 use \jtl\Core\Exception\TransactionException;
 use \jtl\Connector\Result\Action;

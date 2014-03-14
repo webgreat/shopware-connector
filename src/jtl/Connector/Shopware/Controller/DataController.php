@@ -16,7 +16,7 @@ use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Model\Statistic;
 use \jtl\Core\Utilities\ClassName;
 use \jtl\Connector\Shopware\Model\DataModel;
-use \jtl\Connector\Transaction\Handler as TransactionHandler;
+use \jtl\Connector\ModelContainer\MainContainer;
 
 /**
  * Product Controller
@@ -170,7 +170,7 @@ abstract class DataController extends CoreController
      */
     public function insert(ModelContainer $container)
     {
-        if (TransactionHandler::isMain($this->getMethod()->getController())) {
+        if (MainContainer::isMain($this->getMethod()->getController())) {
             $config = $this->getConfig();
 
             /*
@@ -194,7 +194,11 @@ abstract class DataController extends CoreController
 
             $mapper = Mmc::getMapper($class);
             $data = $mapper->prepareData($container);
-            var_dump($mapper->save($data));
+            $modelSW = $mapper->save($data);
+
+            if ($modelSW !== null) {
+                var_dump($modelSW->getId());
+            }
                     
             return true;
         }

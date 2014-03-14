@@ -15,6 +15,7 @@ use \jtl\Connector\Base\Connector as BaseConnector;
 use \jtl\Core\Utilities\RpcMethod;
 use \jtl\Core\Controller\Controller as CoreController;
 use \jtl\Connector\Transaction\Handler as TransactionHandler;
+use \jtl\Connector\ModelContainer\MainContainer;
 
 /**
  * Shopware Connector
@@ -112,7 +113,7 @@ class Connector extends BaseConnector
         if (($this->_action !== "commit")) {
             return $this->_controller->{$this->_action}($requestpacket->getParams());
         }
-        else if (TransactionHandler::exists($requestpacket) && TransactionHandler::isMain($this->getMethod()->getController()) && $this->_action === "commit") {
+        else if (TransactionHandler::exists($requestpacket) && MainContainer::isMain($this->getMethod()->getController()) && $this->_action === "commit") {
             return $this->_controller->{$this->_action}($requestpacket->getParams(), $requestpacket->getGlobals()->getTransaction()->getId());
         }
         else {
