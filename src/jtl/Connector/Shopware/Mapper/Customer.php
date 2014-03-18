@@ -6,6 +6,11 @@
 
 namespace jtl\Connector\Shopware\Mapper;
 
+use \jtl\Connector\ModelContainer\CustomerContainer;
+use \Shopware\Components\Api\Exception as ApiException;
+use \jtl\Core\Utilities\DataConverter;
+use \jtl\Connector\Shopware\Model\DataModel;
+
 class Customer extends DataMapper
 {
     public function findAll($offset = 0, $limit = 100, $count = false)
@@ -45,8 +50,33 @@ class Customer extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
+    public function prepareData(CustomerContainer $container)
+    {
+        $customers = $container->getCustomers();
+        $customer = $customers[0];
+
+        $customerSW = $this->Manager()->getRepository('Shopware\Models\Customer\Customer')->find($customer->getId());
+
+        // Customer
+        $data = DataConverter::toArray(DataModel::map(false, null, $customer));
+
+        if (isset($data['group']['id']) && intval($data['group']['id']) > 0) {
+            $data['groupKey'] = $data['group']['id'];
+        }
+
+        die(print_r($data, 1));
+
+        return $data;
+    }
+
     public function save(array $data, $namespace = '\Shopware\Models\Customer\Customer')
     {
-        return parent::save($data, $namespace);
+        $customerResource = \Shopware\Components\Api\Manager::getResource('Customer');
+
+        try {
+            return $customerResource->update($data['id'], $data);
+        } catch (ApiException\NotFoundException $exc) {
+            return $customerResource->create($data);
+        }
     }
 }
