@@ -55,7 +55,7 @@ class Customer extends DataMapper
         $customers = $container->getCustomers();
         $customer = $customers[0];
 
-        $customerSW = $this->Manager()->getRepository('Shopware\Models\Customer\Customer')->find($customer->getId());
+        //$customerSW = $this->Manager()->getRepository('Shopware\Models\Customer\Customer')->find($customer->getId());
 
         // Customer
         $data = DataConverter::toArray(DataModel::map(false, null, $customer));
@@ -64,7 +64,31 @@ class Customer extends DataMapper
             $data['groupKey'] = $data['group']['id'];
         }
 
-        die(print_r($data, 1));
+        // Billing
+        if (isset($data['billing'])) {
+            $billing = Shopware()->Models()->getRepository('Shopware\Models\Customer\Billing')->findOneBy(array(
+                'customerId' => $data['id']
+            ));
+
+            if (empty($billing)) {
+                throw new ApiException\NotFoundException(sprintf("Billing by customerId %s not found", $data['id']));
+            }
+
+            $data['billing'] = $billing->fromArray($data['billing']);
+        }
+
+        // Shipping
+        if (isset($data['shipping'])) {
+            $shipping = Shopware()->Models()->getRepository('Shopware\Models\Customer\Shipping')->findOneBy(array(
+                'customerId' => $data['id']
+            ));
+
+            if (empty($shipping)) {
+                throw new ApiException\NotFoundException(sprintf("Shipping by customerId %s not found", $data['id']));
+            }
+
+            $data['shipping'] = $shipping->fromArray($data['shipping']);
+        }
 
         return $data;
     }

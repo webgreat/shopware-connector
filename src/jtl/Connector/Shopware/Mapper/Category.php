@@ -56,7 +56,7 @@ class Category extends DataMapper
         $categories = $container->getCategories();
         $category = $categories[0];
 
-        $categorySW = $this->Manager()->getRepository('Shopware\Models\Category\Category')->find($category->getId());
+        //$categorySW = $this->Manager()->getRepository('Shopware\Models\Category\Category')->find($category->getId());
 
         // Category
         $data = DataConverter::toArray(DataModel::map(false, null, $category));

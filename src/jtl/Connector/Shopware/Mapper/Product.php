@@ -111,7 +111,7 @@ class Product extends DataMapper
         $products = $container->getProducts();
         $product = $products[0];
 
-        $productSW = $this->Manager()->getRepository('Shopware\Models\Article\Article')->find($product->getId());
+        //$productSW = $this->Manager()->getRepository('Shopware\Models\Article\Article')->find($product->getId());
 
         // Product
         $data = DataConverter::toArray(DataModel::map(false, null, $product));
