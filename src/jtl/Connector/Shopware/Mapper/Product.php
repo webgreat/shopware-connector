@@ -14,23 +14,6 @@ use \jtl\Connector\Shopware\Model\DataModel;
 
 class Product extends DataMapper
 {
-    protected $relations = array(
-        'article' => 'Shopware\Models\Article\Article',
-        'tax' => 'Shopware\Models\Tax\Tax',
-        'categories' => 'Shopware\Models\Category\Category',
-        'details' => 'Shopware\Models\Article\Detail',
-        'mainDetail' => 'Shopware\Models\Article\Detail',
-        'detailprices' => 'Shopware\Models\Article\Article',
-        'prices' => 'Shopware\Models\Article\Article',
-        'links' => 'Shopware\Models\Article\Link',
-        'attribute' => 'Shopware\Models\Article\Article',
-        'downloads' => 'Shopware\Models\Article\Download',
-        'supplier' => 'Shopware\Models\Article\Supplier',
-        'related' => 'Shopware\Models\Article\Article',
-        'pricegroup' => 'Shopware\Models\Price\Group',
-        'customergroups' => 'Shopware\Models\Customer\Group'
-    );
-
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
         $query = $this->Manager()->createQueryBuilder()->select(

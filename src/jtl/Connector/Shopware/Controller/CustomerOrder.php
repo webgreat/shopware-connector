@@ -41,6 +41,8 @@ class CustomerOrder extends DataController
 
             $offset = 0;
             $limit = 100;
+            $from = null;
+            $until = null;
             if ($filter->isOffset()) {
                 $offset = $filter->getOffset();
             }
@@ -49,8 +51,13 @@ class CustomerOrder extends DataController
                 $limit = $filter->getLimit();
             }
 
+            if ($filter->isFrom() && $filter->isUntil()) {
+                $from = $filter->getFrom();
+                $until = $filter->getUntil();
+            }
+
             $mapper = Mmc::getMapper('CustomerOrder');
-            $orders = $mapper->findAll($offset, $limit);
+            $orders = $mapper->findAll($offset, $limit, false, $from, $until);
 
             foreach ($orders as $orderSW) {
                 try {

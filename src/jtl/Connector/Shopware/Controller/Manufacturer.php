@@ -49,7 +49,6 @@ class Manufacturer extends DataController
 
             $mapper = Mmc::getMapper('Manufacturer');
             $manufacturers = $mapper->findAll($offset, $limit);
-
             foreach ($manufacturers as $manufacturerSW) {
                 try {
                     $container = new ManufacturerContainer();

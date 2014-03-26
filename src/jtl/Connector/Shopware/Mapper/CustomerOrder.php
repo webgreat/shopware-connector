@@ -15,9 +15,9 @@ use \Shopware\Models\Order\Detail as DetailModel;
 
 class CustomerOrder extends DataMapper
 {
-    public function findAll($offset = 0, $limit = 100, $count = false)
+    public function findAll($offset = 0, $limit = 100, $count = false, $from = null, $until = null)
     {
-        $query = $this->Manager()->createQueryBuilder()->select(array(
+        $builder = $this->Manager()->createQueryBuilder()->select(array(
             'orders',
             'customer',
             'attribute',
@@ -26,7 +26,8 @@ class CustomerOrder extends DataMapper
             'billing',
             'shipping',
             'countryS',
-            'countryB'
+            'countryB',
+            'history'
         ))
         ->from('Shopware\Models\Order\Order', 'orders')
         ->leftJoin('orders.customer', 'customer')
@@ -37,9 +38,20 @@ class CustomerOrder extends DataMapper
         ->leftJoin('orders.shipping', 'shipping')
         ->leftJoin('billing.country', 'countryS')
         ->leftJoin('shipping.country', 'countryB')
-        ->setFirstResult($offset)
-        ->setMaxResults($limit)
-        ->getQuery();
+        ->leftJoin('orders.history', 'history');
+
+        if ($from !== null && $until !== null) {
+            $builder->where('orders.orderTime >= :from')
+                ->andWhere('orders.orderTime <= :until')
+                ->andWhere('history.changeDate is null or history.changeDate >= :from')
+                ->andWhere('history.changeDate is null or history.changeDate <= :until')
+                ->setParameter('from', $from)
+                ->setParameter('until', $until);
+        }
+
+        $query = $builder->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery();
 
         if ($count) {
             $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query);
@@ -81,7 +93,7 @@ class CustomerOrder extends DataMapper
             $data['attribute']['attribute' . ($i + 1)] = $customerOrderAttr->getValue();
         }
 
-        // getCustomerOrderItems
+        // CustomerOrderItems
         foreach ($container->getCustomerOrderItems() as $customerOrderItem) {
             if (!isset($data['details'])) {
                 $data['details'] = array();
@@ -94,7 +106,7 @@ class CustomerOrder extends DataMapper
         }
 
         // CustomerOrderBillingAddress
-        if (isset($data['billing']['id']) && intval($data['billing']['id']) > 0)
+        if (isset($data['billing']['id']) && intval($data['billing']['id']) > 0) {
             $billing = Shopware()->Models()->getRepository('Shopware\Models\Order\Billing')->findOneBy(array(
                 'id' => $data['billing']['id']
             ));
@@ -107,7 +119,7 @@ class CustomerOrder extends DataMapper
         }
 
         // CustomerOrderShippingAddress
-        if (isset($data['shipping']['id']) && intval($data['shipping']['id']) > 0)
+        if (isset($data['shipping']['id']) && intval($data['shipping']['id']) > 0) {
             $shipping = Shopware()->Models()->getRepository('Shopware\Models\Order\Shipping')->findOneBy(array(
                 'id' => $data['shipping']['id']
             ));
@@ -118,6 +130,12 @@ class CustomerOrder extends DataMapper
 
             $data['shipping'] = $shipping->fromArray($data['shipping']);
         }
+
+        // getCustomerOrderItems
+
+        // customer_order_item_variation
+
+        // customer_order_payment_info
 
         return $data;
     }
