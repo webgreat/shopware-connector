@@ -34,7 +34,7 @@ class CustomerOrder extends CustomerOrderModel
         '_ratingNotificationDate' => '',
         '_tracking' => 'trackingCode',
         '_note' => 'customerComment',
-        '_logistic' => '',
+        '_carrierName' => '',
         '_trackingURL' => '',
         '_ip' => 'remoteAddress',
         '_isFetched' => '',

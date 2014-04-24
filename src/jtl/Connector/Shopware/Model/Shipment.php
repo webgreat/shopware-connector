@@ -17,8 +17,8 @@ class Shipment extends ShipmentModel
     protected $_fields = array(
         '_id' => '',
         '_deliveryNoteId' => '',
-        '_logistic' => '',
-        '_logisticURL' => '',
+        '_carrierName' => '',
+        '_trackingURL' => '',
         '_identCode' => '',
         '_created' => '',
         '_note' => ''

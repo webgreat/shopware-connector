@@ -8,6 +8,7 @@ namespace jtl\Connector\Shopware\Model;
 
 use \jtl\Core\Model\DataModel as MainDataModel;
 use \jtl\Connector\Shopware\Utilities\Date as DateUtil;
+use \jtl\Connector\Model\Identity;
 
 /**
  * DataModel Class
@@ -70,6 +71,10 @@ class DataModel
                 if (is_array($platformField)) {
                     $value = $getValue($platformField, $obj);
                     $value = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
+                    if ($original->isIdentity($connectorField)) {
+                        $value = new Identity($value);
+                    }
+                    
                     $original->$setter($value);
                 }
                 else if ($connectorField == '_localeName' && strlen($platformField) == 0) {
@@ -77,6 +82,10 @@ class DataModel
                 }
                 else if (isset($obj->$platformField)) {
                     $value = DateUtil::check($obj->$platformField) ? DateUtil::map($obj->$platformField) : $obj->$platformField;
+                    if ($original->isIdentity($connectorField)) {
+                        $value = new Identity($value);
+                    }
+
                     $original->$setter($value);
                 }
             }

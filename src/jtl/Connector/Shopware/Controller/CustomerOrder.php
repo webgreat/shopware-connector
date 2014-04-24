@@ -80,17 +80,17 @@ class CustomerOrder extends DataController
                             $customerOrderAttr->map(true, DataConverter::toObject($orderSW['attribute']));
                             $customerOrderAttr->_key = "attribute{$i}";
                             $customerOrderAttr->_value = $orderSW['attribute']["attribute{$i}"];
-                            $container->add('customer_order_attr', $customerOrderAttr->getPublic(array("_fields", "_isEncrypted")), false);
+                            $container->add('customer_order_attr', $customerOrderAttr->getPublic(), false);
                         }
                     }
 
-                    $container->add('customer_order', $order->getPublic(array('_fields', '_isEncrypted')), false);
+                    $container->add('customer_order', $order->getPublic(), false);
 
                     // CustomerOrderItemVariations
 
                     // CustomerOrderPaymentInfos
 
-                    $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
+                    $result[] = $container->getPublic(array("items"));
                 }
                 catch (\Exception $exc) { }
             }

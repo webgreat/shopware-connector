@@ -60,7 +60,7 @@ class Manufacturer extends DataController
 
                     $container->add('manufacturer', $manufacturer, false);
 
-                    $result[] = $container->getPublic(array('items'), array('_fields', '_isEncrypted'));
+                    $result[] = $container->getPublic(array('items'));
                 } catch (\Exception $exc) { }
             }
 

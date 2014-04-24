@@ -83,7 +83,7 @@ class Customer extends DataController
 
                     $container->add('customer', $customer, false);
 
-                    $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
+                    $result[] = $container->getPublic(array("items"));
                 }
                 catch (\Exception $exc) { }
             }

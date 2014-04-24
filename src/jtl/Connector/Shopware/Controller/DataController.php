@@ -195,10 +195,6 @@ abstract class DataController extends CoreController
             $mapper = Mmc::getMapper($class);
             $data = $mapper->prepareData($container);
             $modelSW = $mapper->save($data);
-
-            if ($modelSW !== null) {
-                var_dump($modelSW->getId());
-            }
                     
             return true;
         }

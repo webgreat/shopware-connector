@@ -90,7 +90,7 @@ class Product extends DataController
                             $productAttrI18n->map(true, DataConverter::toObject($productSW['mainDetail']['attribute']));
                             $productAttrI18n->_key = "attr{$i}";
                             $productAttrI18n->_value = $productSW['mainDetail']['attribute']["attr{$i}"];
-                            $container->add('product_attr_i18n', $productAttrI18n->getPublic(array("_fields", "_isEncrypted")), false);
+                            $container->add('product_attr_i18n', $productAttrI18n->getPublic(), false);
                         }
                     }
 
@@ -179,7 +179,7 @@ class Product extends DataController
 
                     $container->add('product', $product, false);
 
-                    $result[] = $container->getPublic(array('items'), array('_fields', '_isEncrypted'));
+                    $result[] = $container->getPublic(array('items'));
                 }
                 catch (\Exception $exc) { }
             }

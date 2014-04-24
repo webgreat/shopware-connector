@@ -83,7 +83,7 @@ class Image extends DataController
                                 $model->_foreignKey = $imageSW['articleId'];
                                 $model->_filename = sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $imageSW['media']['path']);
 
-                                $result[] = $model->getPublic(array("_fields", "_isEncrypted"));
+                                $result[] = $model->getPublic();
                             }
                             break;
                         case ImageRelationType::TYPE_CATEGORY:
@@ -94,7 +94,7 @@ class Image extends DataController
                             $model->_foreignKey = $modelSW['id'];
                             $model->_filename = sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['media']['path']);
 
-                            $result[] = $model->getPublic(array("_fields", "_isEncrypted"));
+                            $result[] = $model->getPublic();
                             break;
                         case ImageRelationType::TYPE_MANUFACTURER:
                             if (!isset($modelSW['image']) || strlen(trim($modelSW['image'])) == 0) continue;
@@ -106,7 +106,7 @@ class Image extends DataController
                             $model->_foreignKey = $modelSW['id'];
                             $model->_filename = sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['image']);
 
-                            $result[] = $model->getPublic(array("_fields", "_isEncrypted"));
+                            $result[] = $model->getPublic();
                             break;
                     }
                 }
@@ -163,7 +163,7 @@ class Image extends DataController
                 }
             }
 
-            $action->setResult($statModel->getPublic(array("_fields", "_isEncrypted")));
+            $action->setResult($statModel->getPublic());
         }
         catch (\Exception $exc) {
             $err = new Error();

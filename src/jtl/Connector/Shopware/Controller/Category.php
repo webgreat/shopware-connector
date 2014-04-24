@@ -135,7 +135,7 @@ class Category extends DataController
 
                     $container->add('category', $category, false);
 
-                    $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
+                    $result[] = $container->getPublic(array("items"));
                 }
                 catch (\Exception $exc) { }
             }

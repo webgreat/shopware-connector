@@ -131,7 +131,7 @@ class GlobalData extends DataController
 
             // ShippingClasss
             
-            $result[] = $container->getPublic(array("items"), array("_fields", "_isEncrypted"));
+            $result[] = $container->getPublic(array("items"));
 
             $action->setResult($result);
         }
