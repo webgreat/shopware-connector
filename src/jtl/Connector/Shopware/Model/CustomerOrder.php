@@ -19,7 +19,7 @@ class CustomerOrder extends CustomerOrderModel
         '_customerId' => array('customer', 'id'),
         '_shippingAddressId' => array('shipping', 'id'),
         '_billingAddressId' => array('billing', 'id'),
-        '_shippingMethodId' => '',
+        '_shippingMethodCode' => '',
         '_localeName' => '',
         '_currencyIso' => 'currency',
         '_estimatedDeliveryDate' => '',
@@ -40,7 +40,7 @@ class CustomerOrder extends CustomerOrderModel
         '_isFetched' => '',
         '_status' => '',
         '_created' => 'orderTime',
-        '_paymentModuleId' => ''
+        '_paymentModuleCode' => ''
     );
     
     /**
