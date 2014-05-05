@@ -15,34 +15,51 @@ class Customer extends DataMapper
 {
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
-        $query = $this->Manager()->createQueryBuilder()->select(array(
-            'customer',
-            'billing',
-            'shipping',
-            'customergroup',
-            'attribute',
-            'shop',
-            'locale'
-        ))
-        ->from('Shopware\Models\Customer\Customer', 'customer')
-        ->leftJoin('customer.billing', 'billing')
-        ->leftJoin('customer.shipping', 'shipping')
-        ->leftJoin('customer.group', 'customergroup')
-        ->leftJoin('billing.attribute', 'attribute')
-        ->leftJoin('customer.languageSubShop', 'shop')
-        ->leftJoin('shop.locale', 'locale')
-        ->setFirstResult($offset)
-        ->setMaxResults($limit)
-        ->getQuery();
+        $builder = $this->Manager()->createQueryBuilder()->select(
+            'customer'
+        )
+        ->from('Shopware\Models\Customer\Customer', 'customer');
+
+        if ($offset !== null && $limit !== null) {
+            $builder->setFirstResult($offset)
+                ->setMaxResults($limit);
+        }
+
+        $es = $builder->getQuery()
+            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+
+        $entityCount = count($es);
+        $lastIndex = $entityCount - 1;
 
         if ($count) {
-            $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query);
+            return $entityCount;
+        }
 
-            return $paginator->count();
+        if ($entityCount > 0) {
+            return $this->Manager()->createQueryBuilder()->select(array(
+                'customer',
+                'billing',
+                'shipping',
+                'customergroup',
+                'attribute',
+                'shop',
+                'locale'
+            ))
+            ->from('Shopware\Models\Customer\Customer', 'customer')
+            ->leftJoin('customer.billing', 'billing')
+            ->leftJoin('customer.shipping', 'shipping')
+            ->leftJoin('customer.group', 'customergroup')
+            ->leftJoin('billing.attribute', 'attribute')
+            ->leftJoin('customer.languageSubShop', 'shop')
+            ->leftJoin('shop.locale', 'locale')
+            ->where('customer.id BETWEEN :first AND :last')
+            ->setParameter('first', $es[0]['id'])
+            ->setParameter('last', $es[$lastIndex]['id'])
+            ->getQuery()
+            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
         }
-        else {
-            return $query->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-        }
+
+        return array();
     }
 
     public function fetchCount($offset = 0, $limit = 100)

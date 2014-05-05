@@ -10,32 +10,45 @@ class Shop extends DataMapper
 {
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
-        $builder = $this->Manager()->createQueryBuilder()->select(array(
-            'shop',
-            'locale',
-            'category',
-            'currencies'
-        ))
-        ->from('Shopware\Models\Shop\Shop', 'shop')
-        ->leftJoin('shop.locale', 'locale')
-        ->leftJoin('shop.category', 'category')
-        ->leftJoin('shop.currencies', 'currencies');
+        $builder = $this->Manager()->createQueryBuilder()->select(
+            'shop'
+        )
+        ->from('Shopware\Models\Shop\Shop', 'shop');
 
         if ($offset !== null && $limit !== null) {
             $builder->setFirstResult($offset)
                 ->setMaxResults($limit);
         }
 
-        $query = $builder->getQuery();
+        $es = $builder->getQuery()
+            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+
+        $entityCount = count($es);
+        $lastIndex = $entityCount - 1;
 
         if ($count) {
-            $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query);
+            return $entityCount;
+        }
 
-            return $paginator->count();
+        if ($entityCount > 0) {
+            return $this->Manager()->createQueryBuilder()->select(array(
+                'shop',
+                'locale',
+                'category',
+                'currencies'
+            ))
+            ->from('Shopware\Models\Shop\Shop', 'shop')
+            ->leftJoin('shop.locale', 'locale')
+            ->leftJoin('shop.category', 'category')
+            ->leftJoin('shop.currencies', 'currencies')
+            ->where('category.id BETWEEN :first AND :last')
+            ->setParameter('first', $es[0]['id'])
+            ->setParameter('last', $es[$lastIndex]['id'])
+            ->getQuery()
+            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
         }
-        else {
-            return $query->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-        }
+
+        return array();
     }
 
     public function fetchCount($offset = 0, $limit = 100)

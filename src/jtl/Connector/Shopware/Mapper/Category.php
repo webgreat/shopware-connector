@@ -21,29 +21,44 @@ class Category extends DataMapper
 
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
-        //'parent',
+        $builder = $this->Manager()->createQueryBuilder()->select(
+            'category'
+        )
+        ->from('Shopware\Models\Category\Category', 'category');
 
-        $query = $this->Manager()->createQueryBuilder()->select(array(
-            'category',            
-            'attribute',
-            'customergroup'
-        ))
-        ->from('Shopware\Models\Category\Category', 'category')
-        //->leftJoin('category.parent', 'parent')
-        ->leftJoin('category.attribute', 'attribute')
-        ->leftJoin('category.customerGroups', 'customergroup')
-        ->setFirstResult($offset)
-        ->setMaxResults($limit)
-        ->getQuery();
+        if ($offset !== null && $limit !== null) {
+            $builder->setFirstResult($offset)
+                ->setMaxResults($limit);
+        }
+
+        $es = $builder->getQuery()
+            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+
+        $entityCount = count($es);
+        $lastIndex = $entityCount - 1;
 
         if ($count) {
-            $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query);
+            return $entityCount;
+        }
 
-            return $paginator->count();
+        if ($entityCount > 0) {
+            return $this->Manager()->createQueryBuilder()->select(array(
+                'category',
+                'attribute',
+                'customergroup'
+            ))
+            ->from('Shopware\Models\Category\Category', 'category')
+            //->leftJoin('category.parent', 'parent')
+            ->leftJoin('category.attribute', 'attribute')
+            ->leftJoin('category.customerGroups', 'customergroup')
+            ->where('category.id BETWEEN :first AND :last')
+            ->setParameter('first', $es[0]['id'])
+            ->setParameter('last', $es[$lastIndex]['id'])
+            ->getQuery()
+            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
         }
-        else {
-            return $query->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-        }
+
+        return array();
     }
 
     public function fetchCount($offset = 0, $limit = 100)

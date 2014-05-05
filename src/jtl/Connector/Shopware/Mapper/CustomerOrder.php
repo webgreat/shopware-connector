@@ -17,50 +17,68 @@ class CustomerOrder extends DataMapper
 {
     public function findAll($offset = 0, $limit = 100, $count = false, $from = null, $until = null)
     {
-        $builder = $this->Manager()->createQueryBuilder()->select(array(
+        $builder = $this->Manager()->createQueryBuilder()->select(
             'orders',
-            'customer',
-            'attribute',
-            'details',
-            'tax',
-            'billing',
-            'shipping',
-            'countryS',
-            'countryB',
             'history'
-        ))
+        )
         ->from('Shopware\Models\Order\Order', 'orders')
-        ->leftJoin('orders.customer', 'customer')
-        ->leftJoin('orders.attribute', 'attribute')
-        ->leftJoin('orders.details', 'details')
-        ->leftJoin('details.tax', 'tax')
-        ->leftJoin('orders.billing', 'billing')
-        ->leftJoin('orders.shipping', 'shipping')
-        ->leftJoin('billing.country', 'countryS')
-        ->leftJoin('shipping.country', 'countryB')
         ->leftJoin('orders.history', 'history');
 
         if ($from !== null && $until !== null) {
             $builder->where('orders.orderTime >= :from')
-                ->andWhere('orders.orderTime <= :until')
-                ->andWhere('history.changeDate is null or history.changeDate >= :from')
-                ->andWhere('history.changeDate is null or history.changeDate <= :until')
-                ->setParameter('from', $from)
-                ->setParameter('until', $until);
+                    ->andWhere('orders.orderTime <= :until')
+                    ->andWhere('history.changeDate is null or history.changeDate >= :from')
+                    ->andWhere('history.changeDate is null or history.changeDate <= :until')
+                    ->setParameter('from', $from)
+                    ->setParameter('until', $until);
         }
 
-        $query = $builder->setFirstResult($offset)
-            ->setMaxResults($limit)
-            ->getQuery();
+        if ($offset !== null && $limit !== null) {
+            $builder->setFirstResult($offset)
+                ->setMaxResults($limit);
+        }
+
+        $es = $builder->getQuery()
+            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+
+        $entityCount = count($es);
+        $lastIndex = $entityCount - 1;
 
         if ($count) {
-            $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query);
+            return $entityCount;
+        }
 
-            return $paginator->count();
+        if ($entityCount > 0) {
+            return $this->Manager()->createQueryBuilder()->select(array(
+                'orders',
+                'customer',
+                'attribute',
+                'details',
+                'tax',
+                'billing',
+                'shipping',
+                'countryS',
+                'countryB',
+                'history'
+            ))
+            ->from('Shopware\Models\Order\Order', 'orders')
+            ->leftJoin('orders.customer', 'customer')
+            ->leftJoin('orders.attribute', 'attribute')
+            ->leftJoin('orders.details', 'details')
+            ->leftJoin('details.tax', 'tax')
+            ->leftJoin('orders.billing', 'billing')
+            ->leftJoin('orders.shipping', 'shipping')
+            ->leftJoin('billing.country', 'countryS')
+            ->leftJoin('shipping.country', 'countryB')
+            ->leftJoin('orders.history', 'history')
+            ->where('orders.id BETWEEN :first AND :last')
+            ->setParameter('first', $es[0]['id'])
+            ->setParameter('last', $es[$lastIndex]['id'])
+            ->getQuery()
+            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
         }
-        else {
-            return $query->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-        }
+
+        return array();
     }
 
     public function fetchCount($offset = 0, $limit = 100)
