@@ -49,11 +49,15 @@ class Product extends DataController
                 $limit = $filter->getLimit();
             }
 
+            //$articleResource = \Shopware\Components\Api\Manager::getResource('Article');
+
             $mapper = Mmc::getMapper('Product');
             $products = $mapper->findAll($offset, $limit);
 
             foreach ($products as $productSW) {
                 try {
+                    //$productSW = $articleResource->getOne($productSW['id']);
+
                     $container = new ProductContainer();
 
                     $product = Mmc::getModel('Product');
@@ -153,7 +157,7 @@ class Product extends DataController
                                     ->setProductVariationId($option['groupId'])
                                     ->setProductVariationValueId($option['id']);
 
-                                $container->add('product_var_combination', $productVarCombination, false);
+                                //$container->add('product_var_combination', $productVarCombination, false);
 
                                 // Main Language
                                 $productVariationValueI18n = Mmc::getModel('ProductVariationValueI18n');
@@ -175,6 +179,9 @@ class Product extends DataController
                                 }
                             }
                         }
+
+                        // Handle children
+                        //$this->addChildren($container, $productSW);
                     }
 
                     $container->add('product', $product, false);
@@ -205,6 +212,43 @@ class Product extends DataController
 
         return $action;
     }
+
+    /**
+     * Handle children
+     *
+     * @param \jtl\Connector\ModelContainer\ProductContainer $container
+     * @param multiple string $product
+     */
+    /*
+    protected function addChildren(ProductContainer &$container, array &$productSW)
+    {
+        if (is_array($productSW['details']) && count($productSW['details']) > 0) {
+            foreach ($productSW['details'] as $detail) {
+                $product = Mmc::getModel('Product');
+
+                $product->_id = $detail['id'];
+                $product->_masterProductId = $productSW['id'];
+                $product->_manufacturerId = 'supplierId'
+                $product->_unitId = array('mainDetail', 'unitId')
+                $product->_taxClassId = array('tax', 'id')
+                $product->_sku = array('mainDetail', 'number')
+                $product->_stockLevel = array('mainDetail', 'inStock')
+                $product->_vat = array('tax', 'tax')
+                $product->_minimumOrderQuantity = array('mainDetail', 'minPurchase')
+                $product->_ean = array('mainDetail', 'ean'),
+                $product->_productWeight = array('mainDetail', 'weight')
+                $product->_keywords = 'keywords'
+                $product->_created = 'added'
+                $product->_availableFrom = 'availableFrom'
+                $product->_takeOffQuantity = array('mainDetail', 'purchaseSteps')
+
+                die(print_r($detail, 1));
+
+                $container->add('product', $product, false);
+            }
+        }
+    }
+    */
 
     /**
      * Transaction Commit
