@@ -61,7 +61,8 @@ class Image extends DataController
                 $relationTypes = array(
                     ImageRelationType::TYPE_PRODUCT,
                     ImageRelationType::TYPE_CATEGORY,
-                    ImageRelationType::TYPE_MANUFACTURER
+                    ImageRelationType::TYPE_MANUFACTURER,
+                    ImageRelationType::TYPE_PRODUCT_VARIATION_VALUE
                 );
 
                 foreach ($relationTypes as $relationType) {
@@ -79,6 +80,11 @@ class Image extends DataController
                                 $model = Mmc::getModel('Image');
 
                                 $model->_id = $imageSW['id'];
+
+                                if (intval($modelSW['parentId']) > 0) {
+                                    $model->_masterImageId = $modelSW['parentId'];
+                                }
+
                                 $model->_relationType = $relationType;
                                 $model->_foreignKey = $imageSW['articleId'];
                                 $model->_filename = sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $imageSW['media']['path']);
@@ -90,6 +96,11 @@ class Image extends DataController
                             $model = Mmc::getModel('Image');
                             
                             $model->_id = $modelSW['media']['id'];
+
+                            if (intval($modelSW['parentId']) > 0) {
+                                $model->_masterImageId = $modelSW['parentId'];
+                            }
+
                             $model->_relationType = $relationType;
                             $model->_foreignKey = $modelSW['id'];
                             $model->_filename = sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['media']['path']);
@@ -102,9 +113,31 @@ class Image extends DataController
                             $model = Mmc::getModel('Image');
 
                             $model->_id = $modelSW['id'];
+
+                            if (intval($modelSW['parentId']) > 0) {
+                                $model->_masterImageId = $modelSW['parentId'];
+                            }
+
                             $model->_relationType = $relationType;
                             $model->_foreignKey = $modelSW['id'];
                             $model->_filename = sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['image']);
+
+                            $result[] = $model->getPublic();
+                            break;
+                        case ImageRelationType::TYPE_PRODUCT_VARIATION_VALUE:
+                            $model = Mmc::getModel('Image');
+
+                            // Work Around
+                            // id = s_article_img_mapping_rules.id
+                            $model->_id = 'option_' . $modelSW['id'];
+
+                            if (intval($modelSW['masterImageId']) > 0) {
+                                $model->_masterImageId = $modelSW['masterImageId'];
+                            }
+
+                            $model->_relationType = $relationType;
+                            $model->_foreignKey = $modelSW['foreignKey'];
+                            $model->_filename = sprintf('http://%s%s/%s%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), '/media/images/', $modelSW['path']);
 
                             $result[] = $model->getPublic();
                             break;

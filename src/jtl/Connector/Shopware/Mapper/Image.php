@@ -12,6 +12,17 @@ class Image extends DataMapper
 {
     public function findAll($offset = null, $limit = null, $count = false, $relationType = null)
     {
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+
+        switch ($relationType) {
+            case ImageRelationType::TYPE_PRODUCT_VARIATION_VALUE:
+                return Shopware()->Db()->fetchAll('SELECT r.id, r.option_id as foreignKey, i.img as path, i.parent_id as masterImageId  
+                                                    FROM s_article_img_mapping_rules AS r
+                                                    JOIN s_article_img_mappings AS m ON m.id = r.mapping_id
+                                                    JOIN s_articles_img AS i ON i.id = m.image_id
+                                                    GROUP BY r.option_id');
+        }
+
         $query = $this->buildQuery($offset, $limit, $relationType);
 
         if ($count) {
@@ -33,13 +44,24 @@ class Image extends DataMapper
         $count = 0;
         switch ($relationType) {
             case ImageRelationType::TYPE_PRODUCT:
-                $query = Shopware()->Models()->createNativeQuery('SELECT count(*) as count FROM s_articles_img', $rsm);
+                $query = Shopware()->Models()->createNativeQuery('SELECT count(*) as count FROM s_articles_img WHERE main = 1', $rsm);
                 break;
             case ImageRelationType::TYPE_CATEGORY:
                 $query = Shopware()->Models()->createNativeQuery('SELECT count(*) as count FROM s_categories WHERE mediaID > 0', $rsm);
                 break;
             case ImageRelationType::TYPE_MANUFACTURER:
                 $query = Shopware()->Models()->createNativeQuery('SELECT count(*) as count FROM s_articles_supplier WHERE LENGTH(img) > 0', $rsm);
+                break;
+            case ImageRelationType::TYPE_PRODUCT_VARIATION_VALUE:
+                $query = Shopware()->Models()->createNativeQuery('SELECT count(*) as count
+                                                                    FROM
+                                                                    (
+                                                                        SELECT r.option_id
+                                                                        FROM s_article_img_mapping_rules AS r
+                                                                        JOIN s_article_img_mappings AS m ON m.id = r.mapping_id
+                                                                        JOIN s_articles_img AS i ON i.id = m.image_id
+                                                                        GROUP BY r.option_id
+                                                                    ) as x', $rsm);
                 break;
         }
 
@@ -79,6 +101,9 @@ class Image extends DataMapper
                         'join' => 'images.media',
                         'alias' => 'media'
                     )
+                ),
+                'where' => array(
+                    'images.main = 1'
                 )
             ),
             ImageRelationType::TYPE_CATEGORY => array(
@@ -126,6 +151,17 @@ class Image extends DataMapper
         if (isset($data[$relationType]['leftJoin'])) {
             foreach ($data[$relationType]['leftJoin'] as $leftJoin) {
                 $builder->leftJoin($leftJoin['join'], $leftJoin['alias']);
+            }
+        }
+
+        if (isset($data[$relationType]['where'])) {
+            $i = 0;
+            foreach ($data[$relationType]['where'] as $i => $where) {
+                if ($i > 0) {
+                    $builder->andWhere($where);
+                } else {
+                    $builder->where($where);
+                }
             }
         }
 
