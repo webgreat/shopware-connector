@@ -6,7 +6,6 @@
 
 namespace jtl\Connector\Shopware\Controller;
 
-use \jtl\Connector\Result\Transaction as TransactionResult;
 use \jtl\Connector\Transaction\Handler as TransactionHandler;
 use \jtl\Core\Exception\TransactionException;
 use \jtl\Connector\Result\Action;
@@ -62,6 +61,10 @@ class Product extends DataController
 
                     $product = Mmc::getModel('Product');
                     $product->map(true, DataConverter::toObject($productSW));
+
+                    // Stock
+                    $product->_considerStock = ($product->_stockLevel > 0);
+                    $product->_permitNegativeStock = (bool)!$productSW['lastStock'];
 
                     // ProductI18n
                     $this->addContainerPos($container, 'product_i18n', $productSW);
@@ -263,17 +266,18 @@ class Product extends DataController
 
         try {
             $container = TransactionHandler::getContainer($this->getMethod()->getController(), $trid);
-            $result = new TransactionResult();
-            $result->setTransactionId($trid);
+            $result = $this->insert($container);
 
-            if ($this->insert($container)) {
+            if ($result !== null) {
                 $action->setResult($result->getPublic());
             }
         }
         catch (\Exception $exc) {
+            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : "unknown";
+
             $err = new Error();
             $err->setCode($exc->getCode());
-            $err->setMessage($exc->getMessage());
+            $err->setMessage($message);
             $action->setError($err);
         }
 

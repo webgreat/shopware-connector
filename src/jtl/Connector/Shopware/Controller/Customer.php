@@ -16,6 +16,7 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\ModelContainer\CustomerContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \jtl\Connector\Shopware\Utilities\Salutation;
 
 /**
  * Customer Controller
@@ -58,6 +59,9 @@ class Customer extends DataController
 
                     $customer = Mmc::getModel('Customer');
                     $customer->map(true, DataConverter::toObject($customerSW));
+
+                    // Salutation
+                    $customer->_salutation = Salutation::map($customer->_salutation);
 
                     $country = Shopware()->Models()->getRepository('Shopware\Models\Country\Country')
                         ->findOneById($customerSW['billing']['countryId']);
@@ -113,17 +117,18 @@ class Customer extends DataController
 
         try {
             $container = TransactionHandler::getContainer($this->getMethod()->getController(), $trid);
-            $result = new TransactionResult();
-            $result->setTransactionId($trid);
+            $result = $this->insert($container);
 
-            if ($this->insert($container)) {
+            if ($result !== null) {
                 $action->setResult($result->getPublic());
             }
         }
         catch (\Exception $exc) {
+            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : "unknown";
+
             $err = new Error();
             $err->setCode($exc->getCode());
-            $err->setMessage($exc->getMessage());
+            $err->setMessage($message);
             $action->setError($err);
         }
 

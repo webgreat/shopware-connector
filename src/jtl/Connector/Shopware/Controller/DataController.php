@@ -27,7 +27,7 @@ abstract class DataController extends CoreController
     /**
      * Statistic
      *
-     * @params mixed $params
+     * @param mixed $params
      * @return \jtl\Connector\Result\Action
      */
     public function statistic($params)
@@ -65,7 +65,7 @@ abstract class DataController extends CoreController
     /**
      * Insert or update
      *
-     * @params mixed $params
+     * @param mixed $params
      * @return \jtl\Connector\Result\Action
      */
     public function push($params)
@@ -103,7 +103,7 @@ abstract class DataController extends CoreController
     /**
      * Select
      *
-     * @params mixed $params
+     * @param mixed $params
      * @return \jtl\Connector\Result\Action
      */
     public function pull($params)
@@ -153,7 +153,7 @@ abstract class DataController extends CoreController
     /**
      * Delete
      *
-     * @params mixed $params
+     * @param mixed $params
      * @return \jtl\Connector\Result\Action
      */
     public function delete($params)
@@ -165,8 +165,10 @@ abstract class DataController extends CoreController
     }
 
     /**
-     * (non-PHPdoc)
-     * @see \jtl\Core\ModelContainer\IModelContainer::insert()
+     * Insert
+     *
+     * @param \jtl\Connector\ModelContainer\CoreContainer $container
+     * @return \jtl\Connector\Result\Transaction
      */
     public function insert(ModelContainer $container)
     {
@@ -195,11 +197,16 @@ abstract class DataController extends CoreController
             $mapper = Mmc::getMapper($class);
             $data = $mapper->prepareData($container);
             $modelSW = $mapper->save($data);
-                    
-            return true;
+
+            $model = $container->getMainModel();
+
+            $result = new \jtl\Connector\Result\Transaction();
+            $result->setId(new \jtl\Connector\Model\Identity($modelSW->getId(), $model->getId()->getHost()));
+
+            return $result;
         }
         
-        return false;
+        return null;
     }
 
     /**

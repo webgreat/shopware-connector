@@ -41,7 +41,7 @@ class Shop extends DataMapper
             ->leftJoin('shop.locale', 'locale')
             ->leftJoin('shop.category', 'category')
             ->leftJoin('shop.currencies', 'currencies')
-            ->where('category.id BETWEEN :first AND :last')
+            ->where('shop.id BETWEEN :first AND :last')
             ->setParameter('first', $es[0]['id'])
             ->setParameter('last', $es[$lastIndex]['id'])
             ->getQuery()

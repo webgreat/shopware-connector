@@ -56,7 +56,7 @@ class Product extends ProductModel
         '_vat' => array('tax', 'tax'),
         '_minimumOrderQuantity' => array('mainDetail', 'minPurchase'),
         '_ean' => array('mainDetail', 'ean'),
-        '_isTopProduct' => '',
+        '_isTopProduct' => 'highlight',
         '_productWeight' => array('mainDetail', 'weight'),
         '_shippingWeight' => '',
         '_isNew' => '',

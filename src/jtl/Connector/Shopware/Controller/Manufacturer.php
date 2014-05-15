@@ -89,17 +89,18 @@ class Manufacturer extends DataController
 
         try {
             $container = TransactionHandler::getContainer($this->getMethod()->getController(), $trid);
-            $result = new TransactionResult();
-            $result->setTransactionId($trid);
+            $result = $this->insert($container);
 
-            if ($this->insert($container)) {
+            if ($result !== null) {
                 $action->setResult($result->getPublic());
             }
         }
         catch (\Exception $exc) {
+            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : "unknown";
+
             $err = new Error();
             $err->setCode($exc->getCode());
-            $err->setMessage($exc->getMessage());
+            $err->setMessage($message);
             $action->setError($err);
         }
 

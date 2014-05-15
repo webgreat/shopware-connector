@@ -7,6 +7,7 @@
 namespace jtl\Connector\Shopware\Model;
 
 use \jtl\Connector\Model\CustomerOrderBillingAddress as CustomerOrderBillingAddressModel;
+use \jtl\Connector\Shopware\Utilities\Salutation;
 
 /**
  * CustomerOrderBillingAddress Model
@@ -41,6 +42,10 @@ class CustomerOrderBillingAddress extends CustomerOrderBillingAddressModel
      */
     public function map($toWawi = false, \stdClass $obj = null)
     {
+        if (isset($obj->salutation)) {
+            $obj->salutation = Salutation::map($obj->salutation);
+        }
+
         return DataModel::map($toWawi, $obj, $this);
     }
 }

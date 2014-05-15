@@ -94,7 +94,10 @@ class DataModel
                     // TODO: Date Check
                     $setValue($platformField, $original->$getter(), $obj);
                 }
-                else if (strlen($platformField) > 0) {
+                elseif ($original->$getter() instanceof Identity) {
+                    $obj->$platformField = $original->$getter()->getEndpoint();
+                }
+                elseif (strlen($platformField) > 0) {
                     // TODO: Date Check
                     $obj->$platformField = $original->$getter();
                 }
