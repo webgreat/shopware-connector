@@ -110,8 +110,7 @@ class Product extends DataMapper
 
     public function prepareData(ProductContainer $container)
     {
-        $products = $container->getProducts();
-        $product = $products[0];
+        $product = $container->getMainModel();
 
         //$productSW = $this->Manager()->getRepository('Shopware\Models\Article\Article')->find($product->getId());
 

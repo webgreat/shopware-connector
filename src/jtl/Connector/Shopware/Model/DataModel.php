@@ -20,10 +20,14 @@ class DataModel
      *
      * @param boolean $toConnector
      */
-    public static function map($toConnector = false, \stdClass $obj = null, MainDataModel &$original)
+    public static function map($toConnector = false, \stdClass $obj = null, MainDataModel $original)
     {
+        if (!$original instanceof MainDataModel) {
+            throw new \InvalidArgumentException('param original is not an instance of MainDataModel');
+        }
+
         if ($toConnector && $obj === null)
-            throw new \BadMethodCallException("The second parameter can't be null if the first is true");
+            throw new \InvalidArgumentException("The second parameter can't be null if the first is true");
     
         if (!$toConnector) {
             $obj = new \stdClass();
