@@ -136,8 +136,8 @@ class Image extends DataController
                             }
 
                             $model->_relationType = $relationType;
-                            $model->_foreignKey = $modelSW['foreignKey'];
-                            $model->_filename = sprintf('http://%s%s/%s%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), '/media/images/', $modelSW['path']);
+                            $model->_foreignKey = $modelSW['articleID'] . '_' . $modelSW['group_id'] . '_' . $modelSW['foreignKey'];
+                            $model->_filename = sprintf('http://%s%s/%s%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), 'media/image/', $modelSW['path'] . '.' . $modelSW['extension']);
 
                             $result[] = $model->getPublic();
                             break;

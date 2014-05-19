@@ -16,10 +16,11 @@ class Image extends DataMapper
 
         switch ($relationType) {
             case ImageRelationType::TYPE_PRODUCT_VARIATION_VALUE:
-                return Shopware()->Db()->fetchAll('SELECT r.id, r.option_id as foreignKey, i.img as path, i.parent_id as masterImageId  
+                return Shopware()->Db()->fetchAll('SELECT r.id, r.option_id as foreignKey, i.img as path, i.parent_id as masterImageId, i.extension, i.articleID, o.group_id
                                                     FROM s_article_img_mapping_rules AS r
                                                     JOIN s_article_img_mappings AS m ON m.id = r.mapping_id
                                                     JOIN s_articles_img AS i ON i.id = m.image_id
+                                                    JOIN s_article_configurator_options AS o ON o.id = r.option_id
                                                     GROUP BY r.option_id');
         }
 
