@@ -17,6 +17,8 @@ use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\ModelContainer\CustomerContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Connector\Shopware\Utilities\Salutation;
+use \jtl\Connector\Logger\Logger;
+use \jtl\Connector\Formatter\ExceptionFormatter;
 
 /**
  * Customer Controller
@@ -88,8 +90,9 @@ class Customer extends DataController
                     $container->add('customer', $customer, false);
 
                     $result[] = $container->getPublic(array("items"));
+                } catch (\Exception $exc) { 
+                    Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }
-                catch (\Exception $exc) { }
             }
 
             $action->setResult($result);

@@ -18,6 +18,8 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\ModelContainer\CategoryContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \jtl\Connector\Logger\Logger;
+use \jtl\Connector\Formatter\ExceptionFormatter;
 
 /**
  * Category Controller
@@ -136,8 +138,9 @@ class Category extends DataController
                     $container->add('category', $category, false);
 
                     $result[] = $container->getPublic(array("items"));
+                } catch (\Exception $exc) {
+                    Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }
-                catch (\Exception $exc) { }
             }
 
             $action->setResult($result);

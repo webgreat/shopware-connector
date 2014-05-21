@@ -14,6 +14,8 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Connector\ModelContainer\ManufacturerContainer;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \jtl\Connector\Logger\Logger;
+use \jtl\Connector\Formatter\ExceptionFormatter;
 
 /**
  * Manufacturer Controller
@@ -61,7 +63,9 @@ class Manufacturer extends DataController
                     $container->add('manufacturer', $manufacturer, false);
 
                     $result[] = $container->getPublic(array('items'));
-                } catch (\Exception $exc) { }
+                } catch (\Exception $exc) { 
+                    Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+                }
             }
 
             $action->setResult($result);

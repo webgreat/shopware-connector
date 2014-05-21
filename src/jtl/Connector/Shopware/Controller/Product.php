@@ -15,6 +15,8 @@ use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Core\Utilities\DataInjector;
 use \jtl\Connector\ModelContainer\ProductContainer;
+use \jtl\Connector\Logger\Logger;
+use \jtl\Connector\Formatter\ExceptionFormatter;
 
 /**
  * Product Controller
@@ -190,8 +192,9 @@ class Product extends DataController
                     $container->add('product', $product, false);
 
                     $result[] = $container->getPublic(array('items'));
+                } catch (\Exception $exc) { 
+                    Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }
-                catch (\Exception $exc) { }
             }
 
             /*

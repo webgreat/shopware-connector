@@ -34,6 +34,13 @@ class Shopware_Plugins_Frontend_Jtlconnector_Bootstrap extends Shopware_Componen
  
     public function install()
     {
+        if (!$this->assertVersionGreaterThen('4.2.3')) {
+            return array(
+                'success' => false,
+                'message' => 'Das Plugin benötigt mindestens die Shopware Version 4.2.3'
+            );
+        }
+
         $this->subscribeEvent(
             'Enlight_Controller_Dispatcher_ControllerPath_Frontend_Jtlconnector',
             'onGetControllerPathFrontend'

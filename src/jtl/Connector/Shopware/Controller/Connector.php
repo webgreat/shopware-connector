@@ -9,6 +9,8 @@ namespace jtl\Connector\Shopware\Controller;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \jtl\Connector\Logger\Logger;
+use \jtl\Connector\Formatter\ExceptionFormatter;
 
 /**
  * Connector Controller
@@ -53,8 +55,7 @@ class Connector extends DataController
         // Only Main Controller
         if ($params !== null && $params) {
             foreach ($mainControllers as $mainController) {
-                try
-                {
+                try {
                     if (!in_array($mainController, $excludes)) {
                         $controller = Mmc::getController($mainController);
                         $result = $controller->statistic($params);
@@ -62,9 +63,9 @@ class Connector extends DataController
                             $results[] = $result->getResult();
                         }
                     }
+                } catch(\Exception $exc) { 
+                    Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }
-                catch(\Exception $exc)
-                { }
             }
         }
 
@@ -72,8 +73,7 @@ class Connector extends DataController
         else
         {
             foreach (glob("{$path}*.php") as $filename) {
-                try
-                {
+                try {
                     $class = str_replace(array($path, '.php'), '', $filename);
                     if (!in_array($class, $excludes)) {
                         $controller = Mmc::getController(str_replace(array($path, '.php'), '', $filename));
@@ -82,9 +82,9 @@ class Connector extends DataController
                             $results[] = $result->getResult();
                         }
                     }
+                } catch(\Exception $exc) { 
+                    Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }
-                catch(\Exception $exc)
-                { }
             }
         }
 

@@ -16,6 +16,8 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\ModelContainer\CustomerOrderContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \jtl\Connector\Logger\Logger;
+use \jtl\Connector\Formatter\ExceptionFormatter;
 
 /**
  * CustomerOrder Controller
@@ -91,8 +93,9 @@ class CustomerOrder extends DataController
                     // CustomerOrderPaymentInfos
 
                     $result[] = $container->getPublic(array("items"));
+                } catch (\Exception $exc) { 
+                    Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }
-                catch (\Exception $exc) { }
             }
 
             $action->setResult($result);
