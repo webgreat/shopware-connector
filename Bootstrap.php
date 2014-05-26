@@ -46,10 +46,22 @@ class Shopware_Plugins_Frontend_Jtlconnector_Bootstrap extends Shopware_Componen
             'onGetControllerPathFrontend'
         );
 
+        /*
+        $form = $this->Form();
+ 
+        $form->setElement('text', 'auth_token', 
+            array(
+                'label' => 'Auth Token',
+                'value' => '',
+                'scope' => Shopware\Models\Config\Element::SCOPE_SHOP
+            )
+        );
+
         return array(
     		'success' => true,
     		'invalidateCache' => array('backend', 'proxy')
         );
+        */
 	}
 
     public function enable()

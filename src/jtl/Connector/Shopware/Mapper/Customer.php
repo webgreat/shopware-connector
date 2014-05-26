@@ -10,6 +10,7 @@ use \jtl\Connector\ModelContainer\CustomerContainer;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Logger\Logger;
 
 class Customer extends DataMapper
 {
@@ -112,6 +113,8 @@ class Customer extends DataMapper
 
     public function save(array $data, $namespace = '\Shopware\Models\Customer\Customer')
     {
+        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
+        
         $customerResource = \Shopware\Components\Api\Manager::getResource('Customer');
 
         try {

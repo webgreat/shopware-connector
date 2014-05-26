@@ -6,6 +6,8 @@
 
 namespace jtl\Connector\Shopware\Mapper;
 
+use \jtl\Connector\Logger\Logger;
+
 class Currency extends DataMapper
 {
     public function findAll($offset = 0, $limit = 100, $count = false)
@@ -39,6 +41,8 @@ class Currency extends DataMapper
 
     public function save(array $data, $namespace = '\Shopware\Models\Shop\Currency')
     {
+        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
+        
         return parent::save($data, $namespace);
     }
 }

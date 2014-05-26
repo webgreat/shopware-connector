@@ -11,6 +11,7 @@ use \jtl\Connector\ModelContainer\ProductContainer;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Logger\Logger;
 
 class Product extends DataMapper
 {
@@ -206,6 +207,8 @@ class Product extends DataMapper
 
     public function save(array $data, $namespace = '\Shopware\Models\Article\Article')
     {
+        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
+        
         $articleResource = \Shopware\Components\Api\Manager::getResource('Article');
 
         try {

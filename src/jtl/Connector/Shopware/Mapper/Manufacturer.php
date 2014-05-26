@@ -11,6 +11,7 @@ use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
 use \Shopware\Models\Article\Supplier as SupplierModel;
+use \jtl\Connector\Logger\Logger;
 
 class Manufacturer extends DataMapper
 {
@@ -76,6 +77,8 @@ class Manufacturer extends DataMapper
 
     public function save(array $data, $namespace = '\Shopware\Models\Article\Supplier')
     {
+        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
+        
         try {
             return $this->update($data['id'], $data);
         } catch (ApiException\NotFoundException $exc) {

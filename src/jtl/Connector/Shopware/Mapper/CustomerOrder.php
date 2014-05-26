@@ -12,6 +12,7 @@ use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
 use \Shopware\Models\Order\Order as OrderModel;
 use \Shopware\Models\Order\Detail as DetailModel;
+use \jtl\Connector\Logger\Logger;
 
 class CustomerOrder extends DataMapper
 {
@@ -160,6 +161,8 @@ class CustomerOrder extends DataMapper
 
     public function save(array $data, $namespace = '\Shopware\Models\Order\Order')
     {
+        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
+        
         $customerOrderResource = \Shopware\Components\Api\Manager::getResource('Order');
 
         try {

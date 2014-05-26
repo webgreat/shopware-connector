@@ -11,6 +11,7 @@ use \jtl\Connector\ModelContainer\CategoryContainer;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Logger\Logger;
 
 class Category extends DataMapper
 {
@@ -113,6 +114,8 @@ class Category extends DataMapper
 
     public function save(array $data, $namespace = '\Shopware\Models\Category\Category')
     {
+        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
+
         $categoryResource = \Shopware\Components\Api\Manager::getResource('Category');
 
         try {

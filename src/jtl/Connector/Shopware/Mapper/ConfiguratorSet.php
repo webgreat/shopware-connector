@@ -7,6 +7,7 @@
 namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \jtl\Connector\Logger\Logger;
 
 class ConfiguratorSet extends DataMapper
 {
@@ -76,6 +77,8 @@ class ConfiguratorSet extends DataMapper
 
     public function save(array $data, $namespace = '\Shopware\Models\Article\Configurator\Set')
     {
+        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
+
         return parent::save($data, $namespace);
     }
 }

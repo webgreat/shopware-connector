@@ -87,7 +87,7 @@ class Category extends DataController
                         for ($i = 1; $i <= 6; $i++) {
                             if (isset($categorySW['attribute']["attribute{$i}"]) && strlen(trim($categorySW['attribute']["attribute{$i}"]))) {
                                 $categoryAttr = Mmc::getModel('CategoryAttr');
-                                $categoryAttr->map(true, DataConverter::toObject($categorySW['attribute']));                            
+                                $categoryAttr->map(true, DataConverter::toObject($categorySW['attribute']));
 
                                 $container->add('category_attr', $categoryAttr, false);
 

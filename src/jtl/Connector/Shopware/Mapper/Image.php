@@ -7,6 +7,7 @@
 namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Connector\Drawing\ImageRelationType;
+use \jtl\Connector\Logger\Logger;
 
 class Image extends DataMapper
 {
@@ -177,5 +178,29 @@ class Image extends DataMapper
         $query = $builder->getQuery();
 
         return $query;
+    }
+
+    public function prepareData(CategoryContainer $container)
+    {
+        $image = $container->getMainModel();
+
+        $data = DataConverter::toArray(DataModel::map(false, null, $image));
+
+        return $data;
+    }
+
+    public function save(array $data, $namespace = '\Shopware\Models\Media\Media')
+    {
+        $data['type'] = \Shopware\Models\Media\Media::TYPE_IMAGE;
+        
+        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
+
+        $mediaResource = \Shopware\Components\Api\Manager::getResource('Media');
+
+        try {
+            return $mediaResource->update($data['id'], $data);
+        } catch (ApiException\NotFoundException $exc) {
+            return $mediaResource->create($data);
+        }
     }
 }

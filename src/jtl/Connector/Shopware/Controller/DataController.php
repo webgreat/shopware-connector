@@ -82,8 +82,8 @@ abstract class DataController extends CoreController
             $array = DataConverter::toArray($obj->map());
 
             $mapper = Mmc::getMapper($class);
-            $result = $mapper->save($array);
-            if ($result->getErrno() > 0) {
+            $model = $mapper->save($array);
+            if ($model === null) {
                 throw new DatabaseException($result->getError(), $result->getErrno());
             }
             else {

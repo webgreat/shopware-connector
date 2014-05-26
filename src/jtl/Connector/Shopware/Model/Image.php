@@ -15,11 +15,11 @@ use \jtl\Connector\Model\Image as ImageModel;
 class Image extends ImageModel
 {
     protected $_fields = array(
-        '_id' => '',
+        '_id' => 'id',
         '_masterImageId' => '',
-        '_relationType' => '',
+        '_relationType' => 'type',
         '_foreignKey' => '',
-        '_filename' => '',
+        '_filename' => 'path',
         '_sort' => ''
     );
     
