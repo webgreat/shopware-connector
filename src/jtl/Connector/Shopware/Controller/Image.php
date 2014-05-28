@@ -17,6 +17,7 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Connector\Model\Statistic;
+use \jtl\Connector\Connector\Formatter\ExceptionFormatter;
 
 /**
  * Image Controller
@@ -228,7 +229,7 @@ class Image extends DataController
             }
         }
         catch (\Exception $exc) {
-            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : \jtl\Connector\Connector\Formatter\ExceptionFormatter::format($exc);
+            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
 
             $err = new Error();
             $err->setCode($exc->getCode());

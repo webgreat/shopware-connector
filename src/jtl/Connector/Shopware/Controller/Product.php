@@ -276,7 +276,7 @@ class Product extends DataController
             }
         }
         catch (\Exception $exc) {
-            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : \jtl\Connector\Connector\Formatter\ExceptionFormatter::format($exc);
+            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
 
             $err = new Error();
             $err->setCode($exc->getCode());
