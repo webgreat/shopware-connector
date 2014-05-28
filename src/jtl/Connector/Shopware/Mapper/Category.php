@@ -69,8 +69,7 @@ class Category extends DataMapper
 
     public function prepareData(CategoryContainer $container)
     {
-        $categories = $container->getCategories();
-        $category = $categories[0];
+        $category = $container->getMainModel();
 
         //$categorySW = $this->Manager()->getRepository('Shopware\Models\Category\Category')->find($category->getId());
 
@@ -116,12 +115,16 @@ class Category extends DataMapper
     {
         Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
 
-        $categoryResource = \Shopware\Components\Api\Manager::getResource('Category');
+        $resource = \Shopware\Components\Api\Manager::getResource('Category');
 
         try {
-            return $categoryResource->update($data['id'], $data);
+            if (!$data['id']) {
+                return $resource->create($data);
+            } else {
+                return $resource->update($data['id'], $data);
+            }
         } catch (ApiException\NotFoundException $exc) {
-            return $categoryResource->create($data);
+            return $resource->create($data);
         }
     }
 }

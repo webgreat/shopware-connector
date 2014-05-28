@@ -61,8 +61,7 @@ class Manufacturer extends DataMapper
 
     public function prepareData(ManufacturerContainer $container)
     {
-        $manufacturers = $container->getManufacturers();
-        $manufacturer = $manufacturers[0];
+        $manufacturer = $container->getMainModel();
 
         // Manufacturer
         $data = DataConverter::toArray(DataModel::map(false, null, $manufacturer));
@@ -80,7 +79,11 @@ class Manufacturer extends DataMapper
         Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
         
         try {
-            return $this->update($data['id'], $data);
+            if (!$data['id']) {
+                return $this->create($data);
+            } else {
+                return $this->update($data['id'], $data);
+            }
         } catch (ApiException\NotFoundException $exc) {
             return $this->create($data);
         }

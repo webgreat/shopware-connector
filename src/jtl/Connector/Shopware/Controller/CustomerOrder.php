@@ -130,7 +130,7 @@ class CustomerOrder extends DataController
             }
         }
         catch (\Exception $exc) {
-            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : "unknown";
+            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : \jtl\Connector\Connector\Formatter\ExceptionFormatter::format($exc);
 
             $err = new Error();
             $err->setCode($exc->getCode());

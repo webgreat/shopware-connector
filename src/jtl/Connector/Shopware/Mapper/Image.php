@@ -195,12 +195,16 @@ class Image extends DataMapper
         
         Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
 
-        $mediaResource = \Shopware\Components\Api\Manager::getResource('Media');
+        $resource = \Shopware\Components\Api\Manager::getResource('Media');
 
         try {
-            return $mediaResource->update($data['id'], $data);
+            if (!$data['id']) {
+                return $resource->create($data);
+            } else {
+                return $resource->update($data['id'], $data);
+            }
         } catch (ApiException\NotFoundException $exc) {
-            return $mediaResource->create($data);
+            return $resource->create($data);
         }
     }
 }

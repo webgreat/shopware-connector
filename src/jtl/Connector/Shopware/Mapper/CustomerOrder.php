@@ -89,8 +89,7 @@ class CustomerOrder extends DataMapper
 
     public function prepareData(CustomerOrderContainer $container)
     {
-        $customerOrders = $container->getCustomerOrders();
-        $customerOrder = $customerOrders[0];
+        $customerOrder = $container->getMainModel();
 
         //$customerOrderSW = $this->Manager()->getRepository('Shopware\Models\Order\Order')->find($customerOrder->getId());
 
@@ -163,10 +162,14 @@ class CustomerOrder extends DataMapper
     {
         Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
         
-        $customerOrderResource = \Shopware\Components\Api\Manager::getResource('Order');
+        $resource = \Shopware\Components\Api\Manager::getResource('Order');
 
         try {
-            return $customerOrderResource->update($data['id'], $data);
+            if (!$data['id']) {
+                return $this->create($data);
+            } else {
+                return $resource->update($data['id'], $data);
+            }
         } catch (ApiException\NotFoundException $exc) {
             return $this->create($data);
         }

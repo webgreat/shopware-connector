@@ -118,6 +118,10 @@ class Product extends DataMapper
         // Product
         $data = DataConverter::toArray(DataModel::map(false, null, $product));
 
+        if (intval($data['id']) == 0) {
+            $data['active'] = 1;
+        }
+
         // ProductI18n
         foreach ($container->getProductI18ns() as $productI18n) {
 
@@ -209,12 +213,16 @@ class Product extends DataMapper
     {
         Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
         
-        $articleResource = \Shopware\Components\Api\Manager::getResource('Article');
+        $resource = \Shopware\Components\Api\Manager::getResource('Article');
 
         try {
-            return $articleResource->update($data['id'], $data);
+            if (!$data['id']) {
+                return $resource->create($data);
+            } else {
+                return $resource->update($data['id'], $data);
+            }
         } catch (ApiException\NotFoundException $exc) {
-            return $articleResource->create($data);
+            return $resource->create($data);
         }
     }
 }
