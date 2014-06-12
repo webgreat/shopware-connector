@@ -17,6 +17,7 @@ use \jtl\Core\Utilities\DataInjector;
 use \jtl\Connector\ModelContainer\ProductContainer;
 use \jtl\Connector\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
+use \jtl\Connector\Shopware\Utilities\CustomerGroup as CustomerGroupUtil;
 
 /**
  * Product Controller
@@ -82,7 +83,52 @@ class Product extends DataController
                         }
                     }
 
+                    // ProductPrice
                     $this->addContainerPos($container, 'product_price', $productSW['mainDetail']['prices'], true);
+
+                    // ProductSpecialPrice
+                    if ($productSW['priceGroupActive']) {
+                        DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['priceGroup'], array('articleId', 'active'), array($product->_id, true));
+                        $this->addContainerPos($container, 'product_special_price', $productSW['priceGroup']);
+
+                        // SpecialPrices
+                        foreach ($productSW['priceGroup']['discounts'] as $discount) {
+                            $customerGroup = CustomerGroupUtil::get($discount['customerGroupId']);
+                            $price = null;
+                            $priceCount = count($productSW['mainDetail']['prices']);
+
+                            if ($priceCount == 1) {
+                                $price = reset($productSW['mainDetail']['prices']);
+                            } elseif ($priceCount > 1) {
+                                foreach ($productSW['mainDetail']['prices'] as $mainPrice) {
+                                    if ($mainPrice['customerGroupKey'] == $customerGroup->getKey()) {
+                                        $price = $mainPrice;
+
+                                        break;
+                                    }
+                                }
+                            } else {
+                                Logger::write(sprintf('Could not find any price for customer group (%s)', $customerGroup->getKey()), Logger::WARNING, 'controller');
+
+                                continue;
+                            }
+
+                            $discountPriceNet = Shopware()->Modules()->Articles()->sGetPricegroupDiscount(
+                                $customerGroup->getKey(),
+                                $discount['groupId'],
+                                $price['price'],
+                                1,
+                                false
+                            );
+
+                            $specialPrice = Mmc::getModel('SpecialPrice');
+                            $specialPrice->_customerGroupId = $discount['customerGroupId'];
+                            $specialPrice->_productSpecialPriceId = $discount['groupId'];
+                            $specialPrice->_priceNet = $discountPriceNet;
+
+                            $container->add('special_price', $specialPrice, false);
+                        }
+                    }
 
                     // Product2Categories
                     if (isset($productSW['categories'])) {
@@ -199,7 +245,6 @@ class Product extends DataController
 
             /*
             "product_file_download" => array("ProductFileDownload", "ProductFileDownloads"),
-            "product_special_price" => array("ProductSpecialPrice", "ProductSpecialPrices"),
             "product_variation_invisibility" => array("ProductVariationInvisibility", "ProductVariationInvisibilities"),
             "product_variation_value_extra_charge" => array("ProductVariationValueExtraCharge", "ProductVariationValueExtraCharges"),
             "product_variation_value_invisibility" => array("ProductVariationValueInvisibility", "ProductVariationValueInvisibilities"),

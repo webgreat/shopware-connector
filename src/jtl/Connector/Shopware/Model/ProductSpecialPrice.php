@@ -15,9 +15,9 @@ use \jtl\Connector\Model\ProductSpecialPrice as ProductSpecialPriceModel;
 class ProductSpecialPrice extends ProductSpecialPriceModel
 {
     protected $_fields = array(
-        '_id' => '',
-        '_productId' => '',
-        '_isActive' => '',
+        '_id' => 'id',
+        '_productId' => 'articleId',
+        '_isActive' => 'active',
         '_activeFrom' => '',
         '_activeUntil' => '',
         '_stockLimit' => '',

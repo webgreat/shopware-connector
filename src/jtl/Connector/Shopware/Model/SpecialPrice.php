@@ -15,9 +15,9 @@ use \jtl\Connector\Model\SpecialPrice as SpecialPriceModel;
 class SpecialPrice extends SpecialPriceModel
 {
     protected $_fields = array(
-        '_customerGroupId' => '',
-        '_productSpecialPriceId' => '',
-        '_priceNet' => ''
+        '_customerGroupId' => 'customerGroupId',
+        '_productSpecialPriceId' => 'groupId',
+        '_priceNet' => 'priceNet'
     );
     
     /**

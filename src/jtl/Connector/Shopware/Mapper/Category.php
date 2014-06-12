@@ -65,7 +65,7 @@ class Category extends DataMapper
     public function fetchCount($offset = 0, $limit = 100)
     {
         return $this->findAll($offset, $limit, true);
-    } 
+    }
 
     public function prepareData(CategoryContainer $container)
     {

@@ -18,7 +18,7 @@ class ProductVariation extends ProductVariationModel
         '_id' => 'id',
         '_productId' => 'articleId',
         '_type' => '',
-        '_sort' => ''
+        '_sort' => 'position'
     );
     
     /**

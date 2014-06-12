@@ -10,6 +10,16 @@ use \jtl\Connector\Logger\Logger;
 
 class CustomerGroup extends DataMapper
 {
+    public function find($id)
+    {
+        return $this->Manager()->getRepository('Shopware\Models\Customer\Group')->find($id);
+    }
+
+    public function findOneBy(array $kv)
+    {
+        return $this->Manager()->getRepository('Shopware\Models\Customer\Group')->findOneBy($kv);
+    }
+
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
         $builder = $this->Manager()->createQueryBuilder()->select(
