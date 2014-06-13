@@ -113,6 +113,7 @@ class Product extends DataController
                                 continue;
                             }
 
+                            // Calling shopware core method
                             $discountPriceNet = Shopware()->Modules()->Articles()->sGetPricegroupDiscount(
                                 $customerGroup->getKey(),
                                 $discount['groupId'],

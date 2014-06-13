@@ -111,15 +111,10 @@ class Product extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function prepareData(ProductContainer $container)
+    protected function prepareProduct(ProductContainer $container)
     {
-        Logger::write(print_r($container, 1), Logger::DEBUG, 'database');
-        
         $product = $container->getMainModel();
 
-        //$productSW = $this->Manager()->getRepository('Shopware\Models\Article\Article')->find($product->getId());
-
-        // Product
         $data = DataConverter::toArray(DataModel::map(false, null, $product));
 
         if (intval($data['id']) == 0) {
@@ -154,6 +149,28 @@ class Product extends DataMapper
             $data['categories'][] = DataConverter::toArray(DataModel::map(false, null, $product2Category));
         }
 
+        $productSW = null;
+        if (empty($product->getId()->getEndpoint())) {
+            $productSW = $this->save($data);
+        }
+
+        return array(
+            'productSW' => $productSW,
+            'data' => $data
+        );
+    }
+
+    public function prepareData(ProductContainer $container)
+    {
+        Logger::write(print_r($container, 1), Logger::DEBUG, 'database');
+
+        $product = $container->getMainModel();
+        
+        $result = $this->prepareProduct($container);
+        $data = $result['data'];
+        $productSW = $result['productSW'];
+        $productId = ($productSW !== null) ? $productSW->getId() : $product->getId()->getEndpoint();
+
         // Attributes
         foreach ($container->getProductAttrs() as $productAttr) {
             //$data['attribute'][] = DataConverter::toArray(DataModel::map(false, null, $product2Category));
@@ -162,149 +179,8 @@ class Product extends DataMapper
         // ProductInvisibility
 
         // ProductVariation
-        if (count($container->getProductVariations()) > 0) {
-            $data['configuratorSet'] = array();
-
-            $configuratorGroupMapper = Mmc::getMapper('ConfiguratorGroup');
-            $shopMapper = Mmc::getMapper('Shop');
-            $shops = $shopMapper->findAll();
-            foreach ($container->getProductVariations() as $productVariation) {
-
-                // New
-                $groupId = null;
-                if (empty($productVariation->getId()->getEndpoint())) {
-                    if (empty($productVariation->getId()->getHost())) {
-                        throw new ApiException\ValidationException('Product variation host and endpoint ids cannot be empty');
-                    }
-
-                    // creating new configuratorGroup
-                    $isAvailable = false;
-                    foreach ($container->getProductVariationI18ns() as $productVariationI18n) {
-                        if ($productVariation->getId()->getHost() == $productVariationI18n->getProductVariationId()->getHost()
-                            && $productVariationI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-
-                            $params = DataConverter::toArray(DataModel::map(false, null, $productVariation));
-                            $params['name'] = $productVariationI18n->getName();
-
-                            $configuratorGroup = $configuratorGroupMapper->findOneBy(array('name' => $params['name']));
-
-                            if (!$configuratorGroup) {
-                                $configuratorGroup = $configuratorGroupMapper->create($params);
-
-                                // todo: relations????
-                            }
-
-                            $groupId = $configuratorGroup->getId();
-
-                            $data['configuratorSet']['groups'][$groupId]['name'] = $params['name'];
-                            $isAvailable = $groupId > 0;
-                        }
-                    }
-
-                    if (!$isAvailable) {
-                        throw new ApiException\ValidationException('Product variation (Host: ' . $productVariation->getId()->getHost() . ') could not be created');
-                    }
-
-                    $data['configuratorSet']['groups'][$groupId] = array_merge($data['configuratorSet']['groups'][$groupId],
-                        DataConverter::toArray(DataModel::map(false, null, $productVariation)));
-
-                    $data['configuratorSet']['groups'][$groupId]['id'] = $groupId;
-                    $data['configuratorSet']['groups'][$groupId]['articleId'] = $productId;
-
-                    foreach ($container->getProductVariationI18ns() as $productVariationI18n) {
-                        if ($productVariation->getId()->getHost() == $productVariationI18n->getProductVariationId()->getHost()
-                            && $productVariationI18n->getLocaleName() != Shopware()->Shop()->getLocale()->getLocale()) {
-
-                                $localeId = null;
-                                foreach ($shops as $shop) {
-                                    if ($shop['locale']['locale'] == $productVariationI18n->getLocaleName()) {
-                                        $localeId = $shop['locale']['id'];
-                                    }
-                                }
-
-                                if ($localeId === null) {
-                                    $configuratorGroupMapper->delete($groupId);
-
-                                    throw new ApiException\ValidationException('Cannot find any shop localeId with locale (' . $productVariationI18n->getLocaleName() . ')');
-                                }
-
-                                $configuratorGroupMapper->createTranslatation($groupId, $localeId, $productVariationI18n->getName());
-
-                            $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()] = array();
-                            $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['name'] = $productVariationI18n->getName();
-                            $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['groupId'] = $groupId;
-                        }
-                    }
-                } else {
-                    list($productId, $groupId) = explode('_', $productVariation->getId()->getEndpoint());
-
-                    $data['configuratorSet']['groups'][$groupId] = DataConverter::toArray(DataModel::map(false, null, $productVariation));
-                    $data['configuratorSet']['groups'][$groupId]['id'] = $groupId;
-                    $data['configuratorSet']['groups'][$groupId]['articleId'] = $productId;
-
-                    foreach ($container->getProductVariationI18ns() as $productVariationI18n) {
-                        if ($productVariation->getId()->getHost() == $productVariationI18n->getProductVariationId()->getHost()) {
-                            if ($productVariationI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-                                $data['configuratorSet']['groups'][$groupId]['name'] = $productVariationI18n->getName();
-                            } else {
-                                $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()] = array();
-                                $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['name'] = $productVariationI18n->getName();
-                                $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['groupId'] = $groupId;
-                            }
-                        }
-                    }
-                }
-
-                die(print_r($data, 1));
-            }
-
-            // ProductVariationI18n
-            /*
-            foreach ($container->getProductVariationI18ns() as $productVariationI18n) {
-                list($productId, $groupId) = explode('_', $productVariationI18n->getProductVariationId()->getEndpoint());
-
-                // Main language
-                if ($productVariationI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-                    $data['configuratorSet']['groups'][$groupId]['name'] = $productVariationI18n->getName();
-                } else {
-                    if (!isset($data['configuratorSet']['groups'][$groupId]['translations'])) {
-                        $data['configuratorSet']['groups'][$groupId]['translations'] = array();
-                    }
-
-                    $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()] = array();
-                    $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['name'] = $productVariationI18n->getName();
-                    $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['groupId'] = $groupId;
-                }
-
-                $data['configuratorSet']['groups'][$groupId]['id'] = $groupId;
-            }
-            */
-
-            // ProductVariationValue
-            foreach ($container->getProductVariationValues() as $productVariationValue) {
-                list($productId, $groupId, $optionId) = explode('_', $productVariationValue->getId());
-
-                $data['configuratorSet']['options'][$optionId]['id'] = $optionId;
-                $data['configuratorSet']['options'][$optionId]['groupId'] = $groupId;
-            }
-
-            // ProductVariationValueI18n
-            foreach ($container->getProductVariationValueI18ns() as $productVariationValueI18n) {
-                list($productId, $groupId, $optionId) = explode('_', $productVariationValueI18n->getProductVariationValueId());
-
-                if ($productVariationValueI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-                    $data['configuratorSet']['options'][$optionId]['name'] = $productVariationValueI18n->getName();
-                } else {
-                    if (!isset($data['configuratorSet']['options'][$optionId]['translations'])) {
-                        $data['configuratorSet']['options'][$optionId]['translations'] = array();
-                    }
-
-                    $data['configuratorSet']['options'][$optionId]['translations'][$productVariationValueI18n->getLocaleName()] = array();
-                    $data['configuratorSet']['options'][$optionId]['translations'][$productVariationValueI18n->getLocaleName()]['name'] = $productVariationValueI18n->getName();
-                    $data['configuratorSet']['options'][$optionId]['translations'][$productVariationValueI18n->getLocaleName()]['optionId'] = $optionId;
-                }
-            }
-        }
+        $configuratorGroupMapper = Mmc::getMapper('ConfiguratorGroup');
+        $configuratorGroupMapper->prepareData($container, $productId, $data);
 
         return $data;
     }

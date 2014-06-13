@@ -10,6 +10,9 @@ use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Connector\Logger\Logger;
 use \Shopware\Components\Api\Exception as ApiException;
 use \Shopware\Models\Article\Configurator\Group as ConfiguratorGroupModel;
+use \jtl\Connector\ModelContainer\ProductContainer;
+use \jtl\Core\Utilities\DataConverter;
+use \jtl\Connector\Shopware\Model\DataModel;
 
 class ConfiguratorGroup extends DataMapper
 {
@@ -129,5 +132,143 @@ class ConfiguratorGroup extends DataMapper
         ));
 
         return $configuratorGroup;
+    }
+
+    public function prepareData(ProductContainer $container, $productId, array &$data)
+    {
+        if (count($container->getProductVariations()) > 0) {
+            if ($data === null) {
+                $data = array();
+            }
+
+            if (!isset($data['configuratorSet'])) {
+                $data['configuratorSet'] = array();
+            }
+
+            $configuratorOptionMapper = Mmc::getMapper('ConfiguratorOption');
+            $shopMapper = Mmc::getMapper('Shop');
+            $shops = $shopMapper->findAll();
+
+            foreach ($container->getProductVariations() as $productVariation) {
+
+                // New
+                $groupId = null;
+                if (empty($productVariation->getId()->getEndpoint())) {
+
+                    if (empty($productVariation->getId()->getHost())) {
+                        Logger::write('Product variation host and endpoint ids cannot be empty', Logger::WARNING, 'database');
+
+                        continue;
+                    }
+
+                    // creating new configuratorGroup
+                    $isAvailable = false;
+                    foreach ($container->getProductVariationI18ns() as $productVariationI18n) {
+
+                        // find default shop language to create a base variation
+                        if ($productVariation->getId()->getHost() == $productVariationI18n->getProductVariationId()->getHost()
+                            && $productVariationI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+
+                            $params = DataConverter::toArray(DataModel::map(false, null, $productVariation));
+                            $params['name'] = $productVariationI18n->getName();
+
+                            $configuratorGroup = $this->findOneBy(array('name' => $params['name']));
+
+                            if (!$configuratorGroup) {
+                                $configuratorGroup = $this->create($params);
+
+                                // todo: relations????
+                            }
+
+                            $groupId = $configuratorGroup->getId();
+
+                            $data['configuratorSet']['groups'][$groupId]['name'] = $params['name'];
+                            $isAvailable = $groupId > 0;
+                        }
+                    }
+
+                    if (!$isAvailable) {
+                        Logger::write('Product variation (Host: ' . $productVariation->getId()->getHost() . ') could not be created', Logger::WARNING, 'database');
+
+                        continue;
+                    }
+
+                    $data['configuratorSet']['groups'][$groupId] = array_merge($data['configuratorSet']['groups'][$groupId],
+                        DataConverter::toArray(DataModel::map(false, null, $productVariation)));
+
+                    $data['configuratorSet']['groups'][$groupId]['id'] = $groupId;
+                    $data['configuratorSet']['groups'][$groupId]['articleId'] = $productId;
+
+                    // find all non defaut languages to create a translation model
+                    foreach ($container->getProductVariationI18ns() as $productVariationI18n) {
+                        if ($productVariation->getId()->getHost() == $productVariationI18n->getProductVariationId()->getHost()
+                            && $productVariationI18n->getLocaleName() != Shopware()->Shop()->getLocale()->getLocale()) {
+
+                            $localeId = null;
+                            foreach ($shops as $shop) {
+                                if ($shop['locale']['locale'] == $productVariationI18n->getLocaleName()) {
+                                    $localeId = $shop['locale']['id'];
+                                }
+                            }
+
+                            if ($localeId === null) {
+                                Logger::write('Cannot find any shop localeId with locale (' . $productVariationI18n->getLocaleName() . ')', Logger::WARNING, 'database');
+
+                                continue;
+                            }
+
+                            $this->createTranslatation($groupId, $localeId, $productVariationI18n->getName());
+
+                            $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()] = array();
+                            $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['name'] = $productVariationI18n->getName();
+                            $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['groupId'] = $groupId;
+                        }
+                    }
+
+                    // Creating new variation value
+                    $configuratorOptionMapper->prepareData($container, $productVariation, $productId, $groupId, $data);
+
+                } else { // Only update existing variations
+
+                    list($productId, $groupId) = explode('_', $productVariation->getId()->getEndpoint());
+
+                    $data['configuratorSet']['groups'][$groupId] = DataConverter::toArray(DataModel::map(false, null, $productVariation));
+                    $data['configuratorSet']['groups'][$groupId]['id'] = $groupId;
+                    $data['configuratorSet']['groups'][$groupId]['articleId'] = $productId;
+
+                    foreach ($container->getProductVariationI18ns() as $productVariationI18n) {
+                        if ($productVariation->getId()->getEndpoint() == $productVariationI18n->getProductVariationId()->getEndpoint()) {
+
+                            // Update default language name on the current base variation
+                            if ($productVariationI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                                $data['configuratorSet']['groups'][$groupId]['name'] = $productVariationI18n->getName();
+                            } else {
+
+                                // New language translation value
+                                if (empty($productVariationI18n->getProductVariationId()->getEndpoint())) {
+
+                                    $localeId = null;
+                                    foreach ($shops as $shop) {
+                                        if ($shop['locale']['locale'] == $productVariationI18n->getLocaleName()) {
+                                            $localeId = $shop['locale']['id'];
+                                        }
+                                    }
+
+                                    $this->createTranslatation($groupId, $localeId, $productVariationI18n->getName());
+
+                                }
+
+                                $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()] = array();
+                                $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['name'] = $productVariationI18n->getName();
+                                $data['configuratorSet']['groups'][$groupId]['translations'][$productVariationI18n->getLocaleName()]['groupId'] = $groupId;
+                            }
+                        }
+                    }
+
+                    // Prepare variation value
+                    $configuratorOptionMapper->prepareData($container, $productVariation, $productId, $groupId, $data);
+                }
+            }
+        }
     }
 }
