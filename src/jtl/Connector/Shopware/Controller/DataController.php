@@ -17,6 +17,8 @@ use \jtl\Connector\Model\Statistic;
 use \jtl\Core\Utilities\ClassName;
 use \jtl\Connector\Shopware\Model\DataModel;
 use \jtl\Connector\ModelContainer\MainContainer;
+use \jtl\Connector\Formatter\ExceptionFormatter;
+use \jtl\Connector\Logger\Logger;
 
 /**
  * Product Controller
@@ -53,6 +55,8 @@ abstract class DataController extends CoreController
             $action->setResult($statModel->getPublic());
         }
         catch (\Exception $exc) {
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+
             $err = new Error();
             $err->setCode($exc->getCode());
             $err->setMessage($exc->getMessage());
@@ -91,6 +95,8 @@ abstract class DataController extends CoreController
             }
         }
         catch (\Exception $exc) {
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+
             $err = new Error();
             $err->setCode($exc->getCode());
             $err->setMessage($exc->getMessage());
@@ -141,6 +147,8 @@ abstract class DataController extends CoreController
             $action->setResult($result);
         }
         catch (\Exception $exc) {
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+            
             $err = new Error();
             $err->setCode($exc->getCode());
             $err->setMessage($exc->getMessage());

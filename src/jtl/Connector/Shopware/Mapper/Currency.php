@@ -7,6 +7,8 @@
 namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Connector\Logger\Logger;
+use \Shopware\Components\Api\Exception as ApiException;
+use \Shopware\Models\Shop\Currency as CurrencyModel;
 
 class Currency extends DataMapper
 {
@@ -43,6 +45,69 @@ class Currency extends DataMapper
     {
         Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
         
-        return parent::save($data, $namespace);
+        try {
+            if (!$data['id']) {
+                return $this->create($data);
+            } else {
+                return $this->update($data['id'], $data);
+            }
+        } catch (ApiException\NotFoundException $exc) {
+            return $this->create($data);
+        }
+    }
+
+    /**
+     * @param int $id
+     * @param array $params
+     * @return \Shopware\Models\Shop\Currency
+     * @throws \Shopware\Components\Api\Exception\ValidationException
+     * @throws \Shopware\Components\Api\Exception\NotFoundException
+     * @throws \Shopware\Components\Api\Exception\ParameterMissingException
+     */
+    protected function update($id, array $params)
+    {
+        if (empty($id)) {
+            throw new ApiException\ParameterMissingException();
+        }
+
+        /** @var $currency \Shopware\Models\Shop\Currency */
+        $currency = $this->Manager()->getRepository('Shopware\Models\Shop\Currency')->find($id);
+
+        if (!$currency) {
+            throw new ApiException\NotFoundException("Currency by id $id not found");
+        }
+
+        $currency->fromArray($params);
+
+        $violations = $this->Manager()->validate($currency);
+        if ($violations->count() > 0) {
+            throw new ApiException\ValidationException($violations);
+        }
+
+        $this->flush();
+
+        return $currency;
+    }
+
+    /**
+     * @param array $params
+     * @return \Shopware\Models\Shop\Currency
+     * @throws \Shopware\Components\Api\Exception\ValidationException
+     */
+    protected function create(array $params)
+    {
+        $currency = new CurrencyModel();
+
+        $currency->fromArray($params);
+
+        $violations = $this->Manager()->validate($currency);
+        if ($violations->count() > 0) {
+            throw new ApiException\ValidationException($violations);
+        }
+
+        $this->Manager()->persist($currency);
+        $this->flush();
+
+        return $currency;
     }
 }

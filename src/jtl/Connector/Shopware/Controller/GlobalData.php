@@ -18,6 +18,8 @@ use \jtl\Core\Utilities\DataInjector;
 use \jtl\Connector\ModelContainer\GlobalDataContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
+use \jtl\Connector\Formatter\ExceptionFormatter;
+use \jtl\Connector\Logger\Logger;
 
 /**
  * GlobalData Controller
@@ -58,7 +60,7 @@ class GlobalData extends DataController
 
             $builder = Shopware()->Models()->createQueryBuilder();
 
-            // Companys
+            // Companies
             $company = Mmc::getModel('Company');
 
             Shopware()->Config()->setShop(Shopware()->Shop());
@@ -165,7 +167,7 @@ class GlobalData extends DataController
             }
         }
         catch (\Exception $exc) {
-            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : \jtl\Connector\Connector\Formatter\ExceptionFormatter::format($exc);
+            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
 
             $err = new Error();
             $err->setCode($exc->getCode());
@@ -174,5 +176,81 @@ class GlobalData extends DataController
         }
 
         return $action;
+    }
+
+    /**
+     * Insert
+     *
+     * @param \jtl\Connector\ModelContainer\CoreContainer $container
+     * @return \jtl\Connector\Result\Transaction
+     */
+    public function insert(ModelContainer $container)
+    {
+        // Companies
+        $configMapper = Mmc::getMapper('Config');
+        foreach ($container->getCompanies() as $company) {
+            $configMapper->update('company', $company->_name);
+            $configMapper->update('address', $company->_street);
+            $configMapper->update('mail', $company->_eMail);
+            $configMapper->update('taxNumber', $company->_taxIdNumber);
+            $configMapper->update('vatcheckadvancednumber', $company->_vatNumber);
+        }
+
+        // Languages
+
+        // Currencies
+        $currencyMapper = Mmc::getMapper('Currency');
+        foreach ($container->getCurrencies() as $currency) {
+            try {
+                $data = DataConverter::toArray(DataModel::map(false, null, $currency));
+                $currencyMapper->save($data);
+            } catch (\Exception $exc) {
+                Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+            }
+        }
+
+        // CustomerGroups
+        $customerGroupMapper = Mmc::getMapper('CustomerGroup');
+        foreach ($container->getCustomerGroups() as $customerGroup) {
+            try {
+                $data = DataConverter::toArray(DataModel::map(false, null, $customerGroup));
+                $customerGroupMapper->save($data);
+            } catch (\Exception $exc) {
+                Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+            }
+        }
+
+        // Units
+        $unitMapper = Mmc::getMapper('Unit');
+        foreach ($container->getUnits() as $unit) {
+            try {
+                $data = DataConverter::toArray(DataModel::map(false, null, $unit));
+                $unitMapper->save($data);
+            } catch (\Exception $exc) {
+                Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+            }
+        }
+
+        // TaxRates
+        $taxRatesMapper = Mmc::getMapper('TaxRate');
+        foreach ($container->getTaxRates() as $taxRate) {
+            try {
+                $data = DataConverter::toArray(DataModel::map(false, null, $taxRate));
+                $taxRatesMapper->save($data);
+            } catch (\Exception $exc) {
+                Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+            }
+        }
+
+        $mapper = Mmc::getMapper($class);
+        $data = $mapper->prepareData($container);
+        $modelSW = $mapper->save($data);
+
+        $model = $container->getMainModel();
+
+        $result = new \jtl\Connector\Result\Transaction();
+        $result->setId(new \jtl\Connector\Model\Identity($modelSW->getId(), $model->getId()->getHost()));
+
+        return $result;
     }
 }

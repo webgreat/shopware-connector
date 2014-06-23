@@ -58,6 +58,7 @@ class Category extends DataController
 
             $shopMapper = Mmc::getMapper('Shop');
             $shops = $shopMapper->findAll(null, null);
+
             $rootCategories = array();
             $rootCategoryIds = array();
             foreach ($shops as $shop) {
@@ -130,10 +131,16 @@ class Category extends DataController
                                 $categorySW['localeName'] = $localeName;
                                 break;
                             }
-                        }                     
+                        }
                     }
 
                     $this->addContainerPos($container, 'category_i18n', $categorySW);
+
+                    // Default locale hack
+                    if ($categorySW['localeName'] != Shopware()->Shop()->getLocale()->getLocale()) {
+                        $categorySW['localeName'] = Shopware()->Shop()->getLocale()->getLocale();
+                        $this->addContainerPos($container, 'category_i18n', $categorySW);
+                    }
 
                     $container->add('category', $category, false);
 

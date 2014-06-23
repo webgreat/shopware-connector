@@ -7,6 +7,8 @@
 namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Connector\Logger\Logger;
+use \Shopware\Components\Api\Exception as ApiException;
+use \Shopware\Models\Tax\Tax as TaxModel;
 
 class TaxRate extends DataMapper
 {
@@ -38,7 +40,70 @@ class TaxRate extends DataMapper
     public function save(array $data, $namespace = '\Shopware\Models\Tax\Tax')
     {
         Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
+        
+        try {
+            if (!$data['id']) {
+                return $this->create($data);
+            } else {
+                return $this->update($data['id'], $data);
+            }
+        } catch (ApiException\NotFoundException $exc) {
+            return $this->create($data);
+        }
+    }
 
-        return parent::save($data, $namespace);
+    /**
+     * @param int $id
+     * @param array $params
+     * @return \Shopware\Models\Tax\Tax
+     * @throws \Shopware\Components\Api\Exception\ValidationException
+     * @throws \Shopware\Components\Api\Exception\NotFoundException
+     * @throws \Shopware\Components\Api\Exception\ParameterMissingException
+     */
+    protected function update($id, array $params)
+    {
+        if (empty($id)) {
+            throw new ApiException\ParameterMissingException();
+        }
+
+        /** @var $Tax \Shopware\Models\Tax\Tax */
+        $tax = $this->Manager()->getRepository('Shopware\Models\Tax\Tax')->find($id);
+
+        if (!$tax) {
+            throw new ApiException\NotFoundException("Tax by id $id not found");
+        }
+
+        $tax->fromArray($params);
+
+        $violations = $this->Manager()->validate($tax);
+        if ($violations->count() > 0) {
+            throw new ApiException\ValidationException($violations);
+        }
+
+        $this->flush();
+
+        return $tax;
+    }
+
+    /**
+     * @param array $params
+     * @return \Shopware\Models\Tax\Tax
+     * @throws \Shopware\Components\Api\Exception\ValidationException
+     */
+    protected function create(array $params)
+    {
+        $tax = new UnitModel();
+
+        $tax->fromArray($params);
+
+        $violations = $this->Manager()->validate($tax);
+        if ($violations->count() > 0) {
+            throw new ApiException\ValidationException($violations);
+        }
+
+        $this->Manager()->persist($tax);
+        $this->flush();
+
+        return $tax;
     }
 }
