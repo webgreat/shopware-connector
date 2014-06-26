@@ -17,8 +17,8 @@ use \jtl\Connector\Model\Statistic;
 use \jtl\Core\Utilities\ClassName;
 use \jtl\Connector\Shopware\Model\DataModel;
 use \jtl\Connector\ModelContainer\MainContainer;
-use \jtl\Connector\Formatter\ExceptionFormatter;
 use \jtl\Connector\Logger\Logger;
+use \jtl\Connector\Formatter\ExceptionFormatter;
 
 /**
  * Product Controller
@@ -148,7 +148,7 @@ abstract class DataController extends CoreController
         }
         catch (\Exception $exc) {
             Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
-            
+
             $err = new Error();
             $err->setCode($exc->getCode());
             $err->setMessage($exc->getMessage());
@@ -178,27 +178,11 @@ abstract class DataController extends CoreController
      * @param \jtl\Connector\ModelContainer\CoreContainer $container
      * @return \jtl\Connector\Result\Transaction
      */
-    public function insert(ModelContainer $container)
+    /*
+    public function insert(CoreContainer $container)
     {
         if (MainContainer::isMain($this->getMethod()->getController())) {
             $config = $this->getConfig();
-
-            /*
-            $item = array();
-            foreach ($container->items as $items) {
-                $getter = "get" . ucfirst($items[1]);
-                $class = $items[0];
-                
-                $sub = array();
-                foreach ($container->$getter() as $model) {
-                    $sub = array_merge($sub, DataConverter::toArray(DataModel::map(false, null, $model)));
-                    echo $class . "\n\n";
-                    print_r($sub);
-                }
-
-                $item = array_merge($item, $sub);
-            }
-            */
 
             $class = ClassName::getFromNS(get_called_class());
 
@@ -216,6 +200,7 @@ abstract class DataController extends CoreController
         
         return null;
     }
+    */
 
     /**
      * Add Item to Container

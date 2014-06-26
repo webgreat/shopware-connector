@@ -70,13 +70,6 @@ class CustomerGroup extends DataMapper
     {
         Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
         
-        return parent::save($data, $namespace);
-    }
-
-    public function save(array $data, $namespace = '\Shopware\Models\Customer\Group')
-    {
-        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
-        
         try {
             if (!$data['id']) {
                 return $this->create($data);

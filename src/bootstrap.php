@@ -16,6 +16,9 @@ use \jtl\Connector\Shopware\Connector;
 define('CONNECTOR_DIR', __DIR__ . '/../vendor/jtl/connector/');
 define('ENDPOINT_DIR', realpath(__DIR__ . '/../'));
 
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
 function exception_handler(\Exception $exception)
 {
     $trace = $exception->getTrace();
@@ -62,8 +65,27 @@ function error_handler($errno, $errstr, $errfile, $errline, $errcontext)
     file_put_contents("/tmp/shopware_error.log", date("[Y-m-d H:i:s] ") . "(" . $types[$errno] . ") File ({$errfile}, {$errline}): {$errstr}\n", FILE_APPEND);
 }
 
+function shutdown_handler()
+{
+    if (($err = error_get_last())) {
+        ob_clean();
+
+        $error = new Error();
+        $error->setCode($err['type'])
+            ->setData('Shutdown! File: ' . $err['file'] . ' - Line: ' . $err['line'])
+            ->setMessage($err['message']);
+
+        $reponsepacket = new ResponsePacket();
+        $reponsepacket->setError($error)
+            ->setJtlrpc("2.0");
+    
+        Response::send($reponsepacket);
+    }
+}
+
 set_error_handler('error_handler', E_ALL);
 set_exception_handler('exception_handler');
+register_shutdown_function('shutdown_handler');
 
 // Connector instance
 $connector = Connector::getInstance();

@@ -54,7 +54,7 @@ class Image extends DataController
             $mapper = Mmc::getMapper('Image');
 
             $modelContainer = array();
-            if ($filter->getFilter('relationType') !== null) {                
+            if ($filter->getFilter('relationType') !== null) {
                 $modelContainer[$filter->getFilter('relationType')] = $mapper->findAll($offset, $limit, false, $filter->getFilter('relationType'));
             }
             else {
@@ -207,6 +207,16 @@ class Image extends DataController
         }
         
         return $action;
+    }
+
+    /**
+     * Push
+     *
+     * @params mixed $params
+     * @return \jtl\Connector\Result\Action
+     */
+    public function push($params) {
+        die(var_dump($params));
     }
 
     /**

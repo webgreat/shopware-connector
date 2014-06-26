@@ -20,6 +20,8 @@ use \jtl\Connector\ModelContainer\CategoryContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Connector\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
+use \jtl\Connector\Model\Identity;
+use \jtl\Connector\ModelContainer\CoreContainer;
 
 /**
  * Category Controller
@@ -204,5 +206,38 @@ class Category extends DataController
         }
 
         return $action;
+    }
+
+    /**
+     * Insert
+     *
+     * @param \jtl\Connector\ModelContainer\CoreContainer $container
+     * @return \jtl\Connector\ModelContainer\CategoryContainer
+     */
+    public function insert(CoreContainer $container)
+    {
+        $config = $this->getConfig();
+
+        $mapper = Mmc::getMapper('Category');
+        $data = $mapper->prepareData($container);
+        $modelSW = $mapper->save($data);
+
+        $resultContainer = new CategoryContainer();
+
+        // Category
+        foreach ($container->getCategories() as $category) {
+            $resultContainer->addIdentity('category', new Identity($modelSW->getId(), $model->getId()->getHost()));
+        }
+
+        // Attributes
+        foreach ($container->getCategoryAttrs() as $categoryAttr) {
+            foreach ($modelSW->getAttribute() as $attrSW) {
+                if ($attrSW->getAttribute()->getId() == $categoryAttr->getId()->getEndpoint()) {
+                    $resultContainer->addIdentity('category_attr', new Identity($attrSW->getAttribute()->getId(), $categoryAttr->getId()->getHost()));
+                }
+            }
+        }
+
+        return $resultContainer;
     }
 }
