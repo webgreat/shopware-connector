@@ -9,7 +9,7 @@ namespace jtl\Connector\Shopware\Controller;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
 use \jtl\Connector\Shopware\Utilities\Mmc;
-use \jtl\Connector\Logger\Logger;
+use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 
 /**

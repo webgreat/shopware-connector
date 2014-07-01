@@ -10,7 +10,7 @@ use \jtl\Connector\ModelContainer\CustomerContainer;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
-use \jtl\Connector\Logger\Logger;
+use \jtl\Core\Logger\Logger;
 
 class Customer extends DataMapper
 {

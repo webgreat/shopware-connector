@@ -15,7 +15,7 @@ use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Core\Utilities\DataInjector;
 use \jtl\Connector\ModelContainer\ProductContainer;
-use \jtl\Connector\Logger\Logger;
+use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 use \jtl\Connector\Shopware\Utilities\CustomerGroup as CustomerGroupUtil;
 

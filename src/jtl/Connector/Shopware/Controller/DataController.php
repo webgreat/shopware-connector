@@ -17,7 +17,7 @@ use \jtl\Connector\Model\Statistic;
 use \jtl\Core\Utilities\ClassName;
 use \jtl\Connector\Shopware\Model\DataModel;
 use \jtl\Connector\ModelContainer\MainContainer;
-use \jtl\Connector\Logger\Logger;
+use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 
 /**

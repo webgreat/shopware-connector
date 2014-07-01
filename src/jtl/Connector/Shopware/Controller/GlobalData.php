@@ -19,7 +19,7 @@ use \jtl\Connector\ModelContainer\GlobalDataContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Formatter\ExceptionFormatter;
-use \jtl\Connector\Logger\Logger;
+use \jtl\Core\Logger\Logger;
 
 /**
  * GlobalData Controller

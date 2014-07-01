@@ -14,7 +14,7 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Connector\ModelContainer\ManufacturerContainer;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
-use \jtl\Connector\Logger\Logger;
+use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 
 /**

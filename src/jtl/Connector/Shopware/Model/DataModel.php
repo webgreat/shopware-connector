@@ -26,8 +26,9 @@ class DataModel
             throw new \InvalidArgumentException('param original is not an instance of MainDataModel');
         }
 
-        if ($toConnector && $obj === null)
+        if ($toConnector && $obj === null) {
             throw new \InvalidArgumentException("The second parameter can't be null if the first is true");
+        }
     
         if (!$toConnector) {
             $obj = new \stdClass();

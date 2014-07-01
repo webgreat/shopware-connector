@@ -7,7 +7,7 @@
 namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Connector\Drawing\ImageRelationType;
-use \jtl\Connector\Logger\Logger;
+use \jtl\Core\Logger\Logger;
 
 class Image extends DataMapper
 {

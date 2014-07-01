@@ -11,7 +11,7 @@ use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
 use \Shopware\Models\Article\Supplier as SupplierModel;
-use \jtl\Connector\Logger\Logger;
+use \jtl\Core\Logger\Logger;
 
 class Manufacturer extends DataMapper
 {

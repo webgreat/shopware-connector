@@ -11,7 +11,7 @@ use \jtl\Connector\ModelContainer\CategoryContainer;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
-use \jtl\Connector\Logger\Logger;
+use \jtl\Core\Logger\Logger;
 
 class Category extends DataMapper
 {

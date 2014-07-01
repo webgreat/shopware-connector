@@ -17,7 +17,7 @@ use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\ModelContainer\CustomerContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Connector\Shopware\Utilities\Salutation;
-use \jtl\Connector\Logger\Logger;
+use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 
 /**
