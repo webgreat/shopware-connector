@@ -138,6 +138,8 @@ class GlobalData extends DataController
             $action->setResult($result);
         }
         catch (\Exception $exc) {
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+
             $err = new Error();
             $err->setCode($exc->getCode());
             $err->setMessage($exc->getMessage());
@@ -168,6 +170,8 @@ class GlobalData extends DataController
         }
         catch (\Exception $exc) {
             $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
+
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
 
             $err = new Error();
             $err->setCode($exc->getCode());

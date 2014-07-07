@@ -15,7 +15,7 @@ use \jtl\Connector\Model\ProductPrice as ProductPriceModel;
 class ProductPrice extends ProductPriceModel
 {
     protected $_fields = array(
-        '_customerGroupId' => 'customerGroupKey',
+        '_customerGroupId' => 'customerGroupId',
         '_productId' => 'articleId',
         '_netPrice' => 'price',
         '_quantity' => 'from'

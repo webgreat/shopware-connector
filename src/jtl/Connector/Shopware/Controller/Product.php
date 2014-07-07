@@ -18,6 +18,7 @@ use \jtl\Connector\ModelContainer\ProductContainer;
 use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 use \jtl\Connector\Shopware\Utilities\CustomerGroup as CustomerGroupUtil;
+use \jtl\Connector\Model\Identity;
 
 /**
  * Product Controller
@@ -51,15 +52,11 @@ class Product extends DataController
                 $limit = $filter->getLimit();
             }
 
-            //$articleResource = \Shopware\Components\Api\Manager::getResource('Article');
-
             $mapper = Mmc::getMapper('Product');
             $products = $mapper->findAll($offset, $limit);
 
             foreach ($products as $productSW) {
                 try {
-                    //$productSW = $articleResource->getOne($productSW['id']);
-
                     $container = new ProductContainer();
 
                     $product = Mmc::getModel('Product');
@@ -84,6 +81,11 @@ class Product extends DataController
                     }
 
                     // ProductPrice
+                    for ($i = 0; $i < count($productSW['mainDetail']['prices']); $i++) {
+                        $customerGroup = CustomerGroupUtil::getByKey($productSW['mainDetail']['prices'][$i]['customerGroupKey']);
+                        $productSW['mainDetail']['prices'][$i]['customerGroupId'] = $customerGroup->getId();
+                    }
+
                     $this->addContainerPos($container, 'product_price', $productSW['mainDetail']['prices'], true);
 
                     // ProductSpecialPrice
@@ -256,6 +258,8 @@ class Product extends DataController
             $action->setResult($result);
         }
         catch (\Exception $exc) {
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+
             $err = new Error();
             $err->setCode($exc->getCode());
             $err->setMessage($exc->getMessage());
@@ -324,6 +328,8 @@ class Product extends DataController
         catch (\Exception $exc) {
             $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
 
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+
             $err = new Error();
             $err->setCode($exc->getCode());
             $err->setMessage($message);
@@ -331,5 +337,61 @@ class Product extends DataController
         }
 
         return $action;
+    }
+
+    /**
+     * Insert
+     *
+     * @param \jtl\Connector\ModelContainer\CoreContainer $container
+     * @return \jtl\Connector\ModelContainer\ProductContainer
+     */
+    public function insert(CoreContainer $container)
+    {
+        $config = $this->getConfig();
+
+        $mapper = Mmc::getMapper('Product');
+        $data = $mapper->prepareData($container);
+        $modelSW = $mapper->save($data);
+
+        $resultContainer = new ProductContainer();
+
+        // Product
+        $main = $container->getMainModel();
+        $resultContainer->addIdentity('product', new Identity($modelSW->getId(), $main->getId()->getHost()));
+
+        // Product2Category
+        foreach ($modelSW->getCategories() as $categorySW) {
+            $resultContainer->addIdentity('product2_category', new Identity(sprintf('%s_%s', $modelSW->getId(), $categorySW->getId()), $main->getId()->getHost()));
+        }
+
+        // ProductAttr
+        $attrSW = $modelSW->getAttribute();
+        if ($attrSW) {
+            $productAttrs = $container->getProductAttrs();
+            $resultContainer->addIdentity('product_attr', new Identity($attrSW->getId(), $productAttrs[0]->getId()->getHost()));
+        }
+
+        // ProductSpecialPrice
+        $priceGroupSW = $modelSW->getPriceGroup();
+        if ($priceGroupSW) {
+            $productSpecialPrices = $container->getProductSpecialPrices();
+            $resultContainer->addIdentity('product_special_price', new Identity($priceGroupSW->getId(), $productSpecialPrices[0]->getId()->getHost()));
+        }
+
+        // ProductVariation
+        /*
+        $setSW = $modelSW->getConfiguratorSet();
+        if ($setSW) {
+            foreach ($setSW->getGroups() as $groupSW) {
+                $resultContainer->addIdentity('product_variation', new Identity(sprintf('%s_%s', $modelSW->getId(), $groupSW->getId()), $productSpecialPrices[0]->getId()->getHost()));
+            }
+        }
+
+        // ProductVariationValue
+        */
+
+        //\Doctrine\Common\Util\Debug::dump($modelSW);
+
+        return $resultContainer;
     }
 }

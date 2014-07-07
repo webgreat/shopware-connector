@@ -155,6 +155,8 @@ class Category extends DataController
             $action->setResult($result);
         }
         catch (\Exception $exc) {
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+
             $err = new Error();
             $err->setCode($exc->getCode());
             $err->setMessage($exc->getMessage());
@@ -199,6 +201,8 @@ class Category extends DataController
         catch (\Exception $exc) {
             $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
 
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+
             $err = new Error();
             $err->setCode($exc->getCode());
             $err->setMessage($message);
@@ -226,7 +230,7 @@ class Category extends DataController
 
         // Category
         foreach ($container->getCategories() as $category) {
-            $resultContainer->addIdentity('category', new Identity($modelSW->getId(), $model->getId()->getHost()));
+            $resultContainer->addIdentity('category', new Identity($modelSW->getId(), $category->getId()->getHost()));
         }
 
         // Attributes

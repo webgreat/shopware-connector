@@ -16,6 +16,7 @@ use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
+use \jtl\Connector\Model\Identity;
 
 /**
  * Manufacturer Controller
@@ -71,6 +72,8 @@ class Manufacturer extends DataController
             $action->setResult($result);
         }
         catch (\Exception $exc) {
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+
             $err = new Error();
             $err->setCode($exc->getCode());
             $err->setMessage($exc->getMessage());
@@ -102,6 +105,8 @@ class Manufacturer extends DataController
         catch (\Exception $exc) {
             $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
 
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+
             $err = new Error();
             $err->setCode($exc->getCode());
             $err->setMessage($message);
@@ -109,5 +114,28 @@ class Manufacturer extends DataController
         }
 
         return $action;
+    }
+
+    /**
+     * Insert
+     *
+     * @param \jtl\Connector\ModelContainer\CoreContainer $container
+     * @return \jtl\Connector\ModelContainer\ManufacturerContainer
+     */
+    public function insert(CoreContainer $container)
+    {
+        $config = $this->getConfig();
+
+        $mapper = Mmc::getMapper('Manufacturer');
+        $data = $mapper->prepareData($container);
+        $modelSW = $mapper->save($data);
+
+        $resultContainer = new ManufacturerContainer();
+
+        // Manufacturer
+        $main = $container->getMainModel();
+        $resultContainer->addIdentity('manufacturer', new Identity($modelSW->getId(), $main->getId()->getHost()));
+
+        return $resultContainer;
     }
 }

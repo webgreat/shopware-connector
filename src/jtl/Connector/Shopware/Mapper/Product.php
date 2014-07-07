@@ -15,6 +15,11 @@ use \jtl\Core\Logger\Logger;
 
 class Product extends DataMapper
 {
+    public function find($id)
+    {
+        return $this->Manager()->find('Shopware\Models\Article\Article', $id);
+    }
+
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
         $builder = $this->Manager()->createQueryBuilder()->select(

@@ -19,6 +19,7 @@ use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Connector\Shopware\Utilities\Salutation;
 use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
+use \jtl\Connector\Model\Identity;
 
 /**
  * Customer Controller
@@ -136,5 +137,35 @@ class Customer extends DataController
         }
 
         return $action;
+    }
+
+    /**
+     * Insert
+     *
+     * @param \jtl\Connector\ModelContainer\CoreContainer $container
+     * @return \jtl\Connector\ModelContainer\CustomerContainer
+     */
+    public function insert(CoreContainer $container)
+    {
+        $config = $this->getConfig();
+
+        $mapper = Mmc::getMapper('Customer');
+        $data = $mapper->prepareData($container);
+        $modelSW = $mapper->save($data);
+
+        $resultContainer = new CustomerContainer();
+
+        // Customer
+        $main = $container->getMainModel();
+        $resultContainer->addIdentity('customer', new Identity($modelSW->getId(), $main->getId()->getHost()));
+
+        // CustomerAttr
+        $attrSW = $modelSW->getAttribute();
+        if ($attrSW) {
+            $attr = $container->getCustomerAttrs();
+            $resultContainer->addIdentity('customer_attr', new Identity($attrSW->getId(), $attrSW[0]->getId()->getHost()));
+        }
+
+        return $resultContainer;
     }
 }
