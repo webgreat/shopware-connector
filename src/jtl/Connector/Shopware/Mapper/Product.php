@@ -12,6 +12,7 @@ use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
 use \jtl\Core\Logger\Logger;
+use \jtl\Core\Utilities\Money;
 
 class Product extends DataMapper
 {
@@ -139,14 +140,16 @@ class Product extends DataMapper
         $data['mainDetail']['prices'] = array();
         foreach ($container->getProductPrices() as $productPrice) {
             $data = array_merge($data, DataConverter::toArray(DataModel::map(false, null, $product)));
-            $data['mainDetail']['prices'][] = DataConverter::toArray(DataModel::map(false, null, $productPrice));
+            $priceSW = DataConverter::toArray(DataModel::map(false, null, $productPrice));
+            $priceSW['price'] = Money::AsGross($priceSW['price'], $data['tax']['tax']);
+
+            $data['mainDetail']['prices'][] = $priceSW;
         }
 
         // ProductSpecialPrice
         foreach ($container->getProductSpecialPrices() as $productSpecialPrice) {
-            $data['priceGroup'] = DataConverter::toArray(DataModel::map(false, null, $productSpecialPrice));
             $data['priceGroupActive'] = true;
-            $data['priceGroupId'] = $data['priceGroup']['id'];
+            $data['priceGroupId'] = $productSpecialPrice->getId()->getEndpoint();
         }
 
         // Product2Categories

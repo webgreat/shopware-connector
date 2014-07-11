@@ -140,4 +140,42 @@ class CustomerOrder extends DataController
 
         return $action;
     }
+
+    /**
+     * Insert
+     *
+     * @param \jtl\Connector\ModelContainer\CoreContainer $container
+     * @return \jtl\Connector\ModelContainer\CustomerOrderContainer
+     */
+    public function insert(CoreContainer $container)
+    {
+        $config = $this->getConfig();
+
+        $mapper = Mmc::getMapper('CustomerOrder');
+        $data = $mapper->prepareData($container);
+        $modelSW = $mapper->save($data);
+
+        $resultContainer = new CustomerOrderContainer();
+
+        // CustomerOrder
+        $main = $container->getMainModel();
+        $resultContainer->addIdentity('customer_order', new Identity($modelSW->getId(), $main->getId()->getHost()));
+
+        // Item
+
+        // Billing
+
+        // Shipping
+
+        // Attributes
+        /*
+        $attrSW = $modelSW->getAttribute();
+        if ($attrSW) {
+            $attr = $container->getCustomerAttrs();
+            $resultContainer->addIdentity('customer_order_attr', new Identity($attrSW->getId(), $attrSW[0]->getId()->getHost()));
+        }
+        */
+
+        return $resultContainer;
+    }
 }

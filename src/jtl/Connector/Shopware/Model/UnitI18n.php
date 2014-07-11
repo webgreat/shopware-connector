@@ -6,16 +6,18 @@
 
 namespace jtl\Connector\Shopware\Model;
 
-use \jtl\Connector\Model\Unit as UnitModel;
+use \jtl\Connector\Model\UnitI18n as UnitI18nModel;
 
 /**
- * Unit Model
+ * UnitI18n Model
  * @access public
  */
-class Unit extends UnitModel
+class UnitI18n extends UnitI18nModel
 {
     protected $_fields = array(
-        '_id' => 'id'
+        '_unitId' => 'unitId',
+        '_localeName' => 'localeName',
+        '_name' => 'name'
     );
     
     /**

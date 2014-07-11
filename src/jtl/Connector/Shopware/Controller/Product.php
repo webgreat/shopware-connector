@@ -368,14 +368,18 @@ class Product extends DataController
         $attrSW = $modelSW->getAttribute();
         if ($attrSW) {
             $productAttrs = $container->getProductAttrs();
-            $resultContainer->addIdentity('product_attr', new Identity($attrSW->getId(), $productAttrs[0]->getId()->getHost()));
+            if (isset($productAttrs[0])) {
+                $resultContainer->addIdentity('product_attr', new Identity($attrSW->getId(), $productAttrs[0]->getId()->getHost()));
+            }
         }
 
         // ProductSpecialPrice
         $priceGroupSW = $modelSW->getPriceGroup();
         if ($priceGroupSW) {
             $productSpecialPrices = $container->getProductSpecialPrices();
-            $resultContainer->addIdentity('product_special_price', new Identity($priceGroupSW->getId(), $productSpecialPrices[0]->getId()->getHost()));
+            if (isset($productSpecialPrices[0])) {
+                $resultContainer->addIdentity('product_special_price', new Identity($priceGroupSW->getId(), $productSpecialPrices[0]->getId()->getHost()));
+            }
         }
 
         // ProductVariation

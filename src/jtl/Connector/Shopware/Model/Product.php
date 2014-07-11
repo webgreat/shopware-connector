@@ -89,7 +89,13 @@ class Product extends ProductModel
         '_inflowDate' => '',
         '_supplierStockLevel' => '',
         '_supplierDeliveryTime' => '',
-        '_bestBefore' => ''
+        '_bestBefore' => '',
+        '_measurementUnitId' => '',
+        '_measurementQuantity' => '',
+        '_basePriceQuantity' => '',
+        '_length' => '',
+        '_height' => '',
+        '_width' => '',
     );
     
     /**
