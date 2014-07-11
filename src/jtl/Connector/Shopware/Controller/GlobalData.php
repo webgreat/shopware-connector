@@ -116,8 +116,9 @@ class GlobalData extends DataController
             $mapper = Mmc::getMapper('Unit');
             $units = $mapper->findAll($offset, $limit);
 
-            //DataInjector::inject(DataInjector::TYPE_ARRAY, $customerGroups, 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+            DataInjector::inject(DataInjector::TYPE_ARRAY, $units, 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
             $this->addContainerPos($container, 'unit', $units, true);
+            $this->addContainerPos($container, 'unit_i18n', $units, true);
 
             // TaxZones
 
