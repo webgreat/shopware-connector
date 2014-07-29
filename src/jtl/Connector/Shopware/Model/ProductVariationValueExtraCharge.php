@@ -14,10 +14,10 @@ use \jtl\Connector\Model\ProductVariationValueExtraCharge as ProductVariationVal
  */
 class ProductVariationValueExtraCharge extends ProductVariationValueExtraChargeModel
 {
-    protected $_fields = array(
-        '_customerGroupId' => '',
-        '_productVariationValueId' => '',
-        '_extraChargeNet' => ''
+    protected $fields = array(
+        'customerGroupId' => '',
+        'productVariationValueId' => '',
+        'extraChargeNet' => ''
     );
     
     /**

@@ -6,15 +6,12 @@
 
 namespace jtl\Connector\Shopware\Controller;
 
-use \jtl\Connector\Transaction\Handler as TransactionHandler;
-use \jtl\Core\Exception\TransactionException;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Core\Utilities\DataInjector;
-use \jtl\Connector\ModelContainer\ProductContainer;
 use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 use \jtl\Connector\Shopware\Utilities\CustomerGroup as CustomerGroupUtil;
@@ -57,17 +54,18 @@ class Product extends DataController
 
             foreach ($products as $productSW) {
                 try {
-                    $container = new ProductContainer();
+                    $productSW['tax']['tax'] = floatval($productSW['tax']['tax']);
+                    $productSW['mainDetail']['weight'] = floatval($productSW['mainDetail']['weight']);
 
                     $product = Mmc::getModel('Product');
-                    $product->map(true, DataConverter::toObject($productSW));
+                    $product->map(true, DataConverter::toObject($productSW, true));
 
                     // Stock
-                    $product->_considerStock = ($product->_stockLevel > 0);
-                    $product->_permitNegativeStock = (bool)!$productSW['lastStock'];
+                    $product->setConsiderStock(($product->_stockLevel > 0));
+                    $product->setPermitNegativeStock((bool)!$productSW['lastStock']);
 
                     // ProductI18n
-                    $this->addContainerPos($container, 'product_i18n', $productSW);
+                    $this->addPos($product, 'addI18ns', 'ProductI18n', $productSW);
                     if (isset($productSW['translations'])) {
                         foreach ($productSW['translations'] as $localeName => $translation) {
                             $productI18n = Mmc::getModel('ProductI18n');
@@ -76,7 +74,7 @@ class Product extends DataController
                                 ->setName($translation['name'])
                                 ->setDescription($translation['descriptionLong']);
 
-                            $container->add('product_i18n', $productI18n, false);
+                            $product->addI18ns($productI18n);
                         }
                     }
 
@@ -86,12 +84,13 @@ class Product extends DataController
                         $productSW['mainDetail']['prices'][$i]['customerGroupId'] = $customerGroup->getId();
                     }
 
-                    $this->addContainerPos($container, 'product_price', $productSW['mainDetail']['prices'], true);
+                    $this->addPos($product, 'addPrice', 'ProductPrice', $productSW['mainDetail']['prices'], true);
 
                     // ProductSpecialPrice
-                    if ($productSW['priceGroupActive']) {
-                        DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['priceGroup'], array('articleId', 'active'), array($product->_id, true));
-                        $this->addContainerPos($container, 'product_special_price', $productSW['priceGroup']);
+                    if ($productSW['priceGroupActive'] && $productSW['priceGroup'] !== null) {
+                        DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['priceGroup'], array('articleId', 'active'), array($product->getId()->getEndpoint(), true));
+                        $productSpecialPrice = Mmc::getModel('ProductSpecialPrice');
+                        $productSpecialPrice->map(true, DataConverter::toObject($productSW['priceGroup'], true));
 
                         // SpecialPrices
                         foreach ($productSW['priceGroup']['discounts'] as $discount) {
@@ -125,27 +124,31 @@ class Product extends DataController
                             );
 
                             $specialPrice = Mmc::getModel('SpecialPrice');
-                            $specialPrice->_customerGroupId = $discount['customerGroupId'];
-                            $specialPrice->_productSpecialPriceId = $discount['groupId'];
-                            $specialPrice->_priceNet = $discountPriceNet;
+                            $specialPrice->setCustomerGroupId(new Identity($discount['customerGroupId']));
+                            $specialPrice->setProductSpecialPriceId(new Identity($discount['groupId']));
+                            $specialPrice->setPriceNet($discountPriceNet);
 
-                            $container->add('special_price', $specialPrice, false);
+                            $productSpecialPrice->addSpecialPrice($specialPrice);
                         }
+
+                        $product->addSpecialPrice($productSpecialPrice);
                     }
 
                     // Product2Categories
                     if (isset($productSW['categories'])) {
-                        DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['categories'], 'articleId', $product->_id, true);
-                        $this->addContainerPos($container, 'product2_category', $productSW['categories'], true);
+                        DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['categories'], 'articleId', $product->getId()->getEndpoint(), true);
+                        $this->addPos($product, 'addCategory', 'Product2Category', $productSW['categories'], true);
                     }
 
                     // Attributes
+                    /*
+                     * @todo: waiting on connector entity
                     $attributeExists = false;
                     for ($i = 1; $i <= 20; $i++) {
                         if (isset($productSW['mainDetail']['attribute']["attr{$i}"]) && strlen($productSW['mainDetail']['attribute']["attr{$i}"]) > 0) {
                             $attributeExists = true;
                             $productAttrI18n = Mmc::getModel('ProductAttrI18n');
-                            $productAttrI18n->map(true, DataConverter::toObject($productSW['mainDetail']['attribute']));
+                            $productAttrI18n->map(true, DataConverter::toObject($productSW['mainDetail']['attribute'], true));
                             $productAttrI18n->_key = "attr{$i}";
                             $productAttrI18n->_value = $productSW['mainDetail']['attribute']["attr{$i}"];
                             $container->add('product_attr_i18n', $productAttrI18n->getPublic(), false);
@@ -155,11 +158,12 @@ class Product extends DataController
                     if ($attributeExists) {
                         $this->addContainerPos($container, 'product_attr', $productSW['mainDetail']['attribute']);
                     }
+                    */
 
                     // ProductInvisibility
                     if (isset($productSW['customerGroups'])) {
-                        DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['customerGroups'], 'articleId', $product->_id, true);
-                        $this->addContainerPos($container, 'product_invisibility', $productSW['customerGroups'], true);
+                        DataInjector::inject(DataInjector::TYPE_ARRAY, $productSW['customerGroups'], 'articleId', $product->getId()->getEndpoint(), true);
+                        $this->addPos($product, 'addInvisibility', 'ProductInvisibility', $productSW['customerGroups'], true);
                     }
 
                     // ProductVariation
@@ -167,15 +171,17 @@ class Product extends DataController
                     $configuratorSets = $configuratorSetMapper->findByProductId($productSW['id']);
                     if (is_array($configuratorSets)) {
                         foreach ($configuratorSets as $cs) {
-                            $configuratorSet = $cs['configuratorSet'];
+                            $configuratorconfiguratorSetsSet = $cs['configuratorSet'];
 
                             // ProductVariationI18n
                             foreach ($configuratorSet['groups'] as $group) {
+                                $groupId = $group['id'];
                                 $group['localeName'] = Shopware()->Shop()->getLocale()->getLocale();
-                                $group['id'] = "{$product->_id}_" . $group['id'];
-                                $group['articleId'] = $product->_id;
+                                $group['id'] = $product->getId()->getEndpoint() . '_' . $group['id'];
+                                $group['articleId'] = $product->getId()->getEndpoint();
 
-                                $this->addContainerPos($container, 'product_variation', $group, false);
+                                $productVariation = Mmc::getModel('ProductVariation');
+                                $productVariation->map(true, DataConverter::toObject($group, true));
 
                                 // Main Language
                                 $productVariationI18n = Mmc::getModel('ProductVariationI18n');
@@ -183,7 +189,7 @@ class Product extends DataController
                                     ->setProductVariationId($group['id'])
                                     ->setName($group['name']);
 
-                                $container->add('product_variation_i18n', $productVariationI18n, false);
+                                $productVariation->addI18ns($productVariationI18n);
 
                                 if (isset($group['translations'])) {
                                     foreach ($group['translations'] as $localeName => $translation) {
@@ -192,45 +198,55 @@ class Product extends DataController
                                             ->setProductVariationId($group['id'])
                                             ->setName($translation['name']);
 
-                                        $container->add('product_variation_i18n', $productVariationI18n, false);
+                                        $productVariation->addI18ns($productVariationI18n);
                                     }
                                 }
-                            }
 
-                            // ProductVariationValueI18n
-                            foreach ($configuratorSet['options'] as $option) {
-                                $id = $option['id'];
-                                $option['id'] = "{$product->_id}_" . $option['groupId'] . '_' . $option['id'];
-                                $option['groupId'] = "{$product->_id}_" . $option['groupId'];
-
-                                // ProductVariationValue
-                                $this->addContainerPos($container, 'product_variation_value', $option, false);
-
-                                $productVarCombination = Mmc::getModel('ProductVarCombination');
-                                $productVarCombination->setProductId($product->_id)
-                                    ->setProductVariationId($option['groupId'])
-                                    ->setProductVariationValueId($option['id']);
-
-                                //$container->add('product_var_combination', $productVarCombination, false);
-
-                                // Main Language
-                                $productVariationValueI18n = Mmc::getModel('ProductVariationValueI18n');
-                                $productVariationValueI18n->setLocaleName(Shopware()->Shop()->getLocale()->getLocale())
-                                    ->setProductVariationValueId($option['id'])
-                                    ->setName($option['name']);
-
-                                $container->add('product_variation_value_i18n', $productVariationValueI18n, false);
-
-                                if (isset($option['translations'])) {
-                                    foreach ($option['translations'] as $localeName => $translation) {
-                                        $productVariationValueI18n = Mmc::getModel('ProductVariationValueI18n');
-                                        $productVariationValueI18n->setLocaleName($localeName)
-                                            ->setProductVariationValueId($option['id'])
-                                            ->setName($translation['name']);
-
-                                        $container->add('product_variation_value_i18n', $productVariationValueI18n, false);
+                                // ProductVariationValueI18n
+                                foreach ($configuratorSet['options'] as $option) {
+                                    if ($option['groupId'] != $groupId) {
+                                        continue;
                                     }
+
+                                    $id = $option['id'];
+                                    $option['id'] = $product->getId()->getEndpoint() . '_' . $option['groupId'] . '_' . $option['id'];
+                                    $option['groupId'] = $product->getId()->getEndpoint() . '_' . $option['groupId'];
+
+                                    $productVariationValue = Mmc::getModel('ProductVariationValue');
+                                    $productVariationValue->map(true, DataConverter::toObject($option, true));
+
+                                    /*
+                                    $productVarCombination = Mmc::getModel('ProductVarCombination');
+                                    $productVarCombination->setProductId($product->getId()->getEndpoint())
+                                        ->setProductVariationId($option['groupId'])
+                                        ->setProductVariationValueId($option['id']);
+
+                                    $container->add('product_var_combination', $productVarCombination, false);
+                                    */
+
+                                    // Main Language
+                                    $productVariationValueI18n = Mmc::getModel('ProductVariationValueI18n');
+                                    $productVariationValueI18n->setLocaleName(Shopware()->Shop()->getLocale()->getLocale())
+                                        ->setProductVariationValueId($option['id'])
+                                        ->setName($option['name']);
+
+                                    $productVariationValue->addI18ns($productVariationValueI18n);
+
+                                    if (isset($option['translations'])) {
+                                        foreach ($option['translations'] as $localeName => $translation) {
+                                            $productVariationValueI18n = Mmc::getModel('ProductVariationValueI18n');
+                                            $productVariationValueI18n->setLocaleName($localeName)
+                                                ->setProductVariationValueId($option['id'])
+                                                ->setName($translation['name']);
+
+                                            $productVariationValue->addI18ns($productVariationValueI18n);
+                                        }
+                                    }
+
+                                    $productVariation->addValue($productVariationValue);
                                 }
+
+                                $product->addVariation($productVariation);
                             }
                         }
 
@@ -238,9 +254,7 @@ class Product extends DataController
                         //$this->addChildren($container, $productSW);
                     }
 
-                    $container->add('product', $product, false);
-
-                    $result[] = $container->getPublic(array('items'));
+                    $result[] = $product->getPublic();
                 } catch (\Exception $exc) { 
                     Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }

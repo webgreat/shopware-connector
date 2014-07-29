@@ -14,11 +14,11 @@ use \jtl\Connector\Model\ProductAttrI18n as ProductAttrI18nModel;
  */
 class ProductAttrI18n extends ProductAttrI18nModel
 {
-    protected $_fields = array(
-        "_localeName" => '',
-        "_productAttrId" => 'id',
-        "_key" => '',
-        "_value" => ''
+    protected $fields = array(
+        "localeName" => '',
+        "productAttrId" => 'id',
+        "key" => '',
+        "value" => ''
     );
     
     /**

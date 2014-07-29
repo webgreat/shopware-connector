@@ -14,13 +14,13 @@ use \jtl\Connector\Model\ProductI18n as ProductI18nModel;
  */
 class ProductI18n extends ProductI18nModel
 {
-    protected $_fields = array(
-        '_localeName' => '',
-        '_productId' => 'id',
-        '_name' => 'name',
-        '_urlPath' => '',
-        '_description' => 'descriptionLong',
-        '_shortDescription' => 'description'
+    protected $fields = array(
+        'localeName' => '',
+        'productId' => 'id',
+        'name' => 'name',
+        'urlPath' => '',
+        'description' => 'descriptionLong',
+        'shortDescription' => 'description'
     );
     
     /**

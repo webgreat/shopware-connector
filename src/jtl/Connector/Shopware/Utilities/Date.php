@@ -19,7 +19,7 @@ final class Date
     }
     
     public static function map($platformValue = null, $connectorValue = null)
-    {        
+    {
         if ($platformValue !== null) {
             $targetformat = 'Y-m-d H:i:s';
 

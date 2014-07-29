@@ -14,11 +14,11 @@ use \jtl\Connector\Model\Category as CategoryModel;
  */
 class Category extends CategoryModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_parentCategoryId' => 'parentId',
-        '_sort' => '',
-        '_level' => ''
+    protected $fields = array(
+        'id' => 'id',
+        'parentCategoryId' => 'parentId',
+        'sort' => '',
+        'level' => ''
     );
     
     /**

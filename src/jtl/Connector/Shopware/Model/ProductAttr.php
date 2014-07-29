@@ -14,10 +14,10 @@ use \jtl\Connector\Model\ProductAttr as ProductAttrModel;
  */
 class ProductAttr extends ProductAttrModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_productId' => 'articleId',
-        '_sort' => ''
+    protected $fields = array(
+        'id' => 'id',
+        'productId' => 'articleId',
+        'sort' => ''
     );
     
     /**

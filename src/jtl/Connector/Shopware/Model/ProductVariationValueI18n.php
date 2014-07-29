@@ -14,10 +14,10 @@ use \jtl\Connector\Model\ProductVariationValueI18n as ProductVariationValueI18nM
  */
 class ProductVariationValueI18n extends ProductVariationValueI18nModel
 {
-    protected $_fields = array(
-        '_localeName' => 'localeName',
-        '_productVariationValueId' => 'id',
-        '_name' => 'name'
+    protected $fields = array(
+        'localeName' => 'localeName',
+        'productVariationValueId' => 'id',
+        'name' => 'name'
     );
     
     /**

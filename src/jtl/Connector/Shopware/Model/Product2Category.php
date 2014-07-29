@@ -14,10 +14,10 @@ use \jtl\Connector\Model\Product2Category as Product2CategoryModel;
  */
 class Product2Category extends Product2CategoryModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_categoryId' => 'id',
-        '_productId' => 'articleId'
+    protected $fields = array(
+        'id' => '',
+        'categoryId' => 'id',
+        'productId' => 'articleId'
     );
     
     /**

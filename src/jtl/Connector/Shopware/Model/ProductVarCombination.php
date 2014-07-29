@@ -14,10 +14,10 @@ use \jtl\Connector\Model\ProductVarCombination as ProductVarCombinationModel;
  */
 class ProductVarCombination extends ProductVarCombinationModel
 {
-    protected $_fields = array(
-        '_productId' => '',
-        '_productVariationId' => '',
-        '_productVariationValueId' => ''
+    protected $fields = array(
+        'productId' => '',
+        'productVariationId' => '',
+        'productVariationValueId' => ''
     );
     
     /**

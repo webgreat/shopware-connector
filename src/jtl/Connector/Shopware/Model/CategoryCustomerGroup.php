@@ -14,10 +14,10 @@ use \jtl\Connector\Model\CategoryCustomerGroup as CategoryCustomerGroupModel;
  */
 class CategoryCustomerGroup extends CategoryCustomerGroupModel
 {
-    protected $_fields = array(
-        '_customerGroupId' => '',
-        '_categoryId' => '',
-        '_discount' => ''
+    protected $fields = array(
+        'customerGroupId' => '',
+        'categoryId' => '',
+        'discount' => ''
     );
     
     /**

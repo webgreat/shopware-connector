@@ -14,9 +14,9 @@ use \jtl\Connector\Model\CategoryAttr as CategoryAttrModel;
  */
 class CategoryAttr extends CategoryAttrModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_categoryId' => 'categoryId'
+    protected $fields = array(
+        'id' => 'id',
+        'categoryId' => 'categoryId'
     );
     
     /**

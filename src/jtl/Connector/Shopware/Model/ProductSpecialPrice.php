@@ -14,15 +14,15 @@ use \jtl\Connector\Model\ProductSpecialPrice as ProductSpecialPriceModel;
  */
 class ProductSpecialPrice extends ProductSpecialPriceModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_productId' => 'articleId',
-        '_isActive' => 'active',
-        '_activeFrom' => '',
-        '_activeUntil' => '',
-        '_stockLimit' => '',
-        '_considerStockLimit' => '',
-        '_considerDateLimit' => ''
+    protected $fields = array(
+        'id' => 'id',
+        'productId' => 'articleId',
+        'isActive' => 'active',
+        'activeFrom' => '',
+        'activeUntil' => '',
+        'stockLimit' => '',
+        'considerStockLimit' => '',
+        'considerDateLimit' => ''
     );
     
     /**

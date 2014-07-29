@@ -73,29 +73,30 @@ class Category extends DataController
 
             foreach ($categories as $categorySW) {
                 try {
-                    $container = new CategoryContainer();
-
                     $category = Mmc::getModel('Category');
-                    $category->map(true, DataConverter::toObject($categorySW));
+                    $category->map(true, DataConverter::toObject($categorySW, true));
 
                     $categoryObj = Shopware()->Models()->getRepository('Shopware\Models\Category\Category')
                         ->findOneById($categorySW['id']);
 
-                    $category->_level = $categoryObj->getLevel();
+                    // Level
+                    $category->setLevel($categoryObj->getLevel());
 
                     // Attributes
+                    /*
+                     * @todo: waiting for entity
                     $attributeExists = false;
                     if (isset($categorySW['attribute']) && is_array($categorySW['attribute'])) {
                         $attributeExists = true;
                         for ($i = 1; $i <= 6; $i++) {
                             if (isset($categorySW['attribute']["attribute{$i}"]) && strlen(trim($categorySW['attribute']["attribute{$i}"]))) {
                                 $categoryAttr = Mmc::getModel('CategoryAttr');
-                                $categoryAttr->map(true, DataConverter::toObject($categorySW['attribute']));
+                                $categoryAttr->map(true, DataConverter::toObject($categorySW['attribute'], true));
 
                                 $container->add('category_attr', $categoryAttr, false);
 
                                 $categoryAttrI18n = Mmc::getModel('CategoryAttrI18n');
-                                $categoryAttrI18n->map(true, DataConverter::toObject($categorySW['attribute']));
+                                $categoryAttrI18n->map(true, DataConverter::toObject($categorySW['attribute'], true));
                                 $categoryAttrI18n->_localName = Shopware()->Shop()->getLocale()->getLocale();
                                 $categoryAttrI18n->_key = "attribute{$i}";
                                 $categoryAttrI18n->_value = $categorySW['attribute']["attribute{$i}"];
@@ -104,15 +105,16 @@ class Category extends DataController
                             }
                         }
                     }
+                    */
 
                     // Invisibility
                     if (isset($categorySW['customerGroups']) && is_array($categorySW['customerGroups'])) {
                         foreach ($categorySW['customerGroups'] as $customerGroup) {
                             $categoryInvisibility = Mmc::getModel('CategoryInvisibility');
-                            $categoryInvisibility->_customerGroupId = $customerGroup['id'];
-                            $categoryInvisibility->_categoryId = $category->_id;
+                            $categoryInvisibility->setCustomerGroupId(new Identity($customerGroup['id']));
+                            $categoryInvisibility->setCategoryId($category->getId());
 
-                            $container->add('category_invisibility', $categoryInvisibility, false);
+                            $category->addInvisibility($categoryInvisibility);
                         }
                     }
 
@@ -136,17 +138,15 @@ class Category extends DataController
                         }
                     }
 
-                    $this->addContainerPos($container, 'category_i18n', $categorySW);
+                    $this->addPos($category, 'addI18ns', 'CategoryI18n', $categorySW);
 
                     // Default locale hack
                     if ($categorySW['localeName'] != Shopware()->Shop()->getLocale()->getLocale()) {
                         $categorySW['localeName'] = Shopware()->Shop()->getLocale()->getLocale();
-                        $this->addContainerPos($container, 'category_i18n', $categorySW);
+                        $this->addPos($category, 'addI18ns', 'CategoryI18n', $categorySW);
                     }
 
-                    $container->add('category', $category, false);
-
-                    $result[] = $container->getPublic(array("items"));
+                    $result[] = $category->getPublic();
                 } catch (\Exception $exc) {
                     Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }

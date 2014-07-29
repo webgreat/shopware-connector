@@ -14,13 +14,13 @@ use \jtl\Connector\Model\ProductVariationValue as ProductVariationValueModel;
  */
 class ProductVariationValue extends ProductVariationValueModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_productVariationId' => 'groupId',
-        '_extraWeight' => '',
-        '_sku' => '',
-        '_sort' => '',
-        '_stockLevel' => ''
+    protected $fields = array(
+        'id' => 'id',
+        'productVariationId' => 'groupId',
+        'extraWeight' => '',
+        'sku' => '',
+        'sort' => '',
+        'stockLevel' => ''
     );
     
     /**

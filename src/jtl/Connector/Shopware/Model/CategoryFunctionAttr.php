@@ -14,11 +14,11 @@ use \jtl\Connector\Model\CategoryFunctionAttr as CategoryFunctionAttrModel;
  */
 class CategoryFunctionAttr extends CategoryFunctionAttrModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_categoryId' => '',
-        '_name' => '',
-        '_value' => ''
+    protected $fields = array(
+        'id' => '',
+        'categoryId' => '',
+        'name' => '',
+        'value' => ''
     );
     
     /**

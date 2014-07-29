@@ -38,12 +38,12 @@ class DataModel
             if (count($platformFields) > 1) {
                 $value = array_shift($platformFields);
                 
-                return is_object($data->$value) ? $getValue($platformFields, $data->$value) : $data->$value;
+                return is_object($data->{$value}) ? $getValue($platformFields, $data->{$value}) : $data->{$value};
             }
             else {
                 $value = array_shift($platformFields);
                 
-                return $data->$value;
+                return $data->{$value};
             }
         };
 
@@ -51,60 +51,61 @@ class DataModel
             if (count($platformFields) > 1) {
                 $field = array_shift($platformFields);
 
-                if (!isset($obj->$field)) {
-                    $obj->$field = new \stdClass;
+                if (!isset($obj->{$field})) {
+                    $obj->{$field} = new \stdClass;
                 }
                 
-                return $setValue($platformFields, $value, $obj->$field);
+                return $setValue($platformFields, $value, $obj->{$field});
             }
             else {
                 $field = array_shift($platformFields);
-                $obj->$field = $value;
+                $obj->{$field} = $value;
                 
                 return $obj;
             }
         };
 
         foreach ($original->getFields() as $connectorField => $platformField) {
-            $property = ucfirst(substr($connectorField, 1));
+            $property = ucfirst($connectorField);
             $setter = 'set' . $property;
             $getter = 'get' . $property;
 
-            if ($connectorField !== '_localeName' && !is_array($platformField) && strlen($platformField) == 0) continue;
+            if ($connectorField !== 'localeName' && !is_array($platformField) && strlen($platformField) == 0) continue;
 
             if ($toConnector) {
                 if (is_array($platformField)) {
                     $value = $getValue($platformField, $obj);
-                    $value = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
+                    //$value = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
                     if ($original->isIdentity($connectorField)) {
                         $value = new Identity($value);
                     }
                     
-                    $original->$setter($value);
+                    $original->{$setter}($value);
                 }
-                else if ($connectorField == '_localeName' && strlen($platformField) == 0) {
-                    $original->$setter(Shopware()->Locale()->toString());
+                else if ($connectorField == 'localeName' && strlen($platformField) == 0) {
+                    $original->{$setter}(Shopware()->Locale()->toString());
                 }
-                else if (isset($obj->$platformField)) {
-                    $value = DateUtil::check($obj->$platformField) ? DateUtil::map($obj->$platformField) : $obj->$platformField;
+                else if (isset($obj->{$platformField})) {
+                    //$value = DateUtil::check($obj->{$platformField}) ? DateUtil::map($obj->{$platformField}) : $obj->{$platformField};
+                    $value = $obj->{$platformField};
                     if ($original->isIdentity($connectorField)) {
                         $value = new Identity($value);
                     }
 
-                    $original->$setter($value);
+                    $original->{$setter}($value);
                 }
             }
             else {
                 if (is_array($platformField)) {
                     // TODO: Date Check
-                    $setValue($platformField, $original->$getter(), $obj);
+                    $setValue($platformField, $original->{$getter}(), $obj);
                 }
-                elseif ($original->$getter() instanceof Identity) {
-                    $obj->$platformField = $original->$getter()->getEndpoint();
+                elseif ($original->{$getter}() instanceof Identity) {
+                    $obj->{$platformField} = $original->{$getter}()->getEndpoint();
                 }
                 elseif (strlen($platformField) > 0) {
                     // TODO: Date Check
-                    $obj->$platformField = $original->$getter();
+                    $obj->{$platformField} = $original->{$getter}();
                 }
             }
         }
@@ -113,7 +114,7 @@ class DataModel
             return true;
         }
         else {
-            unset($obj->_fields);
+            unset($obj->fields);
             return $obj;
         }
     }

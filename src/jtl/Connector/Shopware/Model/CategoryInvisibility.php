@@ -14,9 +14,9 @@ use \jtl\Connector\Model\CategoryInvisibility as CategoryInvisibilityModel;
  */
 class CategoryInvisibility extends CategoryInvisibilityModel
 {
-    protected $_fields = array(
-        '_customerGroupId' => 'id',
-        '_categoryId' => ''
+    protected $fields = array(
+        'customerGroupId' => 'id',
+        'categoryId' => ''
     );
     
     /**

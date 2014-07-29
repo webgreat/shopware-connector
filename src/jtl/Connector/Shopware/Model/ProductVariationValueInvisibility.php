@@ -14,9 +14,9 @@ use \jtl\Connector\Model\ProductVariationValueInvisibility as ProductVariationVa
  */
 class ProductVariationValueInvisibility extends ProductVariationValueInvisibilityModel
 {
-    protected $_fields = array(
-        '_customerGroupId' => '',
-        '_productVariationValueId' => ''
+    protected $fields = array(
+        'customerGroupId' => '',
+        'productVariationValueId' => ''
     );
     
     /**

@@ -14,11 +14,11 @@ use \jtl\Connector\Model\ProductVariation as ProductVariationModel;
  */
 class ProductVariation extends ProductVariationModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_productId' => 'articleId',
-        '_type' => '',
-        '_sort' => 'position'
+    protected $fields = array(
+        'id' => 'id',
+        'productId' => 'articleId',
+        'type' => '',
+        'sort' => 'position'
     );
     
     /**

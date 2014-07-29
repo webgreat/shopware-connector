@@ -6,7 +6,6 @@
 
 namespace jtl\Connector\Shopware\Controller;
 
-use \jtl\Connector\ModelContainer\CoreContainer;
 use \jtl\Core\Controller\Controller as CoreController;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
@@ -16,7 +15,6 @@ use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Model\Statistic;
 use \jtl\Core\Utilities\ClassName;
 use \jtl\Connector\Shopware\Model\DataModel;
-use \jtl\Connector\ModelContainer\MainContainer;
 use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 
@@ -173,60 +171,33 @@ abstract class DataController extends CoreController
     }
 
     /**
-     * Insert
-     *
-     * @param \jtl\Connector\ModelContainer\CoreContainer $container
-     * @return \jtl\Connector\Result\Transaction
-     */
-    /*
-    public function insert(CoreContainer $container)
-    {
-        if (MainContainer::isMain($this->getMethod()->getController())) {
-            $config = $this->getConfig();
-
-            $class = ClassName::getFromNS(get_called_class());
-
-            $mapper = Mmc::getMapper($class);
-            $data = $mapper->prepareData($container);
-            $modelSW = $mapper->save($data);
-
-            $model = $container->getMainModel();
-
-            $result = new \jtl\Connector\Result\Transaction();
-            $result->setId(new \jtl\Connector\Model\Identity($modelSW->getId(), $model->getId()->getHost()));
-
-            return $result;
-        }
-        
-        return null;
-    }
-    */
-
-    /**
-     * Add Item to Container
+     * Add Subobject to Object
      * 
-     * @param \jtl\Connector\ModelContainer\CoreContainer $container
-     * @param string $type
+     * @param \jtl\Connector\Model\DataModel $model
+     * @param string $setter
+     * @param string $className
      * @param multiple: mixed $kvs
      * @param multiple: mixed $members
      */
-    protected function addContainerPos(CoreContainer &$container, $type, $data, $isSeveral = false)
+    protected function addPos(\jtl\Connector\Model\DataModel &$model, $setter, $className, $data, $isSeveral = false)
     {
-        if (isset($container->items[$type][0]) && $data !== null) {
-            $class = $container->items[$type][0];
+        $callableName = get_class($model) . '::' . $setter;
 
+        if (is_callable(array($model, $setter), false, $callableName) && $data !== null) {
             if ($isSeveral) {
                 foreach ($data as $swArr) {
-                    $model = Mmc::getModel($class);
-                    $model->map(true, DataConverter::toObject($swArr));
-                    $container->add($type, $model, false);
+                    $subModel = Mmc::getModel($className);
+                    $subModel->map(true, DataConverter::toObject($swArr, true));
+                    $model->{$setter}($subModel);
                 }
             }
             else {
-                $model = Mmc::getModel($class);
-                $model->map(true, DataConverter::toObject($data));
-                $container->add($type, $model, false);
+                $subModel = Mmc::getModel($className);
+                $subModel->map(true, DataConverter::toObject($data, true));
+                $model->{$setter}($subModel);
             }
+        } else {
+            throw new \InvalidArgumentException(sprintf('Method %s in class %s not found', $setter, get_class($model)));
         }
     }
 }

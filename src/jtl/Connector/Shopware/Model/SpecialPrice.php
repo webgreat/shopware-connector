@@ -14,10 +14,10 @@ use \jtl\Connector\Model\SpecialPrice as SpecialPriceModel;
  */
 class SpecialPrice extends SpecialPriceModel
 {
-    protected $_fields = array(
-        '_customerGroupId' => 'customerGroupId',
-        '_productSpecialPriceId' => 'groupId',
-        '_priceNet' => 'priceNet'
+    protected $fields = array(
+        'customerGroupId' => 'customerGroupId',
+        'productSpecialPriceId' => 'groupId',
+        'priceNet' => 'priceNet'
     );
     
     /**

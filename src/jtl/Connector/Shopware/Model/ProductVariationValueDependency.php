@@ -14,9 +14,9 @@ use \jtl\Connector\Model\ProductVariationValueDependency as ProductVariationValu
  */
 class ProductVariationValueDependency extends ProductVariationValueDependencyModel
 {
-    protected $_fields = array(
-        '_productVariationValueId' => '',
-        '_productVariationValueTargetId' => ''
+    protected $fields = array(
+        'productVariationValueId' => '',
+        'productVariationValueTargetId' => ''
     );
     
     /**

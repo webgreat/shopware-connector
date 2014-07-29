@@ -14,11 +14,11 @@ use \jtl\Connector\Model\CategoryAttrI18n as CategoryAttrI18nModel;
  */
 class CategoryAttrI18n extends CategoryAttrI18nModel
 {
-    protected $_fields = array(
-        '_localeName' => '',
-        '_categoryAttrId' => 'id',
-        '_key' => '',
-        '_value' => ''
+    protected $fields = array(
+        'localeName' => '',
+        'categoryAttrId' => 'id',
+        'key' => '',
+        'value' => ''
     );
     
     /**

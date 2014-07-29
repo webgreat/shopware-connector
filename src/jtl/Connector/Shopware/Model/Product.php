@@ -14,88 +14,61 @@ use \jtl\Connector\Model\Product as ProductModel;
  */
 class Product extends ProductModel
 {
-    /**
-     * @var string
-     */
-    protected $_taxClassId = '0';
-
-    public function __set($name, $value)
-    {
-        switch ($name) {
-            case '_taxClassId':
-                $this->$name = (string)$value;
-                break;
-        }
-
-        parent::__set($name, $value);
-    }
-
-    public function setTaxClassId($taxClassId)
-    {
-        $this->_taxClassId = $taxClassId;
-        return $this;
-    }
-
-    public function getTaxClassId()
-    {
-        return $this->_taxClassId;
-    }
-
-    protected $_fields = array(
-        '_id' => 'id',
-        '_masterProductId' => '',
-        '_manufacturerId' => 'supplierId',
-        '_deliveryStatusId' => '',
-        '_unitId' => array('mainDetail', 'unitId'),
-        '_basePriceUnitId' => '',
-        '_shippingClassId' => '',
-        '_taxClassId' => array('tax', 'id'),
-        '_sku' => array('mainDetail', 'number'),
-        '_note' => '',
-        '_stockLevel' => array('mainDetail', 'inStock'),
-        '_vat' => array('tax', 'tax'),
-        '_minimumOrderQuantity' => array('mainDetail', 'minPurchase'),
-        '_ean' => array('mainDetail', 'ean'),
-        '_isTopProduct' => 'highlight',
-        '_productWeight' => array('mainDetail', 'weight'),
-        '_shippingWeight' => '',
-        '_isNew' => '',
-        '_recommendedRetailPrice' => '',
-        '_considerStock' => '',
-        '_permitNegativeStock' => '',
-        '_considerVariationStock' => '',
-        '_isDivisible' => '',
-        '_considerBasePrice' => '',
-        '_basePriceDivisor' => '',
-        '_keywords' => 'keywords',
-        '_sort' => '',
-        '_created' => 'added',
-        '_availableFrom' => 'availableFrom',
-        '_manufacturerNumber' => '',
-        '_serialNumber' => '',
-        '_isbn' => '',
-        '_asin' => '',
-        '_unNumber' => '',
-        '_hazardIdNumber' => '',
-        '_taric' => '',
-        '_isMasterProduct' => '',
-        '_takeOffQuantity' => array('mainDetail', 'purchaseSteps'),
-        '_setArticleId' => '',
-        '_upc' => '',
-        '_originCountry' => '',
-        '_epid' => '',
-        '_productTypeId' => '',
-        '_inflowQuantity' => '',
-        '_inflowDate' => '',
-        '_supplierStockLevel' => '',
-        '_supplierDeliveryTime' => '',
-        '_bestBefore' => '',
-        '_measurementUnitId' => '',
-        '_measurementQuantity' => '',
-        '_basePriceQuantity' => '',
-        '_length' => '',
-        '_height' => '',
-        '_width' => '',
+    protected $fields = array(
+        'id' => 'id',
+        'masterProductId' => '',
+        'manufacturerId' => 'supplierId',
+        'deliveryStatusId' => '',
+        //'unitId' => array('mainDetail', 'unitId'),
+        'basePriceUnitId' => '',
+        'shippingClassId' => '',
+        'taxClassId' => array('tax', 'id'),
+        'sku' => array('mainDetail', 'number'),
+        'note' => '',
+        'stockLevel' => array('mainDetail', 'inStock'),
+        'vat' => array('tax', 'tax'),
+        'minimumOrderQuantity' => array('mainDetail', 'minPurchase'),
+        'ean' => array('mainDetail', 'ean'),
+        'isTopProduct' => 'highlight',
+        'productWeight' => array('mainDetail', 'weight'),
+        'shippingWeight' => '',
+        'isNew' => '',
+        'recommendedRetailPrice' => '',
+        'considerStock' => '',
+        'permitNegativeStock' => '',
+        'considerVariationStock' => '',
+        'isDivisible' => '',
+        'considerBasePrice' => '',
+        'basePriceDivisor' => '',
+        //'keywords' => 'keywords',
+        'sort' => '',
+        'created' => 'added',
+        'availableFrom' => 'availableFrom',
+        'manufacturerNumber' => '',
+        'serialNumber' => '',
+        'isbn' => '',
+        'asin' => '',
+        'unNumber' => '',
+        'hazardIdNumber' => '',
+        'taric' => '',
+        'isMasterProduct' => '',
+        'takeOffQuantity' => array('mainDetail', 'purchaseSteps'),
+        'setArticleId' => '',
+        'upc' => '',
+        'originCountry' => '',
+        'epid' => '',
+        'productTypeId' => '',
+        'inflowQuantity' => '',
+        'inflowDate' => '',
+        'supplierStockLevel' => '',
+        'supplierDeliveryTime' => '',
+        'bestBefore' => '',
+        'measurementUnitId' => '',
+        'measurementQuantity' => '',
+        'basePriceQuantity' => '',
+        'length' => '',
+        'height' => '',
+        'width' => '',
     );
     
     /**

@@ -14,15 +14,15 @@ use \jtl\Connector\Model\CategoryI18n as CategoryI18nModel;
  */
 class CategoryI18n extends CategoryI18nModel
 {
-    protected $_fields = array(
-        '_localeName' => 'localeName',
-        '_categoryId' => 'id',
-        '_name' => 'name',
-        '_url' => '',
-        '_description' => '',
-        '_metaDescription' => '',
-        '_metaKeywords' => '',
-        '_titleTag' => ''
+    protected $fields = array(
+        'localeName' => 'localeName',
+        'categoryId' => 'id',
+        'name' => 'name',
+        'url' => '',
+        'description' => '',
+        'metaDescription' => '',
+        'metaKeywords' => '',
+        'titleTag' => ''
     );
     
     /**
