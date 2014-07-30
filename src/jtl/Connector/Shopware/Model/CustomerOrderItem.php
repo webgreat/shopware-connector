@@ -15,19 +15,19 @@ use \jtl\Core\Utilities\Money;
  */
 class CustomerOrderItem extends CustomerOrderItemModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_productId' => 'articleId',
-        '_shippingClassId' => '',
-        '_customerOrderId' => 'orderId',
-        '_name' => 'articleName',
-        '_sku' => 'articleNumber',
-        '_price' => 'price',
-        '_vat' => 'taxRate',
-        '_quantity' => 'quantity',
-        '_type' => '',
-        '_unique' => '',
-        '_configItemId' => ''
+    protected $fields = array(
+        'id' => 'id',
+        'productId' => 'articleId',
+        'shippingClassId' => '',
+        'customerOrderId' => 'orderId',
+        'name' => 'articleName',
+        'sku' => 'articleNumber',
+        'price' => 'price',
+        'vat' => 'taxRate',
+        'quantity' => 'quantity',
+        'type' => '',
+        'unique' => '',
+        'configItemId' => ''
     );
     
     /**

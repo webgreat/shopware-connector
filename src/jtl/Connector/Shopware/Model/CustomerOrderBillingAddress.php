@@ -15,25 +15,25 @@ use \jtl\Connector\Shopware\Utilities\Salutation;
  */
 class CustomerOrderBillingAddress extends CustomerOrderBillingAddressModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_customerId' => 'customerId',
-        '_salutation' => 'salutation',
-        '_firstName' => 'firstName',
-        '_lastName' => 'lastName',
-        '_title' => '',
-        '_company' => '',
-        '_deliveryInstruction' => '',
-        '_street' => 'street',
-        '_extraAddressLine' => 'streetNumber',
-        '_zipCode' => 'zipCode',
-        '_city' => 'city',
-        '_state' => '',
-        '_countryIso' => array('country', 'iso'),
-        '_phone' => 'phone',
-        '_mobile' => '',
-        '_fax' => 'fax',
-        '_eMail' => ''
+    protected $fields = array(
+        'id' => 'id',
+        'customerId' => 'customerId',
+        'salutation' => 'salutation',
+        'firstName' => 'firstName',
+        'lastName' => 'lastName',
+        'title' => '',
+        'company' => '',
+        'deliveryInstruction' => '',
+        'street' => 'street',
+        'extraAddressLine' => 'streetNumber',
+        'zipCode' => 'zipCode',
+        'city' => 'city',
+        'state' => '',
+        'countryIso' => array('country', 'iso'),
+        'phone' => 'phone',
+        'mobile' => '',
+        'fax' => 'fax',
+        'eMail' => ''
     );
     
     /**

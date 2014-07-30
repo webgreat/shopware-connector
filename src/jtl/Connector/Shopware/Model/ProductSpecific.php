@@ -14,10 +14,10 @@ use \jtl\Connector\Model\ProductSpecific as ProductSpecificModel;
  */
 class ProductSpecific extends ProductSpecificModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_specificValueId' => '',
-        '_productId' => ''
+    protected $fields = array(
+        'id' => '',
+        'specificValueId' => '',
+        'productId' => ''
     );
     
     /**

@@ -14,18 +14,18 @@ use \jtl\Connector\Model\EmailTemplate as EmailTemplateModel;
  */
 class EmailTemplate extends EmailTemplateModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_name' => '',
-        '_description' => '',
-        '_emailType' => '',
-        '_moduleId' => '',
-        '_filename' => '',
-        '_isActive' => '',
-        '_isOii' => '',
-        '_isAgb' => '',
-        '_isWrb' => '',
-        '_error' => ''
+    protected $fields = array(
+        'id' => '',
+        'name' => '',
+        'description' => '',
+        'emailType' => '',
+        'moduleId' => '',
+        'filename' => '',
+        'isActive' => '',
+        'isOii' => '',
+        'isAgb' => '',
+        'isWrb' => '',
+        'error' => ''
     );
     
     /**

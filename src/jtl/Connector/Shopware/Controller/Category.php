@@ -6,9 +6,6 @@
 
 namespace jtl\Connector\Shopware\Controller;
 
-use \jtl\Core\Result\Transaction as TransactionResult;
-use \jtl\Connector\Transaction\Handler as TransactionHandler;
-use \jtl\Core\Exception\TransactionException;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
 use \jtl\Core\Exception\DatabaseException;
@@ -16,12 +13,10 @@ use \Shopware\Components\Api\Manager as ShopwareManager;
 use \Shopware\Models\Category\Category as CategoryShopware;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
-use \jtl\Connector\ModelContainer\CategoryContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 use \jtl\Connector\Model\Identity;
-use \jtl\Connector\ModelContainer\CoreContainer;
 
 /**
  * Category Controller
@@ -111,8 +106,8 @@ class Category extends DataController
                     if (isset($categorySW['customerGroups']) && is_array($categorySW['customerGroups'])) {
                         foreach ($categorySW['customerGroups'] as $customerGroup) {
                             $categoryInvisibility = Mmc::getModel('CategoryInvisibility');
-                            $categoryInvisibility->setCustomerGroupId(new Identity($customerGroup['id']));
-                            $categoryInvisibility->setCategoryId($category->getId());
+                            $categoryInvisibility->setCustomerGroupId(new Identity($customerGroup['id']))
+                                ->setCategoryId($category->getId());
 
                             $category->addInvisibility($categoryInvisibility);
                         }
@@ -138,12 +133,12 @@ class Category extends DataController
                         }
                     }
 
-                    $this->addPos($category, 'addI18ns', 'CategoryI18n', $categorySW);
+                    $this->addPos($category, 'addI18n', 'CategoryI18n', $categorySW);
 
                     // Default locale hack
                     if ($categorySW['localeName'] != Shopware()->Shop()->getLocale()->getLocale()) {
                         $categorySW['localeName'] = Shopware()->Shop()->getLocale()->getLocale();
-                        $this->addPos($category, 'addI18ns', 'CategoryI18n', $categorySW);
+                        $this->addPos($category, 'addI18n', 'CategoryI18n', $categorySW);
                     }
 
                     $result[] = $category->getPublic();

@@ -14,11 +14,11 @@ use \jtl\Connector\Model\CustomerOrderAttr as CustomerOrderAttrModel;
  */
 class CustomerOrderAttr extends CustomerOrderAttrModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_customerOrderId' => 'orderId',
-        '_key' => '',
-        '_value' => ''
+    protected $fields = array(
+        'id' => 'id',
+        'customerOrderId' => 'orderId',
+        'key' => '',
+        'value' => ''
     );
     
     /**

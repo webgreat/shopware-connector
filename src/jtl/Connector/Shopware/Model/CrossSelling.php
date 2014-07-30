@@ -14,11 +14,11 @@ use \jtl\Connector\Model\CrossSelling as CrossSellingModel;
  */
 class CrossSelling extends CrossSellingModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_crossSellingProductId' => '',
-        '_crossSellingGroupId' => '',
-        '_productId' => ''
+    protected $fields = array(
+        'id' => '',
+        'crossSellingProductId' => '',
+        'crossSellingGroupId' => '',
+        'productId' => ''
     );
     
     /**

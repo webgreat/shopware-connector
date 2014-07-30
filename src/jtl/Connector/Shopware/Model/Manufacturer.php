@@ -14,12 +14,12 @@ use \jtl\Connector\Model\Manufacturer as ManufacturerModel;
  */
 class Manufacturer extends ManufacturerModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_name' => 'name',
-        '_www' => 'link',
-        '_sort' => '',
-        '_urlPath' => ''
+    protected $fields = array(
+        'id' => 'id',
+        'name' => 'name',
+        'www' => 'link',
+        'sort' => '',
+        'urlPath' => ''
     );
     
     /**

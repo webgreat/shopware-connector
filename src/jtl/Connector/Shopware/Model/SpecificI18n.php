@@ -14,10 +14,10 @@ use \jtl\Connector\Model\SpecificI18n as SpecificI18nModel;
  */
 class SpecificI18n extends SpecificI18nModel
 {
-    protected $_fields = array(
-        '_localeName' => '',
-        '_specificId' => '',
-        '_name' => ''
+    protected $fields = array(
+        'localeName' => '',
+        'specificId' => '',
+        'name' => ''
     );
     
     /**

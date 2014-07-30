@@ -14,10 +14,10 @@ use \jtl\Connector\Model\MeasurementUnitI18n as MeasurementUnitI18nModel;
  */
 class MeasurementUnitI18n extends MeasurementUnitI18nModel
 {
-    protected $_fields = array(
-        '_measurementUnitId' => '',
-        '_localeName' => '',
-        '_name' => ''
+    protected $fields = array(
+        'measurementUnitId' => '',
+        'localeName' => '',
+        'name' => ''
     );
     
     /**

@@ -14,23 +14,23 @@ use \jtl\Connector\Model\ConfigItem as ConfigItemModel;
  */
 class ConfigItem extends ConfigItemModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_configGroupId' => '',
-        '_productId' => '',
-        '_type' => '',
-        '_isPreSelected' => '',
-        '_isRecommended' => '',
-        '_inheritProductName' => '',
-        '_inheritProductPrice' => '',
-        '_showDiscount' => '',
-        '_showSurcharge' => '',
-        '_ignoreMultiplier' => '',
-        '_minQuantity' => '',
-        '_maxQuantity' => '',
-        '_initialQuantity' => '',
-        '_sort' => '',
-        '_vat' => ''
+    protected $fields = array(
+        'id' => '',
+        'configGroupId' => '',
+        'productId' => '',
+        'type' => '',
+        'isPreSelected' => '',
+        'isRecommended' => '',
+        'inheritProductName' => '',
+        'inheritProductPrice' => '',
+        'showDiscount' => '',
+        'showSurcharge' => '',
+        'ignoreMultiplier' => '',
+        'minQuantity' => '',
+        'maxQuantity' => '',
+        'initialQuantity' => '',
+        'sort' => '',
+        'vat' => ''
     );
     
     /**

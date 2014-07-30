@@ -14,14 +14,14 @@ use \jtl\Connector\Model\Shipment as ShipmentModel;
  */
 class Shipment extends ShipmentModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_deliveryNoteId' => '',
-        '_carrierName' => '',
-        '_trackingURL' => '',
-        '_identCode' => '',
-        '_created' => '',
-        '_note' => ''
+    protected $fields = array(
+        'id' => '',
+        'deliveryNoteId' => '',
+        'carrierName' => '',
+        'trackingURL' => '',
+        'identCode' => '',
+        'created' => '',
+        'note' => ''
     );
     
     /**

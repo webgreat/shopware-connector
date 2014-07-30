@@ -14,26 +14,26 @@ use \jtl\Connector\Model\Company as CompanyModel;
  */
 class Company extends CompanyModel
 {
-    protected $_fields = array(
-        'cName' => '_name',
-        'cUnternehmer' => '_businessman',
-        'cStrasse' => '_street',
-        '' => '_streetNumber',
-        'cPLZ' => '_zipCode',
-        'cOrt' => '_city',
-        'cLand' => '_country',
-        'cTel' => '_phone',
-        'cFax' => '_fax',
-        'cEMail' => '_eMail',
-        'cWWW' => '_www',
-        'cBLZ' => '_bankCode',
-        'cKontoNr' => '_accountNumber',
-        'cBank' => '_bankAccount',
-        'cKontoInhaber' => '_accountHolder',
-        'cUSTID' => '_vatNumber',
-        'cSteuerNr' => '_taxIdNumber',
-        'cIBAN' => '_iban',
-        'cBIC' => '_bic'
+    protected $fields = array(
+        'name' => '',
+        'businessman' => '',
+        'street' => '',
+        'streetNumber' => '',
+        'zipCode' => '',
+        'city' => '',
+        'countryIso' => '',
+        'phone' => '',
+        'fax' => '',
+        'eMail' => '',
+        'www' => '',
+        'bankCode' => '',
+        'accountNumber' => '',
+        'bankName' => '',
+        'accountHolder' => '',
+        'vatNumber' => '',
+        'taxIdNumber' => '',
+        'iban' => '',
+        'bic' => ''
     );
     
     /**

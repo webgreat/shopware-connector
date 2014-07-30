@@ -14,9 +14,9 @@ use \jtl\Connector\Model\WarehouseI18n as WarehouseI18nModel;
  */
 class WarehouseI18n extends WarehouseI18nModel
 {
-    protected $_fields = array(
-        '_warehouseId' => '',
-        '_name' => ''
+    protected $fields = array(
+        'warehouseId' => '',
+        'name' => ''
     );
     
     /**

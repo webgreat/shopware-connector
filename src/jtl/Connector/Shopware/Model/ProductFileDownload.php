@@ -14,9 +14,9 @@ use \jtl\Connector\Model\ProductFileDownload as ProductFileDownloadModel;
  */
 class ProductFileDownload extends ProductFileDownloadModel
 {
-    protected $_fields = array(
-        '_productId' => '',
-        '_fileDownloadId' => ''
+    protected $fields = array(
+        'productId' => '',
+        'fileDownloadId' => ''
     );
     
     /**

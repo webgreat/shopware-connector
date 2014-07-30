@@ -14,12 +14,12 @@ use \jtl\Connector\Model\MediaFileAttr as MediaFileAttrModel;
  */
 class MediaFileAttr extends MediaFileAttrModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_mediaFileId' => '',
-        '_localeName' => '',
-        '_name' => '',
-        '_value' => ''
+    protected $fields = array(
+        'id' => '',
+        'mediaFileId' => '',
+        'localeName' => '',
+        'name' => '',
+        'value' => ''
     );
     
     /**

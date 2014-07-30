@@ -14,10 +14,10 @@ use \jtl\Connector\Model\SetArticle as SetArticleModel;
  */
 class SetArticle extends SetArticleModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_productId' => '',
-        '_quantity' => ''
+    protected $fields = array(
+        'id' => '',
+        'productId' => '',
+        'quantity' => ''
     );
     
     /**

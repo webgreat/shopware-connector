@@ -14,14 +14,14 @@ use \jtl\Connector\Model\EmailTemplateI18n as EmailTemplateI18nModel;
  */
 class EmailTemplateI18n extends EmailTemplateI18nModel
 {
-    protected $_fields = array(
-        '_emailTemplateId' => '',
-        '_localeName' => '',
-        '_subject' => '',
-        '_contentHtml' => '',
-        '_contentText' => '',
-        '_pdf' => '',
-        '_filename' => ''
+    protected $fields = array(
+        'emailTemplateId' => '',
+        'localeName' => '',
+        'subject' => '',
+        'contentHtml' => '',
+        'contentText' => '',
+        'pdf' => '',
+        'filename' => ''
     );
     
     /**

@@ -14,10 +14,10 @@ use \jtl\Connector\Model\TaxClass as TaxClassModel;
  */
 class TaxClass extends TaxClassModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_name' => '',
-        '_isDefault' => ''
+    protected $fields = array(
+        'id' => '',
+        'name' => '',
+        'isDefault' => ''
     );
     
     /**

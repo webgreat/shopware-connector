@@ -14,11 +14,11 @@ use \jtl\Connector\Model\ConfigGroupI18n as ConfigGroupI18nModel;
  */
 class ConfigGroupI18n extends ConfigGroupI18nModel
 {
-    protected $_fields = array(
-        '_configGroupId' => '',
-        '_localeName' => '',
-        '_name' => '',
-        '_description' => ''
+    protected $fields = array(
+        'configGroupId' => '',
+        'localeName' => '',
+        'name' => '',
+        'description' => ''
     );
     
     /**

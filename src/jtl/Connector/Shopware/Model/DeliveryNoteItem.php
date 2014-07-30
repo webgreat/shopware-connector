@@ -14,15 +14,15 @@ use \jtl\Connector\Model\DeliveryNoteItem as DeliveryNoteItemModel;
  */
 class DeliveryNoteItem extends DeliveryNoteItemModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_customerOrderItemId' => '',
-        '_quantity' => '',
-        '_warehouseId' => '',
-        '_serialNumber' => '',
-        '_batchNumber' => '',
-        '_bestBefore' => '',
-        '_deliveryNoteId' => ''
+    protected $fields = array(
+        'id' => '',
+        'customerOrderItemId' => '',
+        'quantity' => '',
+        'warehouseId' => '',
+        'serialNumber' => '',
+        'batchNumber' => '',
+        'bestBefore' => '',
+        'deliveryNoteId' => ''
     );
     
     /**

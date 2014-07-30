@@ -14,9 +14,9 @@ use \jtl\Connector\Model\ProductInvisibility as ProductInvisibilityModel;
  */
 class ProductInvisibility extends ProductInvisibilityModel
 {
-    protected $_fields = array(
-        '_customerGroupId' => 'id',
-        '_productId' => 'articleId'
+    protected $fields = array(
+        'customerGroupId' => 'id',
+        'productId' => 'articleId'
     );
     
     /**

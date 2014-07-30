@@ -14,9 +14,9 @@ use \jtl\Connector\Model\TaxZone as TaxZoneModel;
  */
 class TaxZone extends TaxZoneModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_name' => ''
+    protected $fields = array(
+        'id' => '',
+        'name' => ''
     );
     
     /**

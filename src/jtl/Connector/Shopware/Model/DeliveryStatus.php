@@ -14,10 +14,10 @@ use \jtl\Connector\Model\DeliveryStatus as DeliveryStatusModel;
  */
 class DeliveryStatus extends DeliveryStatusModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_localeName' => '',
-        '_name' => ''
+    protected $fields = array(
+        'id' => '',
+        'localeName' => '',
+        'name' => ''
     );
     
     /**

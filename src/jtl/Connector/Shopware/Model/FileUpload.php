@@ -14,13 +14,13 @@ use \jtl\Connector\Model\FileUpload as FileUploadModel;
  */
 class FileUpload extends FileUploadModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_productId' => '',
-        '_name' => '',
-        '_description' => '',
-        '_fileType' => '',
-        '_isRequired' => ''
+    protected $fields = array(
+        'id' => '',
+        'productId' => '',
+        'name' => '',
+        'description' => '',
+        'fileType' => '',
+        'isRequired' => ''
     );
     
     /**

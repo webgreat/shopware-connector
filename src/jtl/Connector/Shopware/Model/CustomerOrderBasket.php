@@ -14,11 +14,11 @@ use \jtl\Connector\Model\CustomerOrderBasket as CustomerOrderBasketModel;
  */
 class CustomerOrderBasket extends CustomerOrderBasketModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_customerId' => '',
-        '_shippingAddressId' => '',
-        '_customerOrderPaymentInfoId' => ''
+    protected $fields = array(
+        'id' => '',
+        'customerId' => '',
+        'shippingAddressId' => '',
+        'customerOrderPaymentInfoId' => ''
     );
     
     /**

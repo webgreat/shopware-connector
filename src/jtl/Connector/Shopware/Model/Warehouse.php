@@ -14,8 +14,8 @@ use \jtl\Connector\Model\Warehouse as WarehouseModel;
  */
 class Warehouse extends WarehouseModel
 {
-    protected $_fields = array(
-        '_id' => ''
+    protected $fields = array(
+        'id' => ''
     );
     
     /**

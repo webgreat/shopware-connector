@@ -14,9 +14,9 @@ use \jtl\Connector\Model\ShippingClass as ShippingClassModel;
  */
 class ShippingClass extends ShippingClassModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_name' => ''
+    protected $fields = array(
+        'id' => '',
+        'name' => ''
     );
     
     /**

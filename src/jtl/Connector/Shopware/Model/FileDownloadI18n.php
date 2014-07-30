@@ -14,11 +14,11 @@ use \jtl\Connector\Model\FileDownloadI18n as FileDownloadI18nModel;
  */
 class FileDownloadI18n extends FileDownloadI18nModel
 {
-    protected $_fields = array(
-        '_fileDownloadId' => '',
-        '_localeName' => '',
-        '_name' => '',
-        '_description' => ''
+    protected $fields = array(
+        'fileDownloadId' => '',
+        'localeName' => '',
+        'name' => '',
+        'description' => ''
     );
     
     /**

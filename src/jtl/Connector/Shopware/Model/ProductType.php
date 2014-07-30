@@ -14,9 +14,9 @@ use \jtl\Connector\Model\ProductType as ProductTypeModel;
  */
 class ProductType extends ProductTypeModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_name' => ''
+    protected $fields = array(
+        'id' => '',
+        'name' => ''
     );
     
     /**

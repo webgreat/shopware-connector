@@ -14,11 +14,11 @@ use \jtl\Connector\Model\ProductFunctionAttr as ProductFunctionAttrModel;
  */
 class ProductFunctionAttr extends ProductFunctionAttrModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_productId' => '',
-        '_key' => '',
-        '_value' => ''
+    protected $fields = array(
+        'id' => '',
+        'productId' => '',
+        'key' => '',
+        'value' => ''
     );
     
     /**

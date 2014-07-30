@@ -18,6 +18,7 @@ use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Connector\Model\Statistic;
 use \jtl\Connector\Connector\Formatter\ExceptionFormatter;
+use \jtl\Connector\Model\Identity;
 
 /**
  * Image Controller
@@ -80,15 +81,15 @@ class Image extends DataController
                             foreach ($modelSW['images'] as $imageSW) {
                                 $model = Mmc::getModel('Image');
 
-                                $model->_id = $imageSW['id'];
+                                $model->setId(new Identity($imageSW['id']));
 
                                 if (intval($modelSW['parentId']) > 0) {
-                                    $model->_masterImageId = $modelSW['parentId'];
+                                    $model->setMasterImageId(new Identity($modelSW['parentId']));
                                 }
 
-                                $model->_relationType = $relationType;
-                                $model->_foreignKey = $imageSW['articleId'];
-                                $model->_filename = sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $imageSW['media']['path']);
+                                $model->setRelationType($relationType)
+                                    ->setForeignKey($imageSW['articleId'])
+                                    ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $imageSW['media']['path']));
 
                                 $result[] = $model->getPublic();
                             }
@@ -96,15 +97,15 @@ class Image extends DataController
                         case ImageRelationType::TYPE_CATEGORY:
                             $model = Mmc::getModel('Image');
                             
-                            $model->_id = $modelSW['media']['id'];
+                            $model->setId(new Identity($modelSW['media']['id']));
 
                             if (intval($modelSW['parentId']) > 0) {
-                                $model->_masterImageId = $modelSW['parentId'];
+                                 $model->setMasterImageId(new Identity($modelSW['parentId']));
                             }
 
-                            $model->_relationType = $relationType;
-                            $model->_foreignKey = $modelSW['id'];
-                            $model->_filename = sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['media']['path']);
+                            $model->setRelationType($relationType)
+                                ->setForeignKey($modelSW['id'])
+                                ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['media']['path']));
 
                             $result[] = $model->getPublic();
                             break;
@@ -113,15 +114,15 @@ class Image extends DataController
 
                             $model = Mmc::getModel('Image');
 
-                            $model->_id = $modelSW['id'];
+                            $model->setId(new Identity($modelSW['media']['id']));
 
                             if (intval($modelSW['parentId']) > 0) {
-                                $model->_masterImageId = $modelSW['parentId'];
+                                 $model->setMasterImageId(new Identity($modelSW['parentId']));
                             }
-
-                            $model->_relationType = $relationType;
-                            $model->_foreignKey = $modelSW['id'];
-                            $model->_filename = sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['image']);
+                            
+                            $model->setRelationType($relationType)
+                                ->setForeignKey($modelSW['id'])
+                                ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['media']['path']));
 
                             $result[] = $model->getPublic();
                             break;
@@ -130,15 +131,15 @@ class Image extends DataController
 
                             // Work Around
                             // id = s_article_img_mapping_rules.id
-                            $model->_id = 'option_' . $modelSW['id'];
+                            $model->setId(new Identity('option_' . $modelSW['id']));
 
                             if (intval($modelSW['masterImageId']) > 0) {
-                                $model->_masterImageId = $modelSW['masterImageId'];
+                                 $model->setMasterImageId(new Identity($modelSW['masterImageId']));
                             }
-
-                            $model->_relationType = $relationType;
-                            $model->_foreignKey = $modelSW['articleID'] . '_' . $modelSW['group_id'] . '_' . $modelSW['foreignKey'];
-                            $model->_filename = sprintf('http://%s%s/%s%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), 'media/image/', $modelSW['path'] . '.' . $modelSW['extension']);
+                            
+                            $model->setRelationType($relationType)
+                                ->setForeignKey($modelSW['articleID'] . '_' . $modelSW['group_id'] . '_' . $modelSW['foreignKey'])
+                                ->setFilename(sprintf('http://%s%s/%s%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), 'media/image/', $modelSW['path'] . '.' . $modelSW['extension']));
 
                             $result[] = $model->getPublic();
                             break;
@@ -176,13 +177,11 @@ class Image extends DataController
             $mapper = Mmc::getMapper('Image');
 
             $statModel = new Statistic();
-            $statModel->_available = 0;
-            $statModel->_pending = 0;
-            $statModel->_controllerName = 'image';
+            $statModel->setControllerName('image');
 
             if ($filter->getFilter('relationType') !== null) {  
 
-                $statModel->_available = $mapper->fetchCount(null, null, $filter->getFilter('relationType'));
+                $statModel->setAvailable($mapper->fetchCount(null, null, $filter->getFilter('relationType')));
             }
             else {
                 // Get all images
@@ -193,7 +192,7 @@ class Image extends DataController
                 );
 
                 foreach ($relationTypes as $relationType) {
-                    $statModel->_available += $mapper->fetchCount(null, null, $relationType);
+                    $statModel->setAvailable($statModel->getAvailable() + $mapper->fetchCount(null, null, $relationType));
                 }
             }
 

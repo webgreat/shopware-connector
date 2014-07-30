@@ -61,11 +61,11 @@ class Product extends DataController
                     $product->map(true, DataConverter::toObject($productSW, true));
 
                     // Stock
-                    $product->setConsiderStock(($product->_stockLevel > 0));
-                    $product->setPermitNegativeStock((bool)!$productSW['lastStock']);
+                    $product->setConsiderStock(($product->_stockLevel > 0))
+                        ->setPermitNegativeStock((bool)!$productSW['lastStock']);
 
                     // ProductI18n
-                    $this->addPos($product, 'addI18ns', 'ProductI18n', $productSW);
+                    $this->addPos($product, 'addI18n', 'ProductI18n', $productSW);
                     if (isset($productSW['translations'])) {
                         foreach ($productSW['translations'] as $localeName => $translation) {
                             $productI18n = Mmc::getModel('ProductI18n');
@@ -74,7 +74,7 @@ class Product extends DataController
                                 ->setName($translation['name'])
                                 ->setDescription($translation['descriptionLong']);
 
-                            $product->addI18ns($productI18n);
+                            $product->addI18n($productI18n);
                         }
                     }
 
@@ -124,9 +124,9 @@ class Product extends DataController
                             );
 
                             $specialPrice = Mmc::getModel('SpecialPrice');
-                            $specialPrice->setCustomerGroupId(new Identity($discount['customerGroupId']));
-                            $specialPrice->setProductSpecialPriceId(new Identity($discount['groupId']));
-                            $specialPrice->setPriceNet($discountPriceNet);
+                            $specialPrice->setCustomerGroupId(new Identity($discount['customerGroupId']))
+                                ->setProductSpecialPriceId(new Identity($discount['groupId']))
+                                ->setPriceNet($discountPriceNet);
 
                             $productSpecialPrice->addSpecialPrice($specialPrice);
                         }
@@ -189,7 +189,7 @@ class Product extends DataController
                                     ->setProductVariationId($group['id'])
                                     ->setName($group['name']);
 
-                                $productVariation->addI18ns($productVariationI18n);
+                                $productVariation->addI18n($productVariationI18n);
 
                                 if (isset($group['translations'])) {
                                     foreach ($group['translations'] as $localeName => $translation) {
@@ -198,7 +198,7 @@ class Product extends DataController
                                             ->setProductVariationId($group['id'])
                                             ->setName($translation['name']);
 
-                                        $productVariation->addI18ns($productVariationI18n);
+                                        $productVariation->addI18n($productVariationI18n);
                                     }
                                 }
 
@@ -230,7 +230,7 @@ class Product extends DataController
                                         ->setProductVariationValueId($option['id'])
                                         ->setName($option['name']);
 
-                                    $productVariationValue->addI18ns($productVariationValueI18n);
+                                    $productVariationValue->addI18n($productVariationValueI18n);
 
                                     if (isset($option['translations'])) {
                                         foreach ($option['translations'] as $localeName => $translation) {
@@ -239,7 +239,7 @@ class Product extends DataController
                                                 ->setProductVariationValueId($option['id'])
                                                 ->setName($translation['name']);
 
-                                            $productVariationValue->addI18ns($productVariationValueI18n);
+                                            $productVariationValue->addI18n($productVariationValueI18n);
                                         }
                                     }
 

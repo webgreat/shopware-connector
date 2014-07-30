@@ -14,10 +14,10 @@ use \jtl\Connector\Model\SpecificValue as SpecificValueModel;
  */
 class SpecificValue extends SpecificValueModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_specificId' => '',
-        '_sort' => ''
+    protected $fields = array(
+        'id' => '',
+        'specificId' => '',
+        'sort' => ''
     );
     
     /**

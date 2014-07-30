@@ -6,15 +6,11 @@
 
 namespace jtl\Connector\Shopware\Controller;
 
-use \jtl\Core\Result\Transaction as TransactionResult;
-use \jtl\Connector\Transaction\Handler as TransactionHandler;
-use \jtl\Core\Exception\TransactionException;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
 use \jtl\Core\Exception\DatabaseException;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
-use \jtl\Connector\ModelContainer\CustomerContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Connector\Shopware\Utilities\Salutation;
 use \jtl\Core\Logger\Logger;
@@ -58,20 +54,20 @@ class Customer extends DataController
 
             foreach ($customers as $customerSW) {
                 try {
-                    $container = new CustomerContainer();
-
+                    $customerSW['newsletter'] = (bool)$customerSW['newsletter'];
                     $customer = Mmc::getModel('Customer');
-                    $customer->map(true, DataConverter::toObject($customerSW));
-
-                    // Salutation
-                    $customer->_salutation = Salutation::map($customer->_salutation);
+                    $customer->map(true, DataConverter::toObject($customerSW, true));
 
                     $country = Shopware()->Models()->getRepository('Shopware\Models\Country\Country')
                         ->findOneById($customerSW['billing']['countryId']);
 
-                    $customer->_countryIso = $country->getIso();
+                    // Salutation
+                    $customer->setSalutation(Salutation::map($customer->getSalutation()))
+                        ->setCountryIso($country->getIso());
 
                     // Attributes
+                    /*
+                     * @todo: waiting for entity
                     $attributeExists = false;
                     if (isset($customerSW['billing']['attribute']) && is_array($customerSW['billing']['attribute'])) {
                         $attributeExists = true;
@@ -87,10 +83,9 @@ class Customer extends DataController
                             }
                         }
                     }
+                    */
 
-                    $container->add('customer', $customer, false);
-
-                    $result[] = $container->getPublic(array("items"));
+                    $result[] = $customer->getPublic();
                 } catch (\Exception $exc) { 
                     Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }

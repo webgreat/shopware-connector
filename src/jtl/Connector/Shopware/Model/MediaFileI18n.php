@@ -14,11 +14,11 @@ use \jtl\Connector\Model\MediaFileI18n as MediaFileI18nModel;
  */
 class MediaFileI18n extends MediaFileI18nModel
 {
-    protected $_fields = array(
-        '_mediaFileId' => '',
-        '_localeName' => '',
-        '_name' => '',
-        '_description' => ''
+    protected $fields = array(
+        'mediaFileId' => '',
+        'localeName' => '',
+        'name' => '',
+        'description' => ''
     );
     
     /**

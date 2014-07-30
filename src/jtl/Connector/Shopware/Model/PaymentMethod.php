@@ -14,15 +14,15 @@ use \jtl\Connector\Model\PaymentMethod as PaymentMethodModel;
  */
 class PaymentMethod extends PaymentMethodModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_sort' => '',
-        '_moduleId' => '',
-        '_picture' => '',
-        '_vendor' => '',
-        '_useMail' => '',
-        '_isActive' => '',
-        '_isUseable' => ''
+    protected $fields = array(
+        'id' => '',
+        'sort' => '',
+        'moduleId' => '',
+        'picture' => '',
+        'vendor' => '',
+        'useMail' => '',
+        'isActive' => '',
+        'isUseable' => ''
     );
     
     /**

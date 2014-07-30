@@ -14,12 +14,12 @@ use \jtl\Connector\Model\ProductWarehouseInfo as ProductWarehouseInfoModel;
  */
 class ProductWarehouseInfo extends ProductWarehouseInfoModel
 {
-    protected $_fields = array(
-        '_productId' => '',
-        '_warehouseId' => '',
-        '_stockLevel' => '',
-        '_inflowQuantity' => '',
-        '_inflowDate' => ''
+    protected $fields = array(
+        'productId' => '',
+        'warehouseId' => '',
+        'stockLevel' => '',
+        'inflowQuantity' => '',
+        'inflowDate' => ''
     );
     
     /**

@@ -6,15 +6,11 @@
 
 namespace jtl\Connector\Shopware\Controller;
 
-use \jtl\Core\Result\Transaction as TransactionResult;
-use \jtl\Connector\Transaction\Handler as TransactionHandler;
-use \jtl\Core\Exception\TransactionException;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
 use \jtl\Core\Exception\DatabaseException;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
-use \jtl\Connector\ModelContainer\CustomerOrderContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
@@ -63,17 +59,17 @@ class CustomerOrder extends DataController
 
             foreach ($orders as $orderSW) {
                 try {
-                    $container = new CustomerOrderContainer();
-
                     // CustomerOrders
                     $order = Mmc::getModel('CustomerOrder');
-                    $order->map(true, DataConverter::toObject($orderSW));
+                    $order->map(true, DataConverter::toObject($orderSW, true));
 
-                    $this->addContainerPos($container, 'customer_order_item', $orderSW['details'], true);
-                    $this->addContainerPos($container, 'customer_order_billing_address', $orderSW['billing']);
-                    $this->addContainerPos($container, 'customer_order_shipping_address', $orderSW['shipping']);
+                    $this->addPos($order, 'addPosition', 'CustomerOrderItem', $orderSW['details'], true);
+                    $this->addPos($order, 'addBillingAddress', 'CustomerOrderBillingAddress', $orderSW['billing']);
+                    $this->addPos($order, 'addShippingAddress', 'CustomerOrderShippingAddress', $orderSW['shipping']);
 
                     // Attributes
+                    /*
+                     * @todo: waiting for entity
                     $attributeExists = false;
                     for ($i = 1; $i <= 6; $i++) {
                         if (isset($orderSW['attribute']["attribute{$i}"]) && strlen($orderSW['attribute']["attribute{$i}"]) > 0) {
@@ -85,14 +81,13 @@ class CustomerOrder extends DataController
                             $container->add('customer_order_attr', $customerOrderAttr->getPublic(), false);
                         }
                     }
-
-                    $container->add('customer_order', $order->getPublic(), false);
+                    */
 
                     // CustomerOrderItemVariations
 
                     // CustomerOrderPaymentInfos
 
-                    $result[] = $container->getPublic(array("items"));
+                    $result[] = $order->getPublic();
                 } catch (\Exception $exc) { 
                     Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }

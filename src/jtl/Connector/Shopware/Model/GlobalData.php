@@ -6,20 +6,16 @@
 
 namespace jtl\Connector\Shopware\Model;
 
-use \jtl\Connector\Model\FileDownloadHistory as FileDownloadHistoryModel;
+use \jtl\Connector\Model\GlobalData as GlobalDataModel;
 
 /**
- * FileDownloadHistory Model
+ * GlobalData Model
  * @access public
  */
-class FileDownloadHistory extends FileDownloadHistoryModel
+class GlobalData extends GlobalDataModel
 {
     protected $fields = array(
-        'id' => '',
-        'fileDownloadId' => '',
-        'customerId' => '',
-        'customerOrderId' => '',
-        'created' => ''
+        
     );
     
     /**

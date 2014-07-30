@@ -14,16 +14,16 @@ use \jtl\Connector\Model\Currency as CurrencyModel;
  */
 class Currency extends CurrencyModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_name' => 'name',
-        '_iso' => 'currency',
-        '_nameHtml' => 'symbol',
-        '_factor' => 'factor',
-        '_isDefault' => 'default',
-        '_hasCurrencySignBeforeValue' => 'hasCurrencySignBeforeValue',
-        '_delimiterCent' => '',
-        '_delimiterThousand' => ''
+    protected $fields = array(
+        'id' => 'id',
+        'name' => 'name',
+        //'iso' => 'currency',
+        'nameHtml' => 'symbol',
+        'factor' => 'factor',
+        'isDefault' => 'default',
+        //'hasCurrencySignBeforeValue' => 'hasCurrencySignBeforeValue',
+        'delimiterCent' => '',
+        'delimiterThousand' => ''
     );
     
     /**

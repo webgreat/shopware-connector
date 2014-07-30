@@ -14,11 +14,11 @@ use \jtl\Connector\Model\ConfigItemPrice as ConfigItemPriceModel;
  */
 class ConfigItemPrice extends ConfigItemPriceModel
 {
-    protected $_fields = array(
-        '_configItemId' => '',
-        '_customerGroupId' => '',
-        '_price' => '',
-        '_type' => ''
+    protected $fields = array(
+        'configItemId' => '',
+        'customerGroupId' => '',
+        'price' => '',
+        'type' => ''
     );
     
     /**

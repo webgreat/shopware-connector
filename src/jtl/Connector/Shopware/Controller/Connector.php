@@ -34,7 +34,7 @@ class Connector extends DataController
             'Category',
             'Customer',
             'CustomerOrder',
-            'DeliveryNote',
+            //'DeliveryNote',
             'GlobalData',
             'Image',
             'Product',

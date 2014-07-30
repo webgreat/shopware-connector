@@ -14,14 +14,14 @@ use \jtl\Connector\Model\MediaFile as MediaFileModel;
  */
 class MediaFile extends MediaFileModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_productId' => '',
-        '_path' => '',
-        '_url' => '',
-        '_mediaFileCategory' => '',
-        '_type' => '',
-        '_sort' => ''
+    protected $fields = array(
+        'id' => '',
+        'productId' => '',
+        'path' => '',
+        'url' => '',
+        'mediaFileCategory' => '',
+        'type' => '',
+        'sort' => ''
     );
     
     /**

@@ -14,14 +14,14 @@ use \jtl\Connector\Model\ConfigGroup as ConfigGroupModel;
  */
 class ConfigGroup extends ConfigGroupModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_imagePath' => '',
-        '_minimumSelection' => '',
-        '_maximumSelection' => '',
-        '_type' => '',
-        '_sort' => '',
-        '_comment' => ''
+    protected $fields = array(
+        'id' => '',
+        'imagePath' => '',
+        'minimumSelection' => '',
+        'maximumSelection' => '',
+        'type' => '',
+        'sort' => '',
+        'comment' => ''
     );
     
     /**

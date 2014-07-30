@@ -14,14 +14,14 @@ use \jtl\Connector\Model\FileDownload as FileDownloadModel;
  */
 class FileDownload extends FileDownloadModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_path' => '',
-        '_previewPath' => '',
-        '_maxDownloads' => '',
-        '_maxDays' => '',
-        '_sort' => '',
-        '_created' => ''
+    protected $fields = array(
+        'id' => '',
+        'path' => '',
+        'previewPath' => '',
+        'maxDownloads' => '',
+        'maxDays' => '',
+        'sort' => '',
+        'created' => ''
     );
     
     /**

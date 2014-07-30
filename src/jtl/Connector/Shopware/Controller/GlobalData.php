@@ -6,16 +6,12 @@
 
 namespace jtl\Connector\Shopware\Controller;
 
-use \jtl\Core\Result\Transaction as TransactionResult;
-use \jtl\Connector\Transaction\Handler as TransactionHandler;
-use \jtl\Core\Exception\TransactionException;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
 use \jtl\Core\Exception\DatabaseException;
 use \Shopware\Components\Api\Manager as ShopwareManager;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataInjector;
-use \jtl\Connector\ModelContainer\GlobalDataContainer;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Formatter\ExceptionFormatter;
@@ -53,7 +49,7 @@ class GlobalData extends DataController
                 $limit = $filter->getLimit();
             }
 
-            $container = new GlobalDataContainer();
+            $globalData = Mmc::getModel('GlobalData');
 
             $shopMapper = Mmc::getMapper('Shop');
             $shops = $shopMapper->findAll(null, null);
@@ -64,49 +60,60 @@ class GlobalData extends DataController
             $company = Mmc::getModel('Company');
 
             Shopware()->Config()->setShop(Shopware()->Shop());
-            $company->_name = Shopware()->Config()->get('company');
-            $company->_street = Shopware()->Config()->get('address');
-            $company->_eMail = Shopware()->Config()->get('mail');
-            $company->_taxIdNumber = Shopware()->Config()->get('taxNumber');
-            $company->_vatNumber = Shopware()->Config()->get('vatcheckadvancednumber');
+            $company->setName(Shopware()->Config()->get('company'))
+                ->setStreet(Shopware()->Config()->get('address'))
+                ->setEMail(Shopware()->Config()->get('mail'))
+                ->setTaxIdNumber(Shopware()->Config()->get('taxNumber'))
+                ->setVatNumber(Shopware()->Config()->get('vatcheckadvancednumber'));
 
-            $container->add('company', $company, false);
+            $globalData->addCompany($company);
 
             foreach ($shops as $shop) {
-
                 $shop['locale']['default'] = (intval($shop['default']) == 1);
                 $shop['customerGroup']['localeName'] = $shop['locale']['locale'];
 
                 // Languages
                 $language = Mmc::getModel('Language');
-                $language->map(true, DataConverter::toObject($shop['locale']));
+                $language->map(true, DataConverter::toObject($shop['locale'], true));
 
-                $container->add('language', $language, false);
+                $globalData->addLanguage($language);
 
                 // Currencies
                 if (isset($shop['currencies']) && is_array($shop['currencies'])) {
                     foreach ($shop['currencies'] as $currencySW) {
+                        $currencySW['default'] = (bool)$currencySW['default'];
                         $currencySW['hasCurrencySignBeforeValue'] = ($currencySW['position'] == 32) ? true : false;
 
                         $currency = Mmc::getModel('Currency');
-                        $currency->map(true, DataConverter::toObject($currencySW));
+                        $currency->map(true, DataConverter::toObject($currencySW, true));
 
-                        $container->add('currency', $currency, false);
+                        $globalData->addCurrency($currency);
                     }
                 }
             }
 
             // CustomerGroups
+            /*
+             * @todo: waiting for entity
             $mapper = Mmc::getMapper('CustomerGroup');
-            $customerGroups = $mapper->findAll($offset, $limit);
+            $customerGroupSWs = $mapper->findAll($offset, $limit);
 
-            for ($i = 0; $i < count($customerGroups); $i++) {
-                $customerGroups[$i]['taxInput'] = !(bool)$customerGroups[$i]['taxInput'];
+            for ($i = 0; $i < count($customerGroupSWs); $i++) {
+                $customerGroupSWs[$i]['taxInput'] = !(bool)$customerGroupSWs[$i]['taxInput'];
             }
 
-            DataInjector::inject(DataInjector::TYPE_ARRAY, $customerGroups, 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
-            $this->addContainerPos($container, 'customer_group', $customerGroups, true);
-            $this->addContainerPos($container, 'customer_group_i18n', $customerGroups, true);
+            DataInjector::inject(DataInjector::TYPE_ARRAY, $customerGroupSWs, 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+            foreach ($customerGroupSWs as $customerGroupSW) {
+                $customerGroup = Mmc::getModel('CustomerGroup');
+                $customerGroup->map(true, DataConverter::toObject($customerGroupSW, true));
+
+                $customerGroupI18n = Mmc::getModel('CustomerGroupI18n');
+                $customerGroup->map(true, DataConverter::toObject($customerGroupSW, true));
+
+                $customerGroup->addI18n($customerGroupI18n);
+                $globalData->addCustomerGroup($customerGroup);
+            }
+            */
 
             // CustomerGroupAttrs
 
@@ -114,11 +121,20 @@ class GlobalData extends DataController
 
             // Units
             $mapper = Mmc::getMapper('Unit');
-            $units = $mapper->findAll($offset, $limit);
+            $unitSWs = $mapper->findAll($offset, $limit);
 
-            DataInjector::inject(DataInjector::TYPE_ARRAY, $units, 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
-            $this->addContainerPos($container, 'unit', $units, true);
-            $this->addContainerPos($container, 'unit_i18n', $units, true);
+            DataInjector::inject(DataInjector::TYPE_ARRAY, $unitSWs, 'localeName', Shopware()->Shop()->getLocale()->getLocale(), true);
+            foreach ($unitSWs as $unitSW) {
+                $unit = Mmc::getModel('Unit');
+                $unit->map(true, DataConverter::toObject($unitSW, true));
+
+                // @todo: waiting for entity unitI18n
+                //$unitI18n = Mmc::getModel('UnitI18n');
+                //$unitI18n->map(true, DataConverter::toObject($unitSW, true));
+
+                //$unit->addI18n($unitI18n);
+                $globalData->addUnit($unit);
+            }
 
             // TaxZones
 
@@ -128,13 +144,19 @@ class GlobalData extends DataController
 
             // TaxRates
             $mapper = Mmc::getMapper('TaxRate');
-            $taxes = $mapper->findAll($offset, $limit);
+            $taxSWs = $mapper->findAll($offset, $limit);
 
-            $this->addContainerPos($container, 'tax_rate', $taxes, true);
+            foreach ($taxSWs as $taxSW) {
+                $taxSW['tax'] = (float)$taxSW['tax'];
+                $tax = Mmc::getModel('TaxRate');
+                $tax->map(true, DataConverter::toObject($taxSW, true));
+
+                $globalData->addTaxRate($tax);
+            }
 
             // ShippingClasss
             
-            $result[] = $container->getPublic(array("items"));
+            $result[] = $globalData->getPublic();
 
             $action->setResult($result);
         }

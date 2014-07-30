@@ -14,12 +14,12 @@ use \jtl\Connector\Model\Language as LanguageModel;
  */
 class Language extends LanguageModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_nameEnglish' => 'language',
-        '_nameGerman' => 'language',
-        '_localeName' => 'locale',
-        '_isDefault' => 'default'
+    protected $fields = array(
+        'id' => 'id',
+        'nameEnglish' => 'language',
+        'nameGerman' => 'language',
+        'localeName' => 'locale',
+        'isDefault' => 'default'
     );
     
     /**

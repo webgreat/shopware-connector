@@ -41,14 +41,13 @@ abstract class DataController extends CoreController
             $statModel = new Statistic();
             $mapper = Mmc::getMapper($class);
 
-            $statModel->_available = $mapper->fetchCount();
+            $statModel->setAvailable($mapper->fetchCount());
 
-            $statModel->_pending = 0;
             if (is_callable(array($mapper, 'fetchPendingCount'))) {
-                $statModel->_pending = $mapper->fetchPendingCount();
+                $statModel->setPending($mapper->fetchPendingCount());
             }
 
-            $statModel->_controllerName = lcfirst($class);
+            $statModel->setControllerName(lcfirst($class));
 
             $action->setResult($statModel->getPublic());
         }

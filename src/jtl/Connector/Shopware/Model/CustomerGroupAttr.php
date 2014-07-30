@@ -14,11 +14,11 @@ use \jtl\Connector\Model\CustomerGroupAttr as CustomerGroupAttrModel;
  */
 class CustomerGroupAttr extends CustomerGroupAttrModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_customerGroupId' => '',
-        '_key' => '',
-        '_value' => ''
+    protected $fields = array(
+        'id' => '',
+        'customerGroupId' => '',
+        'key' => '',
+        'value' => ''
     );
     
     /**

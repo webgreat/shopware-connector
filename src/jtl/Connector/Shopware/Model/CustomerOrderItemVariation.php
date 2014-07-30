@@ -14,15 +14,15 @@ use \jtl\Connector\Model\CustomerOrderItemVariation as CustomerOrderItemVariatio
  */
 class CustomerOrderItemVariation extends CustomerOrderItemVariationModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_customerOrderItemId' => '',
-        '_productVariationId' => '',
-        '_productVariationValueId' => '',
-        '_productVariationName' => '',
-        '_productVariationValueName' => '',
-        '_freeField' => '',
-        '_surcharge' => ''
+    protected $fields = array(
+        'id' => '',
+        'customerOrderItemId' => '',
+        'productVariationId' => '',
+        'productVariationValueId' => '',
+        'productVariationName' => '',
+        'productVariationValueName' => '',
+        'freeField' => '',
+        'surcharge' => ''
     );
     
     /**

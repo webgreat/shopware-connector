@@ -14,13 +14,13 @@ use \jtl\Connector\Model\ManufacturerI18n as ManufacturerI18nModel;
  */
 class ManufacturerI18n extends ManufacturerI18nModel
 {
-    protected $_fields = array(
-        '_manufacturerId' => 'id',
-        '_localeName' => '',
-        '_description' => 'description',
-        '_metaDescription' => '',
-        '_metaKeywords' => '',
-        '_titleTag' => ''
+    protected $fields = array(
+        'manufacturerId' => 'id',
+        'localeName' => '',
+        'description' => 'description',
+        'metaDescription' => '',
+        'metaKeywords' => '',
+        'titleTag' => ''
     );
     
     /**

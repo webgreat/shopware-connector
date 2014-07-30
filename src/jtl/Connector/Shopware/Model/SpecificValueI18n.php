@@ -14,15 +14,15 @@ use \jtl\Connector\Model\SpecificValueI18n as SpecificValueI18nModel;
  */
 class SpecificValueI18n extends SpecificValueI18nModel
 {
-    protected $_fields = array(
-        '_localeName' => '',
-        '_specificValueId' => '',
-        '_value' => '',
-        '_urlPath' => '',
-        '_description' => '',
-        '_metaDescription' => '',
-        '_metaKeywords' => '',
-        '_titleTag' => ''
+    protected $fields = array(
+        'localeName' => '',
+        'specificValueId' => '',
+        'value' => '',
+        'urlPath' => '',
+        'description' => '',
+        'metaDescription' => '',
+        'metaKeywords' => '',
+        'titleTag' => ''
     );
     
     /**

@@ -14,13 +14,13 @@ use \jtl\Connector\Model\DeliveryNote as DeliveryNoteModel;
  */
 class DeliveryNote extends DeliveryNoteModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_customerOrderId' => '',
-        '_note' => '',
-        '_created' => '',
-        '_isFulfillment' => '',
-        '_status' => ''
+    protected $fields = array(
+        'id' => '',
+        'customerOrderId' => '',
+        'note' => '',
+        'created' => '',
+        'isFulfillment' => '',
+        'status' => ''
     );
     
     /**

@@ -14,11 +14,11 @@ use \jtl\Connector\Model\Specific as SpecificModel;
  */
 class Specific extends SpecificModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_sort' => '',
-        '_isGlobal' => '',
-        '_type' => ''
+    protected $fields = array(
+        'id' => '',
+        'sort' => '',
+        'isGlobal' => '',
+        'type' => ''
     );
     
     /**

@@ -14,10 +14,10 @@ use \jtl\Connector\Model\UnitI18n as UnitI18nModel;
  */
 class UnitI18n extends UnitI18nModel
 {
-    protected $_fields = array(
-        '_unitId' => 'id',
-        '_localeName' => 'localeName',
-        '_name' => 'name'
+    protected $fields = array(
+        'unitId' => 'id',
+        'localeName' => 'localeName',
+        'name' => 'name'
     );
     
     /**

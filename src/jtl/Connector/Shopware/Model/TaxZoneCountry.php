@@ -14,10 +14,10 @@ use \jtl\Connector\Model\TaxZoneCountry as TaxZoneCountryModel;
  */
 class TaxZoneCountry extends TaxZoneCountryModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_taxZoneId' => '',
-        '_countryIso' => ''
+    protected $fields = array(
+        'id' => '',
+        'taxZoneId' => '',
+        'countryIso' => ''
     );
     
     /**

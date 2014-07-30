@@ -14,11 +14,11 @@ use \jtl\Connector\Model\ProductConfigGroup as ProductConfigGroupModel;
  */
 class ProductConfigGroup extends ProductConfigGroupModel
 {
-    protected $_fields = array(
-        '_id' => '',
-        '_configGroupId' => '',
-        '_productId' => '',
-        '_sort' => ''
+    protected $fields = array(
+        'id' => '',
+        'configGroupId' => '',
+        'productId' => '',
+        'sort' => ''
     );
     
     /**

@@ -14,11 +14,11 @@ use \jtl\Connector\Model\CustomerGroup as CustomerGroupModel;
  */
 class CustomerGroup extends CustomerGroupModel
 {
-    protected $_fields = array(
-        '_id' => 'id',
-        '_discount' => 'discount',
-        '_isDefault' => '',
-        '_applyNetPrice' => 'taxInput'
+    protected $fields = array(
+        'id' => 'id',
+        'discount' => 'discount',
+        'isDefault' => '',
+        'applyNetPrice' => 'taxInput'
     );
     
     /**
