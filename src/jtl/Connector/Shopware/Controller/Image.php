@@ -88,7 +88,7 @@ class Image extends DataController
                                 }
 
                                 $model->setRelationType($relationType)
-                                    ->setForeignKey($imageSW['articleId'])
+                                    ->setForeignKey(new Identity($imageSW['articleId']))
                                     ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $imageSW['media']['path']));
 
                                 $result[] = $model->getPublic();
@@ -104,7 +104,7 @@ class Image extends DataController
                             }
 
                             $model->setRelationType($relationType)
-                                ->setForeignKey($modelSW['id'])
+                                ->setForeignKey(new Identity($modelSW['id']))
                                 ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['media']['path']));
 
                             $result[] = $model->getPublic();
@@ -121,7 +121,7 @@ class Image extends DataController
                             }
                             
                             $model->setRelationType($relationType)
-                                ->setForeignKey($modelSW['id'])
+                                ->setForeignKey(new Identity($modelSW['id']))
                                 ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['media']['path']));
 
                             $result[] = $model->getPublic();
@@ -138,7 +138,7 @@ class Image extends DataController
                             }
                             
                             $model->setRelationType($relationType)
-                                ->setForeignKey($modelSW['articleID'] . '_' . $modelSW['group_id'] . '_' . $modelSW['foreignKey'])
+                                ->setForeignKey(new Identity($modelSW['articleID'] . '_' . $modelSW['group_id'] . '_' . $modelSW['foreignKey']))
                                 ->setFilename(sprintf('http://%s%s/%s%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), 'media/image/', $modelSW['path'] . '.' . $modelSW['extension']));
 
                             $result[] = $model->getPublic();
