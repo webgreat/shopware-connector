@@ -33,7 +33,7 @@ class GlobalData extends DataController
     {
         $action = new Action();
         $action->setHandled(true);
-
+        
         try {
             $result = array();
             $filter = new QueryFilter();

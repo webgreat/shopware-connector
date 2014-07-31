@@ -6,24 +6,24 @@
 
 namespace jtl\Connector\Shopware\Model;
 
-use \jtl\Core\Model\DataModel as MainDataModel;
+use \jtl\Connector\Model\DataModel as ConnectorDataModel;
 use \jtl\Connector\Shopware\Utilities\Date as DateUtil;
 use \jtl\Connector\Model\Identity;
 
 /**
  * DataModel Class
  */
-class DataModel
+abstract class DataModel
 {
     /**
      * Object Mapping
      *
      * @param boolean $toConnector
      */
-    public static function map($toConnector = false, \stdClass $obj = null, MainDataModel $original)
+    public static function map($toConnector = false, \stdClass $obj = null, ConnectorDataModel $original)
     {
-        if (!$original instanceof MainDataModel) {
-            throw new \InvalidArgumentException('param original is not an instance of MainDataModel');
+        if (!$original instanceof ConnectorDataModel) {
+            throw new \InvalidArgumentException('param original is not an instance of \jtl\Connector\Model\DataModel');
         }
 
         if ($toConnector && $obj === null) {
@@ -34,6 +34,7 @@ class DataModel
             $obj = new \stdClass();
         }
 
+        // Get Value
         $getValue = function (array $platformFields, \stdClass $data) use (&$getValue) {
             if (count($platformFields) > 1) {
                 $value = array_shift($platformFields);
@@ -47,6 +48,7 @@ class DataModel
             }
         };
 
+        // Set Value
         $setValue = function (array $platformFields, $value, \stdClass $obj) use (&$setValue) {            
             if (count($platformFields) > 1) {
                 $field = array_shift($platformFields);
@@ -65,6 +67,28 @@ class DataModel
             }
         };
 
+        // Typecast
+        $typeCast = function (ConnectorDataModel $model, $property, $value) {
+            if (($propertyInfo = $model->getType()->getProperty($property)) !== null) {
+                if ($propertyInfo->isIdentity() && !($value instanceof Identity)) {
+                    return new Identity($value);
+                } else {
+                    switch ($propertyInfo->getType()) {
+                        case 'integer':
+                            return (int)$value;
+                        case 'float':
+                            return (float)$value;
+                        case 'string':
+                            return (string)$value;
+                        case 'boolean':
+                            return (bool)$value;
+                    }
+                }
+            }
+
+            return $value;
+        };
+
         foreach ($original->getFields() as $connectorField => $platformField) {
             $property = ucfirst($connectorField);
             $setter = 'set' . $property;
@@ -75,24 +99,27 @@ class DataModel
             if ($toConnector) {
                 if (is_array($platformField)) {
                     $value = $getValue($platformField, $obj);
-                    //$value = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
-                    if ($original->isIdentity($connectorField)) {
+                    /*
+                    $value = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
+                    if ($original->getType()->getProperty($connectorField)->isIdentity()) {
                         $value = new Identity($value);
                     }
-                    
-                    $original->{$setter}($value);
+                    */
+
+                    $original->{$setter}($typeCast($original, $connectorField, $value));
                 }
                 else if ($connectorField == 'localeName' && strlen($platformField) == 0) {
                     $original->{$setter}(Shopware()->Locale()->toString());
                 }
                 else if (isset($obj->{$platformField})) {
-                    //$value = DateUtil::check($obj->{$platformField}) ? DateUtil::map($obj->{$platformField}) : $obj->{$platformField};
-                    $value = $obj->{$platformField};
-                    if ($original->isIdentity($connectorField)) {
+                    /*
+                    $value = DateUtil::check($obj->{$platformField}) ? DateUtil::map($obj->{$platformField}) : $obj->{$platformField};
+                    if ($original->getType()->getProperty($connectorField)->isIdentity()) {
                         $value = new Identity($value);
                     }
+                    */
 
-                    $original->{$setter}($value);
+                    $original->{$setter}($typeCast($original, $connectorField, $obj->{$platformField}));
                 }
             }
             else {
@@ -123,11 +150,11 @@ class DataModel
      * Single Field Mapping
      *
      * @param string $fieldName
-     * @param MainDataModel $original
+     * @param \jtl\Connector\Model\DataModel $original
      * @param boolean $toWawi
      * @return string|NULL
      */
-    public static function getMappingField($fieldName, MainDataModel &$original, $toWawi = false)
+    public static function getMappingField($fieldName, ConnectorDataModel &$original, $toWawi = false)
     {
         foreach ($original->getFields() as $shopField => $wawiField) {
             if ($toWawi) {
