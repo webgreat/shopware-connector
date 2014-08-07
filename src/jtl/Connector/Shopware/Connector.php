@@ -109,16 +109,7 @@ class Connector extends BaseConnector
         // Set the method to our controller
         $this->_controller->setMethod($this->getMethod());
         
-        // Transaction Commit work around
-        if (($this->_action !== "commit")) {
-            return $this->_controller->{$this->_action}($requestpacket->getParams());
-        }
-        else if (TransactionHandler::exists($requestpacket) && MainContainer::isMain($this->getMethod()->getController()) && $this->_action === "commit") {
-            return $this->_controller->{$this->_action}($requestpacket->getParams(), $requestpacket->getGlobals()->getTransaction()->getId());
-        }
-        else {
-            throw new TransactionException("Only Main Controller can handle commit actions");
-        }
+        return $this->_controller->{$this->_action}($requestpacket->getParams());
     }
     
     /**

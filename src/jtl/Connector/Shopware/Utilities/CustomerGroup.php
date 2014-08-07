@@ -37,7 +37,7 @@ final class CustomerGroup
      */
     public static function getByKey($key)
     {
-        if ($customerGroups === null) {
+        if (self::$customerGroups === null) {
             self::$customerGroups = array();
         }
 

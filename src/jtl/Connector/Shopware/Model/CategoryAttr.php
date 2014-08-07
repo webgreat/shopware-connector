@@ -16,7 +16,8 @@ class CategoryAttr extends CategoryAttrModel
 {
     protected $fields = array(
         'id' => 'id',
-        'categoryId' => 'categoryId'
+        'categoryId' => 'categoryId',
+        'sort' => ''
     );
     
     /**

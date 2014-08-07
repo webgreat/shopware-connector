@@ -16,35 +16,77 @@ use \jtl\Core\Utilities\Money;
 
 class Product extends DataMapper
 {
-    public function find($id)
+    public function find($id, $full = false)
     {
         return $this->Manager()->find('Shopware\Models\Article\Article', $id);
     }
 
-    public function findAll($offset = 0, $limit = 100, $count = false)
+    public function findDetails($productId, $offset = 0, $limit = 100, $count = false)
     {
-        $builder = $this->Manager()->createQueryBuilder()->select(
-            'article'
-        )
-        ->from('Shopware\Models\Article\Article', 'article');
+        $query = $this->Manager()->createQueryBuilder()->select(
+                'detail',
+                'article',
+                'tax',
+                'categories',
+                'detailprices',
+                'links',
+                'attribute',
+                'downloads',
+                'supplier',
+                'related',
+                'pricegroup',
+                'discounts',
+                'customergroups',
+                'configuratorOptions'
+            )
+            ->from('Shopware\Models\Article\Detail', 'detail')
+            ->leftJoin('detail.article', 'article')
+            ->leftJoin('article.tax', 'tax')
+            ->leftJoin('article.categories', 'categories')
+            ->leftJoin('detail.prices', 'detailprices')
+            ->leftJoin('article.links', 'links')
+            ->leftJoin('article.attribute', 'attribute')
+            ->leftJoin('article.downloads', 'downloads')
+            ->leftJoin('article.supplier', 'supplier')
+            ->leftJoin('article.related', 'related')
+            ->leftJoin('article.priceGroup', 'pricegroup')
+            ->leftJoin('pricegroup.discounts', 'discounts')
+            ->leftJoin('article.customerGroups', 'customergroups')
+            ->leftJoin('detail.configuratorOptions', 'configuratorOptions')
+            ->where('detail.articleId = :productId')
+            ->setParameter('productId', $productId)
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()->setHydrationMode(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
 
-        if ($offset !== null && $limit !== null) {
-            $builder->setFirstResult($offset)
-                ->setMaxResults($limit);
-        }
-
-        $es = $builder->getQuery()
-            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-
-        $entityCount = count($es);
-        $lastIndex = $entityCount - 1;
+        $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query, $fetchJoinCollection = true);
 
         if ($count) {
-            return $entityCount;
-        }
+            return $paginator->count();
+        } else {
+            $products = iterator_to_array($paginator);
 
-        if ($entityCount > 0) {
-            $query = $this->Manager()->createQueryBuilder()->select(
+            $shopMapper = Mmc::getMapper('Shop');
+            $shops = $shopMapper->findAll(null, null);
+
+            $translationReader = new \Shopware_Components_Translation();
+            for ($i = 0; $i < count($products); $i++) {
+                foreach ($shops as $shop) {
+                    $translation = $translationReader->read($shop['locale']['id'], 'article', $products[$i]['id']);
+                    if (!empty($translation)) {
+                        $translation['shopId'] = $shop['id'];
+                        $products[$i]['translations'][$shop['locale']['locale']] = $translation;
+                    }
+                }
+            }
+
+            return $products;
+        }
+    }
+
+    public function findAll($offset = 0, $limit = 100, $count = false)
+    {
+        $query = $this->Manager()->createQueryBuilder()->select(
                 'article',
                 'tax',
                 'categories',
@@ -76,12 +118,17 @@ class Product extends DataMapper
             ->leftJoin('article.priceGroup', 'pricegroup')
             ->leftJoin('pricegroup.discounts', 'discounts')
             ->leftJoin('article.customerGroups', 'customergroups')
-            ->where('article.id BETWEEN :first AND :last')
-            ->setParameter('first', $es[0]['id'])
-            ->setParameter('last', $es[$lastIndex]['id'])
-            ->getQuery();
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()->setHydrationMode(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
 
-            $products = $query->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+        $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query, $fetchJoinCollection = true);
+
+        if ($count) {
+            return $paginator->count();
+        } else {
+            $products = iterator_to_array($paginator);
+
             $shopMapper = Mmc::getMapper('Shop');
             $shops = $shopMapper->findAll(null, null);
 
@@ -98,16 +145,6 @@ class Product extends DataMapper
 
             return $products;
         }
-
-        /*
-            'configuratorset',
-            'configuratorgroups',
-            'configuratoroptions'
-
-            ->leftJoin('article.configuratorSet', 'configuratorset')
-            ->leftJoin('configuratorset.groups', 'configuratorgroups')
-            ->leftJoin('configuratorset.options', 'configuratoroptions')
-        */
 
         return array();
     }

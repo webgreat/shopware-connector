@@ -161,6 +161,25 @@ class Category extends DataController
         return $action;
     }
 
+    /**
+     * Push
+     * 
+     * @params object $params
+     * @return \jtl\Connector\Result\Action
+     */
+    public function push($params)
+    {
+        $action = new Action();
+        $action->setHandled(true);
+
+        
+
+        $category = Mmc::getModel('Category');
+        $category->setOptions($params);
+
+        return $action;
+    }
+
     protected function isChildOf(CategoryShopware $category, CategoryShopware $parent)
     {
         if (!($category->getParent() instanceof CategoryShopware)) {
@@ -172,71 +191,5 @@ class Category extends DataController
         }
 
         return $this->isChildOf($category->getParent(), $parent);
-    }
-
-    /**
-     * Transaction Commit
-     *
-     * @param mixed $params
-     * @return \jtl\Connector\Result\Action
-     */
-    public function commit($params, $trid)
-    {
-        $action = new Action();
-        $action->setHandled(true);
-
-        try {
-            $container = TransactionHandler::getContainer($this->getMethod()->getController(), $trid);
-            $result = $this->insert($container);
-
-            if ($result !== null) {
-                $action->setResult($result->getPublic());
-            }
-        }
-        catch (\Exception $exc) {
-            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
-
-            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
-
-            $err = new Error();
-            $err->setCode($exc->getCode());
-            $err->setMessage($message);
-            $action->setError($err);
-        }
-
-        return $action;
-    }
-
-    /**
-     * Insert
-     *
-     * @param \jtl\Connector\ModelContainer\CoreContainer $container
-     * @return \jtl\Connector\ModelContainer\CategoryContainer
-     */
-    public function insert(CoreContainer $container)
-    {
-        $config = $this->getConfig();
-
-        $mapper = Mmc::getMapper('Category');
-        $data = $mapper->prepareData($container);
-        $modelSW = $mapper->save($data);
-
-        $resultContainer = new CategoryContainer();
-
-        // Category
-        foreach ($container->getCategories() as $category) {
-            $resultContainer->addIdentity('category', new Identity($modelSW->getId(), $category->getId()->getHost()));
-        }
-
-        // Attributes
-        foreach ($container->getCategoryAttrs() as $categoryAttr) {
-            foreach ($modelSW->getAttribute() as $attrSW) {
-                if ($attrSW->getAttribute()->getId() == $categoryAttr->getId()->getEndpoint()) {
-                    $resultContainer->addIdentity('category_attr', new Identity($attrSW->getAttribute()->getId(), $categoryAttr->getId()->getHost()));
-                }
-            }
-        }
-
-        return $resultContainer;
     }
 }

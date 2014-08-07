@@ -18,7 +18,8 @@ class Category extends CategoryModel
         'id' => 'id',
         'parentCategoryId' => 'parentId',
         'sort' => '',
-        'level' => ''
+        'level' => '',
+        'isActive' => ''
     );
     
     /**

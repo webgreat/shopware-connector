@@ -40,8 +40,7 @@ abstract class DataModel
                 $value = array_shift($platformFields);
                 
                 return is_object($data->{$value}) ? $getValue($platformFields, $data->{$value}) : $data->{$value};
-            }
-            else {
+            } else {
                 $value = array_shift($platformFields);
                 
                 return $data->{$value};
@@ -58,8 +57,7 @@ abstract class DataModel
                 }
                 
                 return $setValue($platformFields, $value, $obj->{$field});
-            }
-            else {
+            } else {
                 $field = array_shift($platformFields);
                 $obj->{$field} = $value;
                 
@@ -69,18 +67,21 @@ abstract class DataModel
 
         // Typecast
         $typeCast = function (ConnectorDataModel $model, $property, $value) {
-            if (($propertyInfo = $model->getType()->getProperty($property)) !== null) {
+            if (($propertyInfo = $model->getModelType()->getProperty($property)) !== null) {
                 if ($propertyInfo->isIdentity() && !($value instanceof Identity)) {
                     return new Identity($value);
                 } else {
                     switch ($propertyInfo->getType()) {
                         case 'integer':
+                        case 'int':
                             return (int)$value;
                         case 'float':
+                        case 'double':
                             return (float)$value;
                         case 'string':
                             return (string)$value;
                         case 'boolean':
+                        case 'bool':
                             return (bool)$value;
                     }
                 }
@@ -99,38 +100,19 @@ abstract class DataModel
             if ($toConnector) {
                 if (is_array($platformField)) {
                     $value = $getValue($platformField, $obj);
-                    /*
-                    $value = DateUtil::check($value) ? DateUtil::map($platformField) : $value;
-                    if ($original->getType()->getProperty($connectorField)->isIdentity()) {
-                        $value = new Identity($value);
-                    }
-                    */
-
                     $original->{$setter}($typeCast($original, $connectorField, $value));
-                }
-                else if ($connectorField == 'localeName' && strlen($platformField) == 0) {
+                } else if ($connectorField == 'localeName' && strlen($platformField) == 0) {
                     $original->{$setter}(Shopware()->Locale()->toString());
-                }
-                else if (isset($obj->{$platformField})) {
-                    /*
-                    $value = DateUtil::check($obj->{$platformField}) ? DateUtil::map($obj->{$platformField}) : $obj->{$platformField};
-                    if ($original->getType()->getProperty($connectorField)->isIdentity()) {
-                        $value = new Identity($value);
-                    }
-                    */
-
+                } else if (isset($obj->{$platformField})) {
                     $original->{$setter}($typeCast($original, $connectorField, $obj->{$platformField}));
                 }
-            }
-            else {
+            } else {
                 if (is_array($platformField)) {
                     // TODO: Date Check
                     $setValue($platformField, $original->{$getter}(), $obj);
-                }
-                elseif ($original->{$getter}() instanceof Identity) {
+                } elseif ($original->{$getter}() instanceof Identity) {
                     $obj->{$platformField} = $original->{$getter}()->getEndpoint();
-                }
-                elseif (strlen($platformField) > 0) {
+                } elseif (strlen($platformField) > 0) {
                     // TODO: Date Check
                     $obj->{$platformField} = $original->{$getter}();
                 }
@@ -139,8 +121,7 @@ abstract class DataModel
 
         if ($toConnector) {
             return true;
-        }
-        else {
+        } else {
             unset($obj->fields);
             return $obj;
         }
@@ -161,8 +142,7 @@ abstract class DataModel
                 if ($shopField === $fieldName) {
                     return $wawiField;
                 }
-            }
-            else {
+            } else {
                 if ($wawiField === $fieldName) {
                     return $shopField;
                 }

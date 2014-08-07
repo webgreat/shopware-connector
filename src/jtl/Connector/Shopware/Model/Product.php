@@ -22,7 +22,7 @@ class Product extends ProductModel
         //'unitId' => array('mainDetail', 'unitId'),
         'basePriceUnitId' => '',
         'shippingClassId' => '',
-        'taxClassId' => array('tax', 'id'),
+        //'taxClassId' => array('tax', 'id'),
         'sku' => array('mainDetail', 'number'),
         'note' => '',
         'stockLevel' => array('mainDetail', 'inStock'),
