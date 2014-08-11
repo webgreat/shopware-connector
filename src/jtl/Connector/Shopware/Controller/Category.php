@@ -161,25 +161,6 @@ class Category extends DataController
         return $action;
     }
 
-    /**
-     * Push
-     * 
-     * @params object $params
-     * @return \jtl\Connector\Result\Action
-     */
-    public function push($params)
-    {
-        $action = new Action();
-        $action->setHandled(true);
-
-        
-
-        $category = Mmc::getModel('Category');
-        $category->setOptions($params);
-
-        return $action;
-    }
-
     protected function isChildOf(CategoryShopware $category, CategoryShopware $parent)
     {
         if (!($category->getParent() instanceof CategoryShopware)) {

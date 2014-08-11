@@ -93,8 +93,6 @@ class GlobalData extends DataController
             }
 
             // CustomerGroups
-            /*
-             * @todo: waiting for entity
             $mapper = Mmc::getMapper('CustomerGroup');
             $customerGroupSWs = $mapper->findAll($offset, $limit);
 
@@ -113,7 +111,6 @@ class GlobalData extends DataController
                 $customerGroup->addI18n($customerGroupI18n);
                 $globalData->addCustomerGroup($customerGroup);
             }
-            */
 
             // CustomerGroupAttrs
 
@@ -170,114 +167,5 @@ class GlobalData extends DataController
         }
 
         return $action;
-    }
-
-    /**
-     * Transaction Commit
-     *
-     * @param mixed $params
-     * @return \jtl\Connector\Result\Action
-     */
-    public function commit($params, $trid)
-    {
-        $action = new Action();
-        $action->setHandled(true);
-
-        try {
-            $container = TransactionHandler::getContainer($this->getMethod()->getController(), $trid);
-            $result = $this->insert($container);
-
-            if ($result !== null) {
-                $action->setResult($result->getPublic());
-            }
-        }
-        catch (\Exception $exc) {
-            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
-
-            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
-
-            $err = new Error();
-            $err->setCode($exc->getCode());
-            $err->setMessage($message);
-            $action->setError($err);
-        }
-
-        return $action;
-    }
-
-    /**
-     * Insert
-     *
-     * @param \jtl\Connector\ModelContainer\CoreContainer $container
-     * @return \jtl\Connector\Result\Transaction
-     */
-    public function insert(ModelContainer $container)
-    {
-        // Companies
-        $configMapper = Mmc::getMapper('Config');
-        foreach ($container->getCompanies() as $company) {
-            $configMapper->update('company', $company->_name);
-            $configMapper->update('address', $company->_street);
-            $configMapper->update('mail', $company->_eMail);
-            $configMapper->update('taxNumber', $company->_taxIdNumber);
-            $configMapper->update('vatcheckadvancednumber', $company->_vatNumber);
-        }
-
-        // Languages
-
-        // Currencies
-        $currencyMapper = Mmc::getMapper('Currency');
-        foreach ($container->getCurrencies() as $currency) {
-            try {
-                $data = DataConverter::toArray(DataModel::map(false, null, $currency));
-                $currencyMapper->save($data);
-            } catch (\Exception $exc) {
-                Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
-            }
-        }
-
-        // CustomerGroups
-        $customerGroupMapper = Mmc::getMapper('CustomerGroup');
-        foreach ($container->getCustomerGroups() as $customerGroup) {
-            try {
-                $data = DataConverter::toArray(DataModel::map(false, null, $customerGroup));
-                $customerGroupMapper->save($data);
-            } catch (\Exception $exc) {
-                Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
-            }
-        }
-
-        // Units
-        $unitMapper = Mmc::getMapper('Unit');
-        foreach ($container->getUnits() as $unit) {
-            try {
-                $data = DataConverter::toArray(DataModel::map(false, null, $unit));
-                $unitMapper->save($data);
-            } catch (\Exception $exc) {
-                Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
-            }
-        }
-
-        // TaxRates
-        $taxRatesMapper = Mmc::getMapper('TaxRate');
-        foreach ($container->getTaxRates() as $taxRate) {
-            try {
-                $data = DataConverter::toArray(DataModel::map(false, null, $taxRate));
-                $taxRatesMapper->save($data);
-            } catch (\Exception $exc) {
-                Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
-            }
-        }
-
-        $mapper = Mmc::getMapper($class);
-        $data = $mapper->prepareData($container);
-        $modelSW = $mapper->save($data);
-
-        $model = $container->getMainModel();
-
-        $result = new \jtl\Connector\Result\Transaction();
-        $result->setId(new \jtl\Connector\Model\Identity($modelSW->getId(), $model->getId()->getHost()));
-
-        return $result;
     }
 }

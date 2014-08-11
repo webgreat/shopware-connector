@@ -66,7 +66,7 @@ abstract class DataController extends CoreController
     /**
      * Insert or update
      *
-     * @param mixed $params
+     * @param \jtl\Connector\Shopware\Model\DataModel $params
      * @return \jtl\Connector\Result\Action
      */
     public function push($params)
@@ -76,20 +76,11 @@ abstract class DataController extends CoreController
 
         try {
             $class = ClassName::getFromNS(get_called_class());
-            
-            $obj = Mmc::getModel($class);
-            $obj->setOptions($params);
-
-            $array = DataConverter::toArray($obj->map());
 
             $mapper = Mmc::getMapper($class);
-            $model = $mapper->save($array);
-            if ($model === null) {
-                throw new DatabaseException($result->getError(), $result->getErrno());
-            }
-            else {
-                $action->setResult($result->getPublic());
-            }
+            $model = $mapper->save($params);
+            
+            $action->setResult($model->getPublic());
         }
         catch (\Exception $exc) {
             Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');

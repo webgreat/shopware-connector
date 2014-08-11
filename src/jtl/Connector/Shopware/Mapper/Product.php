@@ -69,7 +69,7 @@ class Product extends DataMapper
             $shopMapper = Mmc::getMapper('Shop');
             $shops = $shopMapper->findAll(null, null);
 
-            $translationReader = new \Shopware_Components_Translation();
+            $translationReader = new \Shopware_Components_Translation;
             for ($i = 0; $i < count($products); $i++) {
                 foreach ($shops as $shop) {
                     $translation = $translationReader->read($shop['locale']['id'], 'article', $products[$i]['id']);
@@ -230,6 +230,12 @@ class Product extends DataMapper
         return $data;
     }
 
+    public function save(\jtl\Connector\Shopware\Model\DataModel $model)
+    {
+        $modelSW = new \Shopware\Models\Article\Article;
+    }
+
+    /*
     public function save(array $data, $namespace = '\Shopware\Models\Article\Article')
     {
         Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
@@ -246,4 +252,5 @@ class Product extends DataMapper
             return $resource->create($data);
         }
     }
+    */
 }

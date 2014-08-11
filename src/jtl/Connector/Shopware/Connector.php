@@ -3,7 +3,6 @@
  * @copyright 2010-2013 JTL-Software GmbH
  * @package jtl\Connector\Shopware
  */
-
 namespace jtl\Connector\Shopware;
 
 use \jtl\Core\Config\Config;
@@ -21,7 +20,7 @@ use \jtl\Connector\ModelContainer\MainContainer;
  * Shopware Connector
  *
  * @access public
- * @author Christian Spoo <christian.spoo@jtl-software.de>
+ * @author Daniel Böhmer <daniel.boehmer@jtl-software.com
  */
 class Connector extends BaseConnector
 {
@@ -30,18 +29,17 @@ class Connector extends BaseConnector
      *
      * @var \jtl\Core\Controller\Controller
      */
-    protected $_controller;
+    protected $controller;
     
     /**
-     *
      * @var string
      */
-    protected $_action;
+    protected $action;
     
     protected function __construct()
     {
         $this->initializeConfiguration();
-        $this->setModelNamespace("\\jtl\\Connector\\Shopware\\Model");
+        $this->setModelNamespace('jtl\Connector\Shopware\Model');
     }
     
     protected function initializeConfiguration()
@@ -52,7 +50,7 @@ class Connector extends BaseConnector
         }
                 
         if (empty($config)) {
-            if (!is_null($this->_config)) {
+            if (!is_null($this->config)) {
                 $config = $this->getConfig();
             }
 
@@ -61,9 +59,10 @@ class Connector extends BaseConnector
                 // the Config object
                 $json = new ConfigJson(realpath(APP_DIR . '/../config/') . '/config.json');
                 $config = new Config(array(
-                  $json,
-                  new ConfigSystem()
+                    $json,
+                    new ConfigSystem()
                 ));
+
                 $this->setConfig($config);
             }
         }
@@ -85,10 +84,10 @@ class Connector extends BaseConnector
         
         $class = "\\jtl\\Connector\\Shopware\\Controller\\{$controller}";
         if (class_exists($class)) {
-            $this->_controller = $class::getInstance();
-            $this->_action = RpcMethod::buildAction($this->getMethod()->getAction());
+            $this->controller = $class::getInstance();
+            $this->action = RpcMethod::buildAction($this->getMethod()->getAction());
 
-            return is_callable(array($this->_controller, $this->_action));
+            return is_callable(array($this->controller, $this->action));
         }
 
         return false;
@@ -104,12 +103,12 @@ class Connector extends BaseConnector
         $config = $this->getConfig();
         
         // Set the config to our controller 
-        $this->_controller->setConfig($config);
+        $this->controller->setConfig($config);
 
         // Set the method to our controller
-        $this->_controller->setMethod($this->getMethod());
+        $this->controller->setMethod($this->getMethod());
         
-        return $this->_controller->{$this->_action}($requestpacket->getParams());
+        return $this->controller->{$this->action}($requestpacket->getParams());
     }
     
     /**
@@ -119,7 +118,7 @@ class Connector extends BaseConnector
      */
     public function getController()
     {
-        return $this->_controller;
+        return $this->controller;
     }
 
     /**
@@ -129,7 +128,8 @@ class Connector extends BaseConnector
      */
 	public function setController(CoreController $controller)
     {
-        $this->_controller = $controller;
+        $this->controller = $controller;
+        return $this;
     }
 
     /**
@@ -139,7 +139,7 @@ class Connector extends BaseConnector
      */
 	public function getAction()
     {
-        return $this->_action;
+        return $this->action;
     }
 
     /**
@@ -149,6 +149,7 @@ class Connector extends BaseConnector
      */
 	public function setAction($action)
     {
-        $this->_action = $action;
+        $this->action = $action;
+        return $this;
     }
 }
