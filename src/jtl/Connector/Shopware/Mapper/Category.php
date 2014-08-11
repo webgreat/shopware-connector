@@ -112,7 +112,7 @@ class Category extends DataMapper
         return $data;
     }
 
-    public function save(\jtl\Connector\Shopware\Model\DataModel $category)
+    public function save(DataModel $category)
     {
         $categorySW = null;
 
@@ -169,6 +169,7 @@ class Category extends DataMapper
         $this->Manager()->persist($categorySW);
         $this->flush();
 
+        // Result
         $result = new CategoryModel;
         $result->setId(new Identity($categorySW->getId(), $category->getId()->getHost()));
         

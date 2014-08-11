@@ -10,13 +10,25 @@ final class Salutation
 {
     private function __construct() { }
 
-    public static function map($salutation)
+    public static function toConnector($salutation)
     {
         switch ($salutation) {
             case 'mr':
                 return 'm';
             case 'ms':
                 return 'w';
+            default:
+                return $salutation;
+        }
+    }
+
+    public static function toEndpoint($salutation)
+    {
+        switch ($salutation) {
+            case 'm':
+                return 'mr';
+            case 'w':
+                return 'ms';
             default:
                 return $salutation;
         }

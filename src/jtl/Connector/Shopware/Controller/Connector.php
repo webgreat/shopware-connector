@@ -34,21 +34,15 @@ class Connector extends DataController
             'Category',
             'Customer',
             'CustomerOrder',
-            //'DeliveryNote',
             'GlobalData',
             'Image',
             'Product',
-            'Manufacturer',
-            //'Specific'
+            'Manufacturer'
         );
 
         $excludes = array(
-            'Config',
-            'DataMainController',
             'DataController',
-            'DataControllerI18n',
             'Connector',
-            'Feature',
             'GlobalData'
         );
 

@@ -43,7 +43,7 @@ class CustomerOrderBillingAddress extends CustomerOrderBillingAddressModel
     public function map($toWawi = false, \stdClass $obj = null)
     {
         if (isset($obj->salutation)) {
-            $obj->salutation = Salutation::map($obj->salutation);
+            $obj->salutation = Salutation::toConnector($obj->salutation);
         }
 
         return DataModel::map($toWawi, $obj, $this);

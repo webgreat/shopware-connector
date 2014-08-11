@@ -62,7 +62,7 @@ class Customer extends DataController
                         ->findOneById($customerSW['billing']['countryId']);
 
                     // Salutation
-                    $customer->setSalutation(Salutation::map($customer->getSalutation()))
+                    $customer->setSalutation(Salutation::toConnector($customer->getSalutation()))
                         ->setCountryIso($country->getIso());
 
                     // Attributes
@@ -101,66 +101,5 @@ class Customer extends DataController
         }
 
         return $action;
-    }
-
-    /**
-     * Transaction Commit
-     *
-     * @param mixed $params
-     * @return \jtl\Connector\Result\Action
-     */
-    public function commit($params, $trid)
-    {
-        $action = new Action();
-        $action->setHandled(true);
-
-        try {
-            $container = TransactionHandler::getContainer($this->getMethod()->getController(), $trid);
-            $result = $this->insert($container);
-
-            if ($result !== null) {
-                $action->setResult($result->getPublic());
-            }
-        }
-        catch (\Exception $exc) {
-            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
-
-            $err = new Error();
-            $err->setCode($exc->getCode());
-            $err->setMessage($message);
-            $action->setError($err);
-        }
-
-        return $action;
-    }
-
-    /**
-     * Insert
-     *
-     * @param \jtl\Connector\ModelContainer\CoreContainer $container
-     * @return \jtl\Connector\ModelContainer\CustomerContainer
-     */
-    public function insert(CoreContainer $container)
-    {
-        $config = $this->getConfig();
-
-        $mapper = Mmc::getMapper('Customer');
-        $data = $mapper->prepareData($container);
-        $modelSW = $mapper->save($data);
-
-        $resultContainer = new CustomerContainer();
-
-        // Customer
-        $main = $container->getMainModel();
-        $resultContainer->addIdentity('customer', new Identity($modelSW->getId(), $main->getId()->getHost()));
-
-        // CustomerAttr
-        $attrSW = $modelSW->getAttribute();
-        if ($attrSW) {
-            $attr = $container->getCustomerAttrs();
-            $resultContainer->addIdentity('customer_attr', new Identity($attrSW->getId(), $attrSW[0]->getId()->getHost()));
-        }
-
-        return $resultContainer;
     }
 }
