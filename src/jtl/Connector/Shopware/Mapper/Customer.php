@@ -76,48 +76,6 @@ class Customer extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function prepareData(CustomerContainer $container)
-    {
-        $customer = $container->getMainModel();
-
-        //$customerSW = $this->Manager()->getRepository('Shopware\Models\Customer\Customer')->find($customer->getId());
-
-        // Customer
-        $data = DataConverter::toArray(DataModel::map(false, null, $customer));
-
-        if (isset($data['group']['id']) && intval($data['group']['id']) > 0) {
-            $data['groupKey'] = $data['group']['id'];
-        }
-
-        // Billing
-        if (isset($data['billing'])) {
-            $billing = Shopware()->Models()->getRepository('Shopware\Models\Customer\Billing')->findOneBy(array(
-                'customerId' => $data['id']
-            ));
-
-            if (empty($billing)) {
-                throw new ApiException\NotFoundException(sprintf("Billing by customerId %s not found", $data['id']));
-            }
-
-            $data['billing'] = $billing->fromArray($data['billing']);
-        }
-
-        // Shipping
-        if (isset($data['shipping'])) {
-            $shipping = Shopware()->Models()->getRepository('Shopware\Models\Customer\Shipping')->findOneBy(array(
-                'customerId' => $data['id']
-            ));
-
-            if (empty($shipping)) {
-                throw new ApiException\NotFoundException(sprintf("Shipping by customerId %s not found", $data['id']));
-            }
-
-            $data['shipping'] = $shipping->fromArray($data['shipping']);
-        }
-
-        return $data;
-    }
-
     public function save(DataModel $customer)
     {
         $customerSW = null;
@@ -171,15 +129,19 @@ class Customer extends DataMapper
             ->setPhone($customer->getPhone())
             ->setFax($customer->getFax())
             ->setVatId($customer->getVatNumber())
-            ->setBirthday($customer->getBirthday())
-            ->setCustomer($customerSW);
+            ->setBirthday($customer->getBirthday());
+
+        $ref = new \ReflectionClass($billingSW);
+        $prop = $ref->getProperty('customerId');
+        $prop->setAccessible(true);
+        $prop->setValue($billingSW, $customerSW->getId());
 
         $countrySW = $this->Manager()->getRepository('Shopware\Models\Country\Country')->findOneBy(array('iso' => $customer->getCountryIso()));
         if ($countrySW) {
             $billingSW->setCountryId($countrySW->getId());
         }
 
-        $this->Manager()->persist($countrySW);
+        $this->Manager()->persist($billingSW);
         $this->flush();
 
         // Result
@@ -188,23 +150,4 @@ class Customer extends DataMapper
 
         return $result;
     }
-
-    /*
-    public function save(array $data, $namespace = '\Shopware\Models\Customer\Customer')
-    {
-        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
-        
-        $resource = \Shopware\Components\Api\Manager::getResource('Customer');
-
-        try {
-            if (!$data['id']) {
-                return $resource->create($data);
-            } else {
-                return $resource->update($data['id'], $data);
-            }
-        } catch (ApiException\NotFoundException $exc) {
-            return $resource->create($data);
-        }
-    }
-    */
 }

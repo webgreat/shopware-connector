@@ -44,7 +44,7 @@ class Product extends ProductModel
         'sort' => '',
         'created' => 'added',
         'availableFrom' => 'availableFrom',
-        'manufacturerNumber' => '',
+        'manufacturerNumber' => array('mainDetail', 'supplierNumber'),
         'serialNumber' => '',
         'isbn' => '',
         'asin' => '',

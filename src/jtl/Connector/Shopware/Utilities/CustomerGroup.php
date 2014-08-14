@@ -18,7 +18,7 @@ final class CustomerGroup
      */
     public static function get($id)
     {
-        if ($customerGroups === null) {
+        if (self::$customerGroups === null) {
             self::$customerGroups = array();
         }
 

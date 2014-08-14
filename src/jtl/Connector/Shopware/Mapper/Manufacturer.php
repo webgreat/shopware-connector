@@ -6,15 +6,22 @@
 
 namespace jtl\Connector\Shopware\Mapper;
 
-use \jtl\Connector\ModelContainer\ManufacturerContainer;
+use \jtl\Connector\Model\Manufacturer as ManufacturerModel;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
 use \Shopware\Models\Article\Supplier as SupplierModel;
 use \jtl\Core\Logger\Logger;
+use \jtl\Connector\Model\Identity;
+use \jtl\Connector\Shopware\Utilities\Mmc;
 
 class Manufacturer extends DataMapper
 {
+    public function find($id)
+    {
+        return $this->Manager()->find('Shopware\Models\Article\Supplier', $id);
+    }
+
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
         $builder = $this->Manager()->createQueryBuilder()->select(
@@ -74,73 +81,44 @@ class Manufacturer extends DataMapper
         return $data;
     }
 
-    public function save(array $data, $namespace = '\Shopware\Models\Article\Supplier')
+    public function save(DataModel $manufacturer)
     {
-        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
-        
-        try {
-            if (!$data['id']) {
-                return $this->create($data);
-            } else {
-                return $this->update($data['id'], $data);
+        $manufacturerSW = null;
+
+        $id = (strlen($manufacturer->getId()->getEndpoint()) > 0) ? (int)$manufacturer->getId()->getEndpoint() : null;
+
+        if ($id > 0) {
+            $manufacturerSW = $this->find($id);
+        }
+
+        if ($manufacturerSW === null) {
+            $manufacturerSW = new SupplierModel;
+        }
+
+        $manufacturerSW->setName($manufacturer->getName())
+            ->setLink($manufacturer->getWww());
+
+        foreach ($manufacturer->getI18ns() as $i18n) {
+            if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                $manufacturerSW->setDescription($i18n->getDescription());
+                $manufacturerSW->setMetaTitle($i18n->getTitleTag());
+                $manufacturerSW->setMetaDescription($i18n->getMetaDescription());
+                $manufacturerSW->setMetaKeywords($i18n->getMetaKeywords());
             }
-        } catch (ApiException\NotFoundException $exc) {
-            return $this->create($data);
-        }
-    }
-
-    /**
-     * @param int $id
-     * @param array $params
-     * @return \Shopware\Models\Article\Supplier
-     * @throws \Shopware\Components\Api\Exception\ValidationException
-     * @throws \Shopware\Components\Api\Exception\NotFoundException
-     * @throws \Shopware\Components\Api\Exception\ParameterMissingException
-     */
-    protected function update($id, array $params)
-    {
-        if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
         }
 
-        /** @var $manufacturer \Shopware\Models\Article\Supplier */
-        $manufacturer = $this->Manager()->getRepository('Shopware\Models\Article\Supplier')->find($id);
-
-        if (!$manufacturer) {
-            throw new ApiException\NotFoundException("Manufacturer by id $id not found");
-        }
-
-        $manufacturer->fromArray($params);
-
-        $violations = $this->Manager()->validate($manufacturer);
+        $violations = $this->Manager()->validate($manufacturerSW);
         if ($violations->count() > 0) {
             throw new ApiException\ValidationException($violations);
         }
 
+        $this->Manager()->persist($manufacturerSW);
         $this->flush();
 
-        return $manufacturer;
-    }
+        // Result
+        $result = new ManufacturerModel;
+        $result->setId(new Identity($manufacturerSW->getId(), $manufacturer->getId()->getHost()));
 
-    /**
-     * @param array $params
-     * @return \Shopware\Models\Article\Supplier
-     * @throws \Shopware\Components\Api\Exception\ValidationException
-     */
-    protected function create(array $params)
-    {
-        $supplier = new SupplierModel();
-
-        $supplier->fromArray($params);
-
-        $violations = $this->Manager()->validate($supplier);
-        if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
-        }
-
-        $this->Manager()->persist($supplier);
-        $this->flush();
-
-        return $supplier;
+        return $result;
     }
 }

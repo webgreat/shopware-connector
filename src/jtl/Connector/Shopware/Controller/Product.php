@@ -42,7 +42,7 @@ class Product extends DataController
             $offset = $filter->isOffset() ? $filter->getOffset() : 0;
             $limit = $filter->isLimit() ?  $filter->getLimit() : 100;
 
-            $fetchChilden = ($filter->isFilter('fetchChilden') && $filter->isFilter('parentId') > 0);
+            $fetchChilden = ($filter->isFilter('fetchChilden') && $filter->getFilter('parentId') > 0);
             $mapper = Mmc::getMapper('Product');
             $products = array();
             if ($fetchChilden) {
@@ -134,7 +134,12 @@ class Product extends DataController
             $productSpecialPrice->map(true, DataConverter::toObject($productSW['priceGroup'], true));
 
             // SpecialPrices
+            $exists = false;
             foreach ($productSW['priceGroup']['discounts'] as $discount) {
+                if (intval($discount['start']) != 1) {
+                    continue;
+                }
+
                 $customerGroup = CustomerGroupUtil::get($discount['customerGroupId']);
                 $price = null;
                 $priceCount = count($productSW['mainDetail']['prices']);
@@ -170,9 +175,12 @@ class Product extends DataController
                     ->setPriceNet($discountPriceNet);
 
                 $productSpecialPrice->addSpecialPrice($specialPrice);
+                $exists = true;
             }
 
-            $product->addSpecialPrice($productSpecialPrice);
+            if ($exists) {
+                $product->addSpecialPrice($productSpecialPrice);
+            }
         }
 
         // Product2Categories

@@ -68,50 +68,6 @@ class Category extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function prepareData(CategoryContainer $container)
-    {
-        $category = $container->getMainModel();
-
-        //$categorySW = $this->Manager()->getRepository('Shopware\Models\Category\Category')->find($category->getId());
-
-        // Category
-        $data = DataConverter::toArray(DataModel::map(false, null, $category));
-
-        if (isset($data['parentId']) && intval($data['parentId']) == 0) {
-            unset($data['parentId']);
-        }
-
-        // CategoryI18n
-        foreach ($container->getCategoryI18ns() as $categoryI18n) {
-            // Main language
-            if ($categoryI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-                $data = array_merge($data, DataConverter::toArray(DataModel::map(false, null, $categoryI18n)));
-            }
-        }
-
-        // CategoryAttributes
-        foreach ($container->getCategoryAttrs() as $categoryAttr) {
-            if (!isset($data['attribute'])) {
-                $data['attribute'] = array();
-            }
-
-            $data['attribute']['id'] = $categoryAttr->getId();
-            $data['attribute']['categoryId'] = $category->getId();
-        }
-
-        // CategoryAttributesI18n
-        foreach ($container->getCategoryAttrI18ns() as $i => $categoryAttrI18n) {
-            $data['attribute']['attribute' . ($i + 1)] = $categoryAttrI18n->getValue();
-        }
-
-        // CategoryCustomerGroups
-        foreach ($container->getCategoryCustomerGroups() as $categoryCustomerGroup) {
-            // TODO - $data['customerGroups']
-        }
-
-        return $data;
-    }
-
     public function save(DataModel $category)
     {
         $categorySW = null;
@@ -135,6 +91,7 @@ class Category extends DataMapper
             }
         }
 
+        // I18n
         foreach ($category->getI18ns() as $i18n) {
             if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
                 $categorySW->setName($i18n->getName());
@@ -145,6 +102,7 @@ class Category extends DataMapper
             }
         }
 
+        // Invisibility
         $customerGroupsSW = new \Doctrine\Common\Collections\ArrayCollection;
         $customerGroupMapper = Mmc::getMapper('CustomerGroup');
         $categorySW->setCustomerGroups($customerGroupsSW);
@@ -166,6 +124,7 @@ class Category extends DataMapper
             throw new ApiException\ValidationException($violations);
         }
 
+        // Save Category
         $this->Manager()->persist($categorySW);
         $this->flush();
 
@@ -181,23 +140,4 @@ class Category extends DataMapper
 
         return $result;
     }
-
-    /*
-    public function save(array $data, $namespace = '\Shopware\Models\Category\Category')
-    {
-        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
-
-        $resource = \Shopware\Components\Api\Manager::getResource('Category');
-
-        try {
-            if (!$data['id']) {
-                return $resource->create($data);
-            } else {
-                return $resource->update($data['id'], $data);
-            }
-        } catch (ApiException\NotFoundException $exc) {
-            return $resource->create($data);
-        }
-    }
-    */
 }
