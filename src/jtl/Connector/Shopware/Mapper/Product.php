@@ -15,6 +15,7 @@ use \jtl\Core\Logger\Logger;
 use \jtl\Core\Utilities\Money;
 use \jtl\Connector\Model\Identity;
 use \jtl\Connector\Shopware\Utilities\CustomerGroup as CustomerGroupUtil;
+use \Doctrine\Common\Collections\ArrayCollection;
 
 class Product extends DataMapper
 {
@@ -238,10 +239,68 @@ class Product extends DataMapper
         $detailSW = null;
         $result = new ProductModel;
 
-        $id = (strlen($product->getId()->getEndpoint()) > 0) ? (int)$product->getId()->getEndpoint() : null;
+        $this->prepareProductAssociatedData($product, $productSW, $detailSW);
+        $this->prepareInvisibilityAssociatedData($product, $productSW);
+        $this->prepareTaxAssociatedData($product, $productSW);
+        $this->prepareManufacturerAssociatedData($product, $productSW);
+        $this->prepareSpecialPriceAssociatedData($product, $productSW);
+        $this->prepareDetailAssociatedData($product, $detailSW);
+        $this->prepareAttributeAssociatedData($productSW, $detailSW);
+        $this->prepareVariationAssociatedData($product, $productSW, $detailSW, $result);
 
-        if ($id !== null && $id > 0) {
-            $productSW = $this->find($id);
+        $productSW->setMainDetail($detailSW);
+
+        $violations = $this->Manager()->validate($productSW);
+        if ($violations->count() > 0) {
+            throw new ApiException\ValidationException($violations);
+        }
+
+        // Save Product
+        $this->Manager()->persist($productSW);
+
+        $this->savePrice($product, $productSW, $detailSW);
+        $this->Manager()->flush();
+        $this->saveCategory($product, $productSW, $result);
+
+        // Result
+        $result->setId(new Identity($productSW->getId(), $product->getId()->getHost()));
+
+        /*
+        $confiSet = $productSW->getConfiguratorSet();
+        if ($confiSet) {
+            foreach ($confiSet->getGroups() as $group) {
+                foreach ($result->getVariations() as &$variation) {
+                    foreach ($variation->getI18ns() as $variationI18n) {
+                        if ($variationI18n->getName() == $group->getName()) {
+                            $variation->getId()->setEndpoint(sprintf('%_%', $productSW->getId(), $group->getId()));
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            foreach ($confiSet->getOptions() as $option) {
+                foreach ($result->getVariations() as &$variation) {
+                    foreach ($variation->getValues() as &$variationValue) {
+                        foreach ($variationValue->getI18ns() as &$variationValueI81n) {
+                            
+                        }
+                    }
+                }
+            }
+        }
+        */
+
+        return $result;
+    }
+
+    protected function prepareProductAssociatedData(DataModel &$product, \Shopware\Models\Article\Article &$productSW, \Shopware\Models\Article\Detail &$detailSW)
+    {
+        $productId = (strlen($product->getId()->getEndpoint()) > 0) ? (int)$product->getId()->getEndpoint() : null;
+
+        if ($productId !== null && $productId > 0) {
+            $productSW = $this->find($productId);
             if ($productSW) {
                 $detailSW = $productSW->getMainDetail();
             }
@@ -262,7 +321,6 @@ class Product extends DataMapper
             ->setActive(true);
 
         // I18n
-        $exists = false;
         foreach ($product->getI18ns() as $i18n) {
             if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
                 $productSW->setName($i18n->getName())
@@ -272,9 +330,12 @@ class Product extends DataMapper
                     ->setMetaTitle($i18n->getTitleTag());
             }
         }
+    }
 
+    protected function prepareInvisibilityAssociatedData(DataModel &$product, \Shopware\Models\Article\Article &$productSW)
+    {
         // Invisibility
-        $collection = new \Doctrine\Common\Collections\ArrayCollection;
+        $collection = new ArrayCollection;
         foreach ($product->getInvisibilities() as $invisibility) {
             $customerGroupSW = CustomerGroupUtil::get(intval($invisibility->getCustomerGroupId()->getEndpoint()));
             if ($customerGroupSW) {
@@ -283,24 +344,34 @@ class Product extends DataMapper
         }
 
         $productSW->setCustomerGroups($collection);
+    }
 
+    protected function prepareTaxAssociatedData(DataModel &$product, \Shopware\Models\Article\Article &$productSW)
+    {
         // Tax
         $taxSW = Shopware()->Models()->getRepository('Shopware\Models\Tax\Tax')->findOneBy(array('tax' => $product->getVat()));
         if ($taxSW) {
             $productSW->setTax($taxSW);
+        } else {
+            throw new ApiException\ValidationException(sprintf('Could not find any Tax entity for value (%s)', $product->getVat()));
         }
+    }
 
+    protected function prepareManufacturerAssociatedData(DataModel &$product, \Shopware\Models\Article\Article &$productSW)
+    {
         // Manufacturer
         $manufacturerMapper = Mmc::getMapper('Manufacturer');
         $manufacturerSW = $manufacturerMapper->find(intval($product->getManufacturerId()->getEndpoint()));
         if ($manufacturerSW) {
             $productSW->setSupplier($manufacturerSW);
-            $result->setManufacturerId(new Identity($manufacturerSW->getId(), $product->getManufacturerId()->getEndpoint()));
         }
+    }
 
+    protected function prepareSpecialPriceAssociatedData(DataModel &$product, \Shopware\Models\Article\Article &$productSW) 
+    {
         // ProductSpecialPrice
         foreach ($product->getSpecialPrices() as $i => $productSpecialPrice) {
-            $collection = new \Doctrine\Common\Collections\ArrayCollection;
+            $collection = new ArrayCollection;
             $priceGroupSW = Shopware()->Models()->getRepository('Shopware\Models\Price\Group')->find(intval($productSpecialPrice->getId()->getEndpoint()));
             if ($priceGroupSW === null) {
                 $priceGroupSW = new \Shopware\Models\Price\Group;
@@ -350,7 +421,10 @@ class Product extends DataMapper
             $productSW->setPriceGroup($priceGroupSW)
                 ->setPriceGroupActive(1);
         }
+    }
 
+    protected function prepareDetailAssociatedData(DataModel &$product, \Shopware\Models\Article\Detail &$detailSW)
+    {
         // Detail
         if ($detailSW === null) {
             $detailSW = new \Shopware\Models\Article\Detail;
@@ -367,17 +441,117 @@ class Product extends DataMapper
 
         $detailSW->setWeight($product->getProductWeight())
             ->setPurchaseSteps($product->getTakeOffQuantity());
+    }
 
-        $productSW->setMainDetail($detailSW);
+    protected function prepareAttributeAssociatedData(\Shopware\Models\Article\Article &$productSW, \Shopware\Models\Article\Detail &$detailSW)
+    {
+        // Attribute
+        // @todo: waiting for connector attribute entity
+        $attributeSW = $productSW->getAttribute();
+        if ($attributeSW) {
+            // @todo: set values
+        } else {
+            $attributeSW = new \Shopware\Models\Attribute\Article;
+            $attributeSW->setArticle($productSW)
+                ->setArticleDetail($detailSW);
 
-        $violations = $this->Manager()->validate($productSW);
-        if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
+            // @todo: set values
         }
 
-        // Save Product
-        $this->Manager()->persist($productSW);
+        $detailSW->setAttribute($attributeSW);
+        $productSW->setAttribute($attributeSW);
+    }
 
+    protected function prepareVariationAssociatedData(DataModel &$product, \Shopware\Models\Article\Article &$productSW, \Shopware\Models\Article\Detail &$detailSW, ProductModel &$result)
+    {
+        // Variations
+        $confiSet = null;
+        if (count($product->getVariations()) > 0) {
+            $confiSet = $productSW->getConfiguratorSet();
+
+            $groups = new ArrayCollection;
+            $options = new ArrayCollection;
+
+            if (!$confiSet) {
+                $confiSet = new \Shopware\Models\Article\Configurator\Set;
+                $confiSet->setName('Set-' . $detailSW->getNumber());
+            }
+
+            $groupMapper = Mmc::getMapper('ConfiguratorGroup');
+            $optionMapper = Mmc::getMapper('ConfiguratorOption');
+
+            foreach ($product->getVariations() as $variation) {
+                $groupId = 0;
+                $group = null;
+                if (strlen($variation->getId()->getEndpoint()) > 0) {
+                    list($productId, $groupId) = explode('_', $variation->getId()->getEndpoint());
+                    $groupId = intval($groupId);
+                }
+
+                if ($groupId > 0) {
+                    $group = $groupMapper->find($groupId);
+                }
+
+                if (!$group) {
+                    $group = new \Shopware\Models\Article\Configurator\Group;
+                }
+
+                foreach ($variation->getI18ns() as $variationI18n) {
+                    if ($variationI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                        $group->setName($variationI18n->getName());
+                    }
+                }
+
+                $variationResult = Mmc::getModel('ProductVariation');
+                $variationResult->setId(new Identity('', $variation->getId()->getHost()));
+
+                // VariationValue
+                foreach ($variation->getValues() as $variationValue) {
+                    $optionId = 0;
+                    $option = null;
+
+                    if (strlen($variationValue->getId()->getEndpoint()) > 0) {
+                        list($productId, $groupId, $optionId) = explode('_', $variationValue->getId()->getEndpoint());
+                        $optionId = intval($optionId);
+                    }
+
+                    if ($optionId > 0) {
+                        $option = $optionMapper->find($optionId);
+                    }
+
+                    if (!$option) {
+                        $option = new \Shopware\Models\Article\Configurator\Option;
+                    }
+
+                    foreach ($variationValue->getI18ns() as $variationValueI18n) {
+                        if ($variationValueI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                            $option->setName($variationValueI18n->getName());
+                        }
+                    }
+
+                    $option->setGroup($group);
+                    $options->add($option);
+
+                    $variationValueResult = Mmc::getModel('ProductVariationValue');
+                    $variationValueResult->setId(new Identity('', $variationValue->getId()->getHost()));
+
+                    $variationResult->addValue($variationValueResult);
+                }
+
+                $groups->add($group);
+
+                $result->addVariation($variationResult);
+            }
+
+            $confiSet->setOptions($options)
+                ->setGroups($groups);
+        }
+
+        $productSW->setConfiguratorSet($confiSet);
+    }
+
+    protected function savePrice(DataModel &$product, \Shopware\Models\Article\Article &$productSW, \Shopware\Models\Article\Detail &$detailSW)
+    {
         foreach ($detailSW->getPrices() as $priceSW) {
              $this->Manager()->remove($priceSW);
         }
@@ -405,9 +579,10 @@ class Product extends DataMapper
                 Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'database');
             }
         }
+    }
 
-        $this->Manager()->flush();
-
+    protected function saveCategory(DataModel &$product, \Shopware\Models\Article\Article &$productSW, ProductModel &$result)
+    {
         // Category
         try {
             $categoryMapper = Mmc::getMapper('Category');
@@ -437,10 +612,5 @@ class Product extends DataMapper
         } catch (\Exception $exc) {
             Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'database');
         }
-
-        // Result
-        $result->setId(new Identity($productSW->getId(), $product->getId()->getHost()));
-
-        return $result;
     }
 }

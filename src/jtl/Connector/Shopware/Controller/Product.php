@@ -44,6 +44,7 @@ class Product extends DataController
 
             $fetchChilden = ($filter->isFilter('fetchChilden') && $filter->getFilter('parentId') > 0);
             $mapper = Mmc::getMapper('Product');
+
             $products = array();
             if ($fetchChilden) {
                 $products = $mapper->findDetails($filter->isFilter('parentId'), $offset, $limit);
@@ -54,7 +55,7 @@ class Product extends DataController
             foreach ($products as $productSW) {
                 try {
                     $result[] = $this->buildProduct($productSW, $fetchChilden);
-                } catch (\Exception $exc) { 
+                } catch (\Exception $exc) {
                     Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }
             }
