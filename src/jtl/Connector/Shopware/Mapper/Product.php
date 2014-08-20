@@ -240,6 +240,7 @@ class Product extends DataMapper
         $result = new ProductModel;
 
         $this->prepareProductAssociatedData($product, $productSW, $detailSW);
+        $this->prepareCategoryAssociatedData($product, $productSW);
         $this->prepareInvisibilityAssociatedData($product, $productSW);
         $this->prepareTaxAssociatedData($product, $productSW);
         $this->prepareManufacturerAssociatedData($product, $productSW);
@@ -247,6 +248,7 @@ class Product extends DataMapper
         $this->prepareDetailAssociatedData($product, $detailSW);
         $this->prepareAttributeAssociatedData($productSW, $detailSW);
         $this->prepareVariationAssociatedData($product, $productSW, $detailSW, $result);
+        $this->preparePriceAssociatedData($product, $productSW, $detailSW);
 
         $productSW->setMainDetail($detailSW);
 
@@ -257,10 +259,7 @@ class Product extends DataMapper
 
         // Save Product
         $this->Manager()->persist($productSW);
-
-        $this->savePrice($product, $productSW, $detailSW);
         $this->Manager()->flush();
-        $this->saveCategory($product, $productSW, $result);
 
         // Result
         $result->setId(new Identity($productSW->getId(), $product->getId()->getHost()));
@@ -330,6 +329,22 @@ class Product extends DataMapper
                     ->setMetaTitle($i18n->getTitleTag());
             }
         }
+    }
+
+    protected function prepareCategoryAssociatedData(&$product, &$productSW)
+    {
+        $collection = new ArrayCollection;
+        $categoryMapper = Mmc::getMapper('Category');
+        foreach ($product->getCategories() as $category) {
+            if (strlen($category->getCategoryId()->getEndpoint()) > 0) {
+                $categorySW = $categoryMapper->find(intval($category->getCategoryId()->getEndpoint()));
+                if ($categorySW) {
+                    $collection->add($categorySW);
+                }
+            }
+        }
+
+        $productSW->setCategories($collection);
     }
 
     protected function prepareInvisibilityAssociatedData(DataModel &$product, \Shopware\Models\Article\Article &$productSW)
@@ -550,10 +565,40 @@ class Product extends DataMapper
         $productSW->setConfiguratorSet($confiSet);
     }
 
+    protected function preparePriceAssociatedData(DataModel &$product, \Shopware\Models\Article\Article &$productSW, \Shopware\Models\Article\Detail &$detailSW)
+    {
+        // Price
+        $collection = new ArrayCollection;
+        foreach ($product->getPrices() as $price) {
+            $priceSW = null;
+            $customerGroupSW = CustomerGroupUtil::get(intval($price->getCustomerGroupId()->getEndpoint()));
+            if (strlen($price->getProductId()->getEndpoint()) > 0) {
+                $priceSW = Shopware()->Models()->getRepository('Shopware\Models\Article\Price')->findOneBy(array('articleId' => intval($price->getProductId()->getEndpoint())));
+            }
+
+            if ($priceSW === null) {
+                $priceSW = new \Shopware\Models\Article\Price;
+            }
+
+            $priceSW->setArticle($productSW)
+                ->setCustomerGroup($customerGroupSW)
+                ->setFrom($price->getQuantity())
+                ->setPrice($price->getNetPrice())
+                ->setDetail($detailSW);
+
+            $this->Manager()->persist($priceSW);
+
+            $collection->add($priceSW);
+        }
+
+        $detailSW->setPrices($collection);
+    }
+
+    /*
     protected function savePrice(DataModel &$product, \Shopware\Models\Article\Article &$productSW, \Shopware\Models\Article\Detail &$detailSW)
     {
         foreach ($detailSW->getPrices() as $priceSW) {
-             $this->Manager()->remove($priceSW);
+            $this->Manager()->remove($priceSW);
         }
 
         // Price
@@ -613,4 +658,5 @@ class Product extends DataMapper
             Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'database');
         }
     }
+    */
 }
