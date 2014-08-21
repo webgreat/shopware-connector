@@ -10,17 +10,28 @@ use \jtl\Core\Logger\Logger;
 
 class Config extends DataMapper
 {
+    public function findOneBy(array $kv)
+    {
+        return $this->Manager()->getRepository('Shopware\Models\Config\Element')->findOneBy($kv);
+    }
+
     public function get($key)
     {
         return Shopware()->Config()->get($key);
     }
 
-    public function update($key, $value)
+    public function update(array $kv, $data, $shopId)
     {
-        $value = serialize($value);
+        $element = $this->findOneBy($kv);
+        if ($element) {
+            foreach ($element->getValues() as $value) {
+                if ($value->getShop()->getId() == $shopId) {
+                    $value->setValue(serialize($data));
 
-        return Shopware()->Db()->query('UPDATE s_core_config_elements
-                                    SET value = ?
-                                    WHERE name = ?', array($key, $value));
+                    $this->Manager()->persist($value);
+                    $this->Manager()->flush();
+                }
+            }
+        }
     }
 }

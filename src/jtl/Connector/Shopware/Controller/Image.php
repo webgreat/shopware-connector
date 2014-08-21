@@ -39,8 +39,7 @@ class Image extends DataController
 
         try {
             $result = array();
-            $filter = new QueryFilter();
-            $filter->set($params);
+            $filter = $params;
 
             $offset = 0;
             $limit = 100;

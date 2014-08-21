@@ -9,6 +9,7 @@ namespace jtl\Connector\Shopware\Mapper;
 use \jtl\Core\Logger\Logger;
 use \Shopware\Components\Api\Exception as ApiException;
 use \Shopware\Models\Customer\Group as GroupModel;
+use \jtl\Connector\Model\Identity;
 
 class CustomerGroup extends DataMapper
 {
@@ -66,73 +67,40 @@ class CustomerGroup extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function save(array $data, $namespace = '\Shopware\Models\Customer\Group')
+    public function save(GroupModel $customerGroup)
     {
-        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
-        
-        try {
-            if (!$data['id']) {
-                return $this->create($data);
-            } else {
-                return $this->update($data['id'], $data);
+        $result = new GroupModel;
+        $customerGroupSW = null;
+        if (strlen($customerGroup->getId()->getEndoint()) > 0) {
+            $customerGroupSW = $this->find(intval($customerGroup->getId()->getEndoint()));
+        }
+
+        if ($customerGroupSW === null) {
+            $customerGroupSW = new \Shopware\Models\Customer\Group;
+            $customerGroupSW->setKey();
+        }
+
+        $customerGroupSW->setDiscount($customerGroup->getDiscount())
+            ->setTaxInput(!$customerGroup->getApplyNetPrice());
+
+        // I18n
+        foreach ($customerGroup->getI18n() as $i18n) {
+            if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                $customerGroupSW->setName($i18n->getName());
             }
-        } catch (ApiException\NotFoundException $exc) {
-            return $this->create($data);
-        }
-    }
-
-    /**
-     * @param int $id
-     * @param array $params
-     * @return \Shopware\Models\Customer\Group
-     * @throws \Shopware\Components\Api\Exception\ValidationException
-     * @throws \Shopware\Components\Api\Exception\NotFoundException
-     * @throws \Shopware\Components\Api\Exception\ParameterMissingException
-     */
-    protected function update($id, array $params)
-    {
-        if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
         }
 
-        /** @var $group \Shopware\Models\Customer\Group */
-        $group = $this->Manager()->getRepository('Shopware\Models\Customer\Group')->find($id);
-
-        if (!$group) {
-            throw new ApiException\NotFoundException("Group by id $id not found");
-        }
-
-        $group->fromArray($params);
-
-        $violations = $this->Manager()->validate($group);
+        $violations = $this->Manager()->validate($customerGroupSW);
         if ($violations->count() > 0) {
             throw new ApiException\ValidationException($violations);
         }
 
-        $this->flush();
+        // Save
+        $this->Manager()->persist($customerGroupSW);
+        $this->Manager()->flush();
 
-        return $group;
-    }
+        $result->setId(new Identity($customerGroupSW->getId(), $customerGroup->getId()->getHost()));
 
-    /**
-     * @param array $params
-     * @return \Shopware\Models\Customer\Group
-     * @throws \Shopware\Components\Api\Exception\ValidationException
-     */
-    protected function create(array $params)
-    {
-        $group = new GroupModel();
-
-        $group->fromArray($params);
-
-        $violations = $this->Manager()->validate($group);
-        if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
-        }
-
-        $this->Manager()->persist($group);
-        $this->flush();
-
-        return $group;
+        return $result;
     }
 }

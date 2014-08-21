@@ -36,8 +36,7 @@ class Product extends DataController
 
         try {
             $result = array();
-            $filter = new QueryFilter();
-            $filter->set($params);
+            $filter = $params;
 
             $offset = $filter->isOffset() ? $filter->getOffset() : 0;
             $limit = $filter->isLimit() ?  $filter->getLimit() : 100;

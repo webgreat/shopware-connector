@@ -16,6 +16,7 @@ use \jtl\Core\Utilities\Money;
 use \jtl\Connector\Model\Identity;
 use \jtl\Connector\Shopware\Utilities\CustomerGroup as CustomerGroupUtil;
 use \Doctrine\Common\Collections\ArrayCollection;
+use \jtl\Connector\Shopware\Utilities\Locale as LocaleUtil;
 
 class Product extends DataMapper
 {
@@ -148,89 +149,11 @@ class Product extends DataMapper
 
             return $products;
         }
-
-        return array();
     }
 
     public function fetchCount($offset = 0, $limit = 100)
     {
         return $this->findAll($offset, $limit, true);
-    }
-
-    protected function prepareProduct(ProductContainer $container)
-    {
-        $product = $container->getMainModel();
-
-        $data = DataConverter::toArray(DataModel::map(false, null, $product));
-
-        if (intval($data['id']) == 0) {
-            $data['active'] = 1;
-        }
-
-        // ProductI18n
-        foreach ($container->getProductI18ns() as $productI18n) {
-
-            // Main language
-            if ($productI18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-                $data = array_merge($data, DataConverter::toArray(DataModel::map(false, null, $productI18n)));
-            }
-        }
-
-        // ProductPrice
-        $data['mainDetail']['prices'] = array();
-        foreach ($container->getProductPrices() as $productPrice) {
-            $data = array_merge($data, DataConverter::toArray(DataModel::map(false, null, $product)));
-            $priceSW = DataConverter::toArray(DataModel::map(false, null, $productPrice));
-            $priceSW['price'] = Money::AsGross($priceSW['price'], $data['tax']['tax']);
-
-            $data['mainDetail']['prices'][] = $priceSW;
-        }
-
-        // ProductSpecialPrice
-        foreach ($container->getProductSpecialPrices() as $productSpecialPrice) {
-            $data['priceGroupActive'] = true;
-            $data['priceGroupId'] = $productSpecialPrice->getId()->getEndpoint();
-        }
-
-        // Product2Categories
-        foreach ($container->getProduct2Categories() as $product2Category) {
-            $data['categories'][] = DataConverter::toArray(DataModel::map(false, null, $product2Category));
-        }
-
-        $productSW = null;
-        if (empty($product->getId()->getEndpoint())) {
-            $productSW = $this->save($data);
-        }
-
-        return array(
-            'productSW' => $productSW,
-            'data' => $data
-        );
-    }
-
-    public function prepareData(ProductContainer $container)
-    {
-        Logger::write(print_r($container, 1), Logger::DEBUG, 'database');
-
-        $product = $container->getMainModel();
-        
-        $result = $this->prepareProduct($container);
-        $data = $result['data'];
-        $productSW = $result['productSW'];
-        $productId = ($productSW !== null) ? $productSW->getId() : $product->getId()->getEndpoint();
-
-        // Attributes
-        foreach ($container->getProductAttrs() as $productAttr) {
-            //$data['attribute'][] = DataConverter::toArray(DataModel::map(false, null, $product2Category));
-        }
-
-        // ProductInvisibility
-
-        // ProductVariation
-        $configuratorGroupMapper = Mmc::getMapper('ConfiguratorGroup');
-        $configuratorGroupMapper->prepareData($container, $productId, $data);
-
-        return $data;
     }
 
     public function save(DataModel $product)
@@ -260,6 +183,8 @@ class Product extends DataMapper
         // Save Product
         $this->Manager()->persist($productSW);
         $this->Manager()->flush();
+
+        $this->saveTranslationData($product, $productSW);
 
         // Result
         $result->setId(new Identity($productSW->getId(), $product->getId()->getHost()));
@@ -592,6 +517,35 @@ class Product extends DataMapper
         }
 
         $detailSW->setPrices($collection);
+    }
+
+    protected function saveTranslationData(DataModel &$product, \Shopware\Models\Article\Article &$productSW)
+    {
+        // ProductI18n
+        $translation = new \Shopware_Components_Translation;
+        foreach ($product->getI18ns() as $i18n) {
+            $locale = LocaleUtil::getByKey($i18n->getLocaleName());
+            if ($locale && $i18n->getLocaleName() != Shopware()->Shop()->getLocale()->getLocale()) {
+                $translation->write(
+                    $locale->getId(),
+                    'article',
+                    $productSW->getId(),
+                    array(
+                        'name' => $i18n->getName(),
+                        'descriptionLong' => $i18n->getDescription(),
+                        'metaTitle' => $i18n->getTitleTag(),
+                        'description' => $i18n->getShortDescription(),
+                        'keywords' => $i18n->getMetaKeywords(),
+                        'packUnit' => '',
+                        'attr1' => '',
+                        'attr2' => '',
+                        'attr3' => ''
+                    )
+                );
+            } else {
+                Logger::write(sprintf('Could not find any locale for (%s)', $i18n->getLocaleName()), Logger::WARNING, 'database');
+            }
+        }
     }
 
     /*

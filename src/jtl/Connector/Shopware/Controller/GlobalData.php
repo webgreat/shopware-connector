@@ -16,6 +16,7 @@ use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 use \jtl\Core\Logger\Logger;
+use \Shopware\Models\Customer\Group as GroupModel;
 
 /**
  * GlobalData Controller
@@ -36,18 +37,10 @@ class GlobalData extends DataController
         
         try {
             $result = array();
-            $filter = new QueryFilter();
-            $filter->set($params);
+            $filter = $params;
 
-            $offset = 0;
-            $limit = 100;
-            if ($filter->isOffset()) {
-                $offset = $filter->getOffset();
-            }
-
-            if ($filter->isLimit()) {
-                $limit = $filter->getLimit();
-            }
+            $offset = $filter->isOffset() ? $filter->getOffset() : 0;
+            $limit = $filter->isLimit() ?  $filter->getLimit() : 100;
 
             $globalData = Mmc::getModel('GlobalData');
 
@@ -156,6 +149,45 @@ class GlobalData extends DataController
             $result[] = $globalData->getPublic();
 
             $action->setResult($result);
+        }
+        catch (\Exception $exc) {
+            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
+
+            $err = new Error();
+            $err->setCode($exc->getCode());
+            $err->setMessage($exc->getMessage());
+            $action->setError($err);
+        }
+
+        return $action;
+    }
+
+    public function push($globalData)
+    {
+        $action = new Action();
+        $action->setHandled(true);
+
+        try {
+            $result = new GroupModel;
+
+            // Companies
+            $configMapper = Mmc::getMapper('Config');
+            foreach ($globalData->getCompanies() as $company) {
+                $configMapper->update(array('name', 'company'), $company->getName(), Shopware()->Shop()->getId());
+                $configMapper->update(array('name', 'address'), $company->getStreet(), Shopware()->Shop()->getId());
+                $configMapper->update(array('name', 'mail'), $company->getEMail(), Shopware()->Shop()->getId());
+                $configMapper->update(array('name', 'taxNumber'), $company->getTaxIdNumber(), Shopware()->Shop()->getId());
+                $configMapper->update(array('name', 'vatcheckadvancednumber'), $company->getVatNumber(), Shopware()->Shop()->getId());
+            }
+
+            // CustomerGroups
+            $customerGroupMapper = Mmc::getMapper('CustomerGroup');
+            foreach ($globalData->getCustomerGroups() as $customerGroup) {
+                $customerGroupResult = $customerGroupMapper->save($customerGroup);
+                $result->addCustomerGroup($customerGroupResult);
+            }
+            
+            $action->setResult($result->getPublic());
         }
         catch (\Exception $exc) {
             Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
