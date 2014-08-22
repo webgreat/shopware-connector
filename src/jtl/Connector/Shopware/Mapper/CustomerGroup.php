@@ -8,7 +8,7 @@ namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Core\Logger\Logger;
 use \Shopware\Components\Api\Exception as ApiException;
-use \Shopware\Models\Customer\Group as GroupModel;
+use \jtl\Connector\Model\CustomerGroup as CustomerGroupModel;
 use \jtl\Connector\Model\Identity;
 
 class CustomerGroup extends DataMapper
@@ -25,41 +25,19 @@ class CustomerGroup extends DataMapper
 
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
-        $builder = $this->Manager()->createQueryBuilder()->select(
-            'customergroup'
-        )
-        ->from('Shopware\Models\Customer\Group', 'customergroup');
-
-        if ($offset !== null && $limit !== null) {
-            $builder->setFirstResult($offset)
-                ->setMaxResults($limit);
-        }
-
-        $es = $builder->getQuery()
-            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-
-        $entityCount = count($es);
-        $lastIndex = $entityCount - 1;
-
-        if ($count) {
-            return $entityCount;
-        }
-
-        if ($entityCount > 0) {
-            return $this->Manager()->createQueryBuilder()->select(array(
+        $query = $this->Manager()->createQueryBuilder()->select(
                 'customergroup',
                 'attribute'
-            ))
+            )
             ->from('Shopware\Models\Customer\Group', 'customergroup')
             ->leftJoin('customergroup.attribute', 'attribute')
-            ->where('customergroup.id BETWEEN :first AND :last')
-            ->setParameter('first', $es[0]['id'])
-            ->setParameter('last', $es[$lastIndex]['id'])
-            ->getQuery()
-            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-        }
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()->setHydrationMode(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
 
-        return array();
+        $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query, $fetchJoinCollection = true);
+
+        return $count ? $paginator->count() : iterator_to_array($paginator);
     }
 
     public function fetchCount($offset = 0, $limit = 100)
@@ -67,9 +45,9 @@ class CustomerGroup extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function save(GroupModel $customerGroup)
+    public function save(CustomerGroupModel $customerGroup)
     {
-        $result = new GroupModel;
+        $result = new CustomerGroupModel;
         $customerGroupSW = null;
         if (strlen($customerGroup->getId()->getEndoint()) > 0) {
             $customerGroupSW = $this->find(intval($customerGroup->getId()->getEndoint()));
@@ -77,6 +55,8 @@ class CustomerGroup extends DataMapper
 
         if ($customerGroupSW === null) {
             $customerGroupSW = new \Shopware\Models\Customer\Group;
+            
+            // @todo: generate unique key
             $customerGroupSW->setKey();
         }
 

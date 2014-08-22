@@ -23,44 +23,22 @@ class Category extends DataMapper
 
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
-        $builder = $this->Manager()->createQueryBuilder()->select(
-            'category'
-        )
-        ->from('Shopware\Models\Category\Category', 'category');
-
-        if ($offset !== null && $limit !== null) {
-            $builder->setFirstResult($offset)
-                ->setMaxResults($limit);
-        }
-
-        $es = $builder->getQuery()
-            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-
-        $entityCount = count($es);
-        $lastIndex = $entityCount - 1;
-
-        if ($count) {
-            return $entityCount;
-        }
-
-        if ($entityCount > 0) {
-            return $this->Manager()->createQueryBuilder()->select(array(
+        $query = $this->Manager()->createQueryBuilder()->select(
                 'category',
                 'attribute',
                 'customergroup'
-            ))
+            )
             ->from('Shopware\Models\Category\Category', 'category')
             //->leftJoin('category.parent', 'parent')
             ->leftJoin('category.attribute', 'attribute')
             ->leftJoin('category.customerGroups', 'customergroup')
-            ->where('category.id BETWEEN :first AND :last')
-            ->setParameter('first', $es[0]['id'])
-            ->setParameter('last', $es[$lastIndex]['id'])
-            ->getQuery()
-            ->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-        }
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()->setHydrationMode(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
 
-        return array();
+        $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query, $fetchJoinCollection = true);
+
+        return $count ? $paginator->count() : iterator_to_array($paginator);
     }
 
     public function fetchCount($offset = 0, $limit = 100)

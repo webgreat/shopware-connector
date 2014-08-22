@@ -305,6 +305,22 @@ class Product extends DataController
             }
         }
 
+        // ProductSpecific
+        // @todo: waiting for entities
+        /*
+        if (isset($productSW['propertyGroup']) && isset($productSW['propertyGroup']['options'])) {
+            foreach ($productSW['propertyGroup']['options'] as $option) {
+                foreach ($option['values'] as $value) {
+                    $productSpecific = Mmc::getModel('ProductSpecific');
+                    $productSpecific->setProductId(new Identity($productSW['id']))
+                        ->setSpecificValueId(new Identity($value['id']));
+
+                    $product->addSpecifics($productSpecific);
+                }
+            }
+        }
+        */
+
         return $product->getPublic();
     }
 }

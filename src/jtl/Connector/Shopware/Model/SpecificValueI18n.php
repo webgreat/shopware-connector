@@ -16,8 +16,8 @@ class SpecificValueI18n extends SpecificValueI18nModel
 {
     protected $fields = array(
         'localeName' => '',
-        'specificValueId' => '',
-        'value' => '',
+        'specificValueId' => 'specificValueId',
+        'value' => 'value',
         'urlPath' => '',
         'description' => '',
         'metaDescription' => '',

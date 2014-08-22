@@ -16,8 +16,8 @@ class ProductSpecific extends ProductSpecificModel
 {
     protected $fields = array(
         'id' => '',
-        'specificValueId' => '',
-        'productId' => ''
+        'specificValueId' => 'specificValueId',
+        'productId' => 'productId'
     );
     
     /**

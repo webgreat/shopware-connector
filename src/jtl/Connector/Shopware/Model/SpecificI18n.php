@@ -16,8 +16,8 @@ class SpecificI18n extends SpecificI18nModel
 {
     protected $fields = array(
         'localeName' => '',
-        'specificId' => '',
-        'name' => ''
+        'specificId' => 'specificId',
+        'name' => 'name'
     );
     
     /**

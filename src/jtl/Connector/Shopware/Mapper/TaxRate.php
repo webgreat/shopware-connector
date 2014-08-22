@@ -14,22 +14,17 @@ class TaxRate extends DataMapper
 {
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
-        $query = $this->Manager()->createQueryBuilder()->select(array(
-            'tax'
-        ))
-        ->from('Shopware\Models\Tax\Tax', 'tax')
-        ->setFirstResult($offset)
-        ->setMaxResults($limit)
-        ->getQuery();
+        $query = $this->Manager()->createQueryBuilder()->select(
+                'tax'
+            )
+            ->from('Shopware\Models\Tax\Tax', 'tax')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()->setHydrationMode(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
 
-        if ($count) {
-            $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query);
+        $paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query, $fetchJoinCollection = true);
 
-            return $paginator->count();
-        }
-        else {
-            return $query->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-        }
+        return $count ? $paginator->count() : iterator_to_array($paginator);
     }
 
     public function fetchCount($offset = 0, $limit = 100)

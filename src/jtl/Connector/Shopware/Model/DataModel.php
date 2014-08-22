@@ -48,7 +48,7 @@ abstract class DataModel
         };
 
         // Set Value
-        $setValue = function (array $platformFields, $value, \stdClass $obj) use (&$setValue) {            
+        $setValue = function (array $platformFields, $value, \stdClass $obj) use (&$setValue) {
             if (count($platformFields) > 1) {
                 $field = array_shift($platformFields);
 

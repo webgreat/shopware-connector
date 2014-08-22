@@ -15,7 +15,7 @@ use \jtl\Connector\Model\Specific as SpecificModel;
 class Specific extends SpecificModel
 {
     protected $fields = array(
-        'id' => '',
+        'id' => 'id',
         'sort' => '',
         'isGlobal' => '',
         'type' => ''

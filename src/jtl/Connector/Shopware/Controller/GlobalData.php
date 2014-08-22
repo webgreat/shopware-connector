@@ -17,6 +17,7 @@ use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 use \jtl\Core\Logger\Logger;
 use \Shopware\Models\Customer\Group as GroupModel;
+use \jtl\Connector\Model\Identity;
 
 /**
  * GlobalData Controller
@@ -186,7 +187,11 @@ class GlobalData extends DataController
                 $customerGroupResult = $customerGroupMapper->save($customerGroup);
                 $result->addCustomerGroup($customerGroupResult);
             }
+
+            // Units
             
+            // TaxRates
+
             $action->setResult($result->getPublic());
         }
         catch (\Exception $exc) {

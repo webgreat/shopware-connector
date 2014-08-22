@@ -41,7 +41,10 @@ class Product extends DataMapper
                 'pricegroup',
                 'discounts',
                 'customergroups',
-                'configuratorOptions'
+                'configuratorOptions',
+                'propertygroup',
+                'propertyoptions',
+                'propertyvalues'
             )
             ->from('Shopware\Models\Article\Detail', 'detail')
             ->leftJoin('detail.article', 'article')
@@ -57,6 +60,9 @@ class Product extends DataMapper
             ->leftJoin('pricegroup.discounts', 'discounts')
             ->leftJoin('article.customerGroups', 'customergroups')
             ->leftJoin('detail.configuratorOptions', 'configuratorOptions')
+            ->leftJoin('article.propertyGroup', 'propertygroup')
+            ->leftJoin('propertygroup.options', 'propertyoptions')
+            ->leftJoin('propertyoptions.values', 'propertyvalues')
             ->where('detail.articleId = :productId')
             ->setParameter('productId', $productId)
             ->setFirstResult($offset)
@@ -105,7 +111,10 @@ class Product extends DataMapper
                 'related',
                 'pricegroup',
                 'discounts',
-                'customergroups'
+                'customergroups',
+                'propertygroup',
+                'propertyoptions',
+                'propertyvalues'
             )
             ->from('Shopware\Models\Article\Article', 'article')
             ->leftJoin('article.tax', 'tax')
@@ -122,6 +131,9 @@ class Product extends DataMapper
             ->leftJoin('article.priceGroup', 'pricegroup')
             ->leftJoin('pricegroup.discounts', 'discounts')
             ->leftJoin('article.customerGroups', 'customergroups')
+            ->leftJoin('article.propertyGroup', 'propertygroup')
+            ->leftJoin('propertygroup.options', 'propertyoptions')
+            ->leftJoin('propertyoptions.values', 'propertyvalues')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
             ->getQuery()->setHydrationMode(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
