@@ -11,6 +11,7 @@ use \jtl\Connector\Model\Product as ProductModel;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Shopware\Utilities\Translation as TranslationUtil;
 use \jtl\Core\Logger\Logger;
 use \jtl\Core\Utilities\Money;
 use \jtl\Connector\Model\Identity;
@@ -79,10 +80,10 @@ class Product extends DataMapper
             $shopMapper = Mmc::getMapper('Shop');
             $shops = $shopMapper->findAll(null, null);
 
-            $translationReader = new \Shopware_Components_Translation;
+            $translationUtil = new TranslationUtil;
             for ($i = 0; $i < count($products); $i++) {
                 foreach ($shops as $shop) {
-                    $translation = $translationReader->read($shop['locale']['id'], 'article', $products[$i]['id']);
+                    $translation = $translationUtil->read($shop['locale']['id'], 'article', $products[$i]['id']);
                     if (!empty($translation)) {
                         $translation['shopId'] = $shop['id'];
                         $products[$i]['translations'][$shop['locale']['locale']] = $translation;
@@ -148,10 +149,10 @@ class Product extends DataMapper
             $shopMapper = Mmc::getMapper('Shop');
             $shops = $shopMapper->findAll(null, null);
 
-            $translationReader = new \Shopware_Components_Translation();
+            $translationUtil = new TranslationUtil();
             for ($i = 0; $i < count($products); $i++) {
                 foreach ($shops as $shop) {
-                    $translation = $translationReader->read($shop['locale']['id'], 'article', $products[$i]['id']);
+                    $translation = $translationUtil->read($shop['locale']['id'], 'article', $products[$i]['id']);
                     if (!empty($translation)) {
                         $translation['shopId'] = $shop['id'];
                         $products[$i]['translations'][$shop['locale']['locale']] = $translation;
@@ -174,32 +175,34 @@ class Product extends DataMapper
         $detailSW = null;
         $result = new ProductModel;
 
-        $this->prepareProductAssociatedData($product, $productSW, $detailSW);
-        $this->prepareCategoryAssociatedData($product, $productSW);
-        $this->prepareInvisibilityAssociatedData($product, $productSW);
-        $this->prepareTaxAssociatedData($product, $productSW);
-        $this->prepareManufacturerAssociatedData($product, $productSW);
-        $this->prepareSpecialPriceAssociatedData($product, $productSW);
-        $this->prepareDetailAssociatedData($product, $detailSW);
-        $this->prepareAttributeAssociatedData($productSW, $detailSW);
-        $this->prepareVariationAssociatedData($product, $productSW, $detailSW, $result);
-        $this->preparePriceAssociatedData($product, $productSW, $detailSW);
+        if ($product->getAction() == DataModel::ACTION_DELETE) { // DELETE
+            $this->deleteProductData($product, $productSW);
+        } else { // UPDATE or INSERT
+            $this->prepareProductAssociatedData($product, $productSW, $detailSW);
+            $this->prepareCategoryAssociatedData($product, $productSW);
+            $this->prepareInvisibilityAssociatedData($product, $productSW);
+            $this->prepareTaxAssociatedData($product, $productSW);
+            $this->prepareManufacturerAssociatedData($product, $productSW);
+            $this->prepareSpecialPriceAssociatedData($product, $productSW);
+            $this->prepareDetailAssociatedData($product, $detailSW);
+            $this->prepareAttributeAssociatedData($productSW, $detailSW);
+            $this->prepareVariationAssociatedData($product, $productSW, $detailSW, $result);
+            $this->preparePriceAssociatedData($product, $productSW, $detailSW);
 
-        $productSW->setMainDetail($detailSW);
+            $productSW->setMainDetail($detailSW);
 
-        $violations = $this->Manager()->validate($productSW);
-        if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
+            $violations = $this->Manager()->validate($productSW);
+            if ($violations->count() > 0) {
+                throw new ApiException\ValidationException($violations);
+            }
+
+            // Save Product
+            $this->Manager()->persist($productSW);
+            $this->Manager()->flush();
+
+            $this->deleteTranslationData($productSW);
+            $this->saveTranslationData($product, $productSW);
         }
-
-        // Save Product
-        $this->Manager()->persist($productSW);
-        $this->Manager()->flush();
-
-        $this->saveTranslationData($product, $productSW);
-
-        // Result
-        $result->setId(new Identity($productSW->getId(), $product->getId()->getHost()));
 
         /*
         $confiSet = $productSW->getConfiguratorSet();
@@ -227,6 +230,9 @@ class Product extends DataMapper
             }
         }
         */
+       
+        // Result
+        $result->setId(new Identity($productSW->getId(), $product->getId()->getHost()));
 
         return $result;
     }
@@ -534,11 +540,11 @@ class Product extends DataMapper
     protected function saveTranslationData(DataModel &$product, \Shopware\Models\Article\Article &$productSW)
     {
         // ProductI18n
-        $translation = new \Shopware_Components_Translation;
+        $translationUtil = new TranslationUtil;
         foreach ($product->getI18ns() as $i18n) {
             $locale = LocaleUtil::getByKey($i18n->getLocaleName());
             if ($locale && $i18n->getLocaleName() != Shopware()->Shop()->getLocale()->getLocale()) {
-                $translation->write(
+                $translationUtil->write(
                     $locale->getId(),
                     'article',
                     $productSW->getId(),
@@ -557,6 +563,67 @@ class Product extends DataMapper
             } else {
                 Logger::write(sprintf('Could not find any locale for (%s)', $i18n->getLocaleName()), Logger::WARNING, 'database');
             }
+        }
+    }
+
+    protected function deleteTranslationData(\Shopware\Models\Article\Article &$productSW)
+    {
+        $translationUtil = new translationUtilUtil;
+        $translationUtil->delete('article', $productSW->getId());
+    }
+
+    protected function deleteProductData(DataModel &$product, \Shopware\Models\Article\Article &$productSW)
+    {
+        $productId = (strlen($product->getId()->getEndpoint()) > 0) ? (int)$product->getId()->getEndpoint() : null;
+
+        if ($productId !== null && $productId > 0) {
+            $productSW = $this->find($productId);
+            if ($productSW !== null) {
+                $this->removePrices($productSW->getId());
+                $this->removeArticleEsd($productSW->getId());
+                $this->removeAttributes($productSW->getId());
+                $this->removeArticleDetails($productSW);
+
+                $this->deleteTranslationData($productSW);
+
+                $this->Manager()->remove($productSW);
+                $this->Manager()->flush();
+            }
+        }
+    }
+
+    protected function removePrices($productId)
+    {
+        $query = $this->getRepository()->getRemovePricesQuery($productId);
+        $query->execute();
+    }
+
+    protected function removeAttributes($productId)
+    {
+        $query = $this->getRepository()->getRemoveAttributesQuery($productId);
+        $query->execute();
+    }
+
+    protected function removeArticleEsd($productId)
+    {
+        $query = $this->getRepository()->getRemoveESDQuery($productId);
+        $query->execute();
+    }
+
+    protected function removeArticleDetails($productSW)
+    {
+        $sql = "SELECT id FROM s_articles_details WHERE articleID = ? AND kind != 1";
+        $detailSWs = Shopware()->Db()->fetchAll($sql, array($productSW->getId()));
+
+        foreach ($detailSWs as $detailSW) {
+            $query = $this->getRepository()->getRemoveImageQuery($detailSW['id']);
+            $query->execute();
+
+            $sql= "DELETE FROM s_article_configurator_option_relations WHERE article_id = ?";
+            Shopware()->Db()->query($sql, array($detailSW['id']));
+
+            $query = $this->getRepository()->getRemoveDetailQuery($detailSW['id']);
+            $query->execute();
         }
     }
 

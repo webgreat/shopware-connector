@@ -8,6 +8,7 @@ namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Logger\Logger;
+use \jtl\Connector\Shopware\Utilities\Translation;
 
 class ConfiguratorSet extends DataMapper
 {
@@ -40,7 +41,7 @@ class ConfiguratorSet extends DataMapper
             $shopMapper = Mmc::getMapper('Shop');
             $shops = $shopMapper->findAll(null, null);
 
-            $translationReader = new \Shopware_Components_Translation();
+            $translationReader = new Translation;
             for ($i = 0; $i < count($sets); $i++) {
                 foreach ($shops as $shop) {
                     
@@ -73,12 +74,5 @@ class ConfiguratorSet extends DataMapper
     public function fetchCount($offset = 0, $limit = 100)
     {
         return $this->findAll($offset, $limit, true);
-    }
-
-    public function save(array $data, $namespace = '\Shopware\Models\Article\Configurator\Set')
-    {
-        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
-
-        return parent::save($data, $namespace);
     }
 }

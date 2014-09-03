@@ -69,29 +69,36 @@ class Manufacturer extends DataMapper
             $manufacturerSW = $this->find($id);
         }
 
-        if ($manufacturerSW === null) {
-            $manufacturerSW = new SupplierModel;
-        }
-
-        $manufacturerSW->setName($manufacturer->getName())
-            ->setLink($manufacturer->getWww());
-
-        foreach ($manufacturer->getI18ns() as $i18n) {
-            if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-                $manufacturerSW->setDescription($i18n->getDescription());
-                $manufacturerSW->setMetaTitle($i18n->getTitleTag());
-                $manufacturerSW->setMetaDescription($i18n->getMetaDescription());
-                $manufacturerSW->setMetaKeywords($i18n->getMetaKeywords());
+        if ($manufacturer->getAction() == DataModel::ACTION_DELETE) {   // Delete
+            if ($manufacturerSW !== null) {
+                $this->Manager()->remove($manufacturerSW);
+                $this->flush();
             }
-        }
+        } else {    // Update or Insert
+            if ($manufacturerSW === null) {
+                $manufacturerSW = new SupplierModel;
+            }
 
-        $violations = $this->Manager()->validate($manufacturerSW);
-        if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
-        }
+            $manufacturerSW->setName($manufacturer->getName())
+                ->setLink($manufacturer->getWww());
 
-        $this->Manager()->persist($manufacturerSW);
-        $this->flush();
+            foreach ($manufacturer->getI18ns() as $i18n) {
+                if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                    $manufacturerSW->setDescription($i18n->getDescription());
+                    $manufacturerSW->setMetaTitle($i18n->getTitleTag());
+                    $manufacturerSW->setMetaDescription($i18n->getMetaDescription());
+                    $manufacturerSW->setMetaKeywords($i18n->getMetaKeywords());
+                }
+            }
+
+            $violations = $this->Manager()->validate($manufacturerSW);
+            if ($violations->count() > 0) {
+                throw new ApiException\ValidationException($violations);
+            }
+
+            $this->Manager()->persist($manufacturerSW);
+            $this->flush();
+        }
 
         // Result
         $result = new ManufacturerModel;

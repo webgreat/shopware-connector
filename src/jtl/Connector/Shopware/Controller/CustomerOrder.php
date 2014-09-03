@@ -24,33 +24,25 @@ class CustomerOrder extends DataController
     /**
      * Pull
      * 
-     * @params object $params
+     * @param \jtl\Core\Model\QueryFilter $queryFilter
      * @return \jtl\Connector\Result\Action
      */
-    public function pull($params)
+    public function pull(QueryFilter $queryFilter)
     {
         $action = new Action();
         $action->setHandled(true);
 
         try {
             $result = array();
-            $filter = $params;
 
-            $offset = 0;
-            $limit = 100;
+            $offset = $queryFilter->isOffset() ? $queryFilter->getOffset() : 0;
+            $limit = $queryFilter->isLimit() ?  $queryFilter->getLimit() : 100;
+
             $from = null;
             $until = null;
-            if ($filter->isOffset()) {
-                $offset = $filter->getOffset();
-            }
-
-            if ($filter->isLimit()) {
-                $limit = $filter->getLimit();
-            }
-
-            if ($filter->isFrom() && $filter->isUntil()) {
-                $from = $filter->getFrom();
-                $until = $filter->getUntil();
+            if ($queryFilter->isFrom() && $queryFilter->isUntil()) {
+                $from = $queryFilter->getFrom();
+                $until = $queryFilter->getUntil();
             }
 
             $mapper = Mmc::getMapper('CustomerOrder');
@@ -102,74 +94,5 @@ class CustomerOrder extends DataController
         }
 
         return $action;
-    }
-
-    /**
-     * Transaction Commit
-     *
-     * @param mixed $params
-     * @return \jtl\Connector\Result\Action
-     */
-    public function commit($params, $trid)
-    {
-        $action = new Action();
-        $action->setHandled(true);
-
-        try {
-            $container = TransactionHandler::getContainer($this->getMethod()->getController(), $trid);
-            $result = $this->insert($container);
-
-            if ($result !== null) {
-                $action->setResult($result->getPublic());
-            }
-        }
-        catch (\Exception $exc) {
-            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
-
-            $err = new Error();
-            $err->setCode($exc->getCode());
-            $err->setMessage($message);
-            $action->setError($err);
-        }
-
-        return $action;
-    }
-
-    /**
-     * Insert
-     *
-     * @param \jtl\Connector\ModelContainer\CoreContainer $container
-     * @return \jtl\Connector\ModelContainer\CustomerOrderContainer
-     */
-    public function insert(CoreContainer $container)
-    {
-        $config = $this->getConfig();
-
-        $mapper = Mmc::getMapper('CustomerOrder');
-        $data = $mapper->prepareData($container);
-        $modelSW = $mapper->save($data);
-
-        $resultContainer = new CustomerOrderContainer();
-
-        // CustomerOrder
-        $main = $container->getMainModel();
-        $resultContainer->addIdentity('customer_order', new Identity($modelSW->getId(), $main->getId()->getHost()));
-
-        // Item
-
-        // Billing
-
-        // Shipping
-
-        // Attributes
-        /*
-        $attrSW = $modelSW->getAttribute();
-        if ($attrSW) {
-            $attr = $container->getCustomerAttrs();
-            $resultContainer->addIdentity('customer_order_attr', new Identity($attrSW->getId(), $attrSW[0]->getId()->getHost()));
-        }
-        */
-
-        return $resultContainer;
     }
 }

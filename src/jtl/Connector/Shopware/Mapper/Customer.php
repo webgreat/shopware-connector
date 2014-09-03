@@ -66,61 +66,68 @@ class Customer extends DataMapper
             $billingSW = $this->Manager()->getRepository('Shopware\Models\Customer\Billing')->findOneBy(array('userId' => $id));
         }
 
-        if ($customerSW === null) {
-            $customerSW = new \Shopware\Models\Customer\Customer;
+        if ($customer->getAction() == DataModel::ACTION_DELETE) {   // Delete
+            if ($customerSW !== null) {
+                $this->Manager()->remove($customerSW);
+                $this->flush();
+            }
+        } else {    // Update or Insert
+            if ($customerSW === null) {
+                $customerSW = new \Shopware\Models\Customer\Customer;
+            }
+
+            // CustomerGroup
+            $customerGroupMapper = Mmc::getMapper('CustomerGroup');
+            $customerGroupSW = $customerGroupMapper->find($customer->getCustomerGroupId()->getEndpoint());
+            if ($customerGroupSW) {
+                $customerSW->setGroup($customerGroupSW);
+            }
+
+            $customerSW->setEmail($customer->getEMail())
+                ->setActive($customer->getIsActive())
+                ->setNewsletter(intval($customer->getHasNewsletterSubscription()))
+                ->setFirstLogin($customer->getCreated())
+                ->setPassword(md5($customer->getPassword()));
+
+            $violations = $this->Manager()->validate($customerSW);
+            if ($violations->count() > 0) {
+                throw new ApiException\ValidationException($violations);
+            }
+
+            $this->Manager()->persist($customerSW);
+            $this->flush();
+
+            // Billing
+            if (!$billingSW) {
+                $billingSW = new \Shopware\Models\Customer\Billing;
+            }
+
+            $billingSW->setCompany($customer->getCompany())
+                ->setSalutation(Salutation::toEndpoint($customer->getSalutation()))
+                ->setNumber($customer->getCustomerNumber())
+                ->setFirstName($customer->getFirstName())
+                ->setLastName($customer->getLastName())
+                ->setStreet($customer->getStreet())
+                ->setZipCode($customer->getZipCode())
+                ->setCity($customer->getCity())
+                ->setPhone($customer->getPhone())
+                ->setFax($customer->getFax())
+                ->setVatId($customer->getVatNumber())
+                ->setBirthday($customer->getBirthday());
+
+            $ref = new \ReflectionClass($billingSW);
+            $prop = $ref->getProperty('customerId');
+            $prop->setAccessible(true);
+            $prop->setValue($billingSW, $customerSW->getId());
+
+            $countrySW = $this->Manager()->getRepository('Shopware\Models\Country\Country')->findOneBy(array('iso' => $customer->getCountryIso()));
+            if ($countrySW) {
+                $billingSW->setCountryId($countrySW->getId());
+            }
+
+            $this->Manager()->persist($billingSW);
+            $this->flush();
         }
-
-        // CustomerGroup
-        $customerGroupMapper = Mmc::getMapper('CustomerGroup');
-        $customerGroupSW = $customerGroupMapper->find($customer->getCustomerGroupId()->getEndpoint());
-        if ($customerGroupSW) {
-            $customerSW->setGroup($customerGroupSW);
-        }
-
-        $customerSW->setEmail($customer->getEMail())
-            ->setActive($customer->getIsActive())
-            ->setNewsletter(intval($customer->getHasNewsletterSubscription()))
-            ->setFirstLogin($customer->getCreated())
-            ->setPassword(md5($customer->getPassword()));
-
-        $violations = $this->Manager()->validate($customerSW);
-        if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
-        }
-
-        $this->Manager()->persist($customerSW);
-        $this->flush();
-
-        // Billing
-        if (!$billingSW) {
-            $billingSW = new \Shopware\Models\Customer\Billing;
-        }
-
-        $billingSW->setCompany($customer->getCompany())
-            ->setSalutation(Salutation::toEndpoint($customer->getSalutation()))
-            ->setNumber($customer->getCustomerNumber())
-            ->setFirstName($customer->getFirstName())
-            ->setLastName($customer->getLastName())
-            ->setStreet($customer->getStreet())
-            ->setZipCode($customer->getZipCode())
-            ->setCity($customer->getCity())
-            ->setPhone($customer->getPhone())
-            ->setFax($customer->getFax())
-            ->setVatId($customer->getVatNumber())
-            ->setBirthday($customer->getBirthday());
-
-        $ref = new \ReflectionClass($billingSW);
-        $prop = $ref->getProperty('customerId');
-        $prop->setAccessible(true);
-        $prop->setValue($billingSW, $customerSW->getId());
-
-        $countrySW = $this->Manager()->getRepository('Shopware\Models\Country\Country')->findOneBy(array('iso' => $customer->getCountryIso()));
-        if ($countrySW) {
-            $billingSW->setCountryId($countrySW->getId());
-        }
-
-        $this->Manager()->persist($billingSW);
-        $this->flush();
 
         // Result
         $result = new CustomerModel;

@@ -10,12 +10,22 @@ use \jtl\Connector\ModelContainer\CustomerOrderContainer;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Model\CustomerOrder as CustomerOrderModel;
+use \jtl\Connector\Model\CustomerOrderItem;
 use \Shopware\Models\Order\Order as OrderModel;
 use \Shopware\Models\Order\Detail as DetailModel;
 use \jtl\Core\Logger\Logger;
+use \jtl\Core\Utilities\Money;
+use \jtl\Connector\Shopware\Utilities\Payment as PaymentUtil;
+use \jtl\Connector\Shopware\Utilities\Status as StatusUtil;
 
 class CustomerOrder extends DataMapper
 {
+    public function find($id)
+    {
+        return $this->Manager()->getRepository('Shopware\Models\Order\Order')->find($id);
+    }
+
     public function findAll($offset = 0, $limit = 100, $count = false, $from = null, $until = null)
     {
         $builder = $this->Manager()->createQueryBuilder()->select(
@@ -87,6 +97,169 @@ class CustomerOrder extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
+    public function save(CustomerOrderModel $customerOrder)
+    {
+        $orderSW = null;
+        $result = new CustomerOrderModel;
+
+        if ($customerOrder->getAction() == DataModel::ACTION_DELETE) { // DELETE
+            $this->deleteOrderData($customerOrder, $orderSW);
+        } else { // UPDATE or INSERT
+            $this->prepareOrderAssociatedData($customerOrder, $orderSW);
+            $this->prepareItemsAssociatedData($customerOrder, $orderSW);
+
+            $violations = $this->Manager()->validate($orderSW);
+            if ($violations->count() > 0) {
+                throw new ApiException\ValidationException($violations);
+            }
+
+            // Save Order
+            $this->Manager()->persist($orderSW);
+            $this->Manager()->flush();
+        }
+        
+        // CustomerOrderPaymentInfo
+        // CustomerOrderItem
+        // CustomerOrderBillingAddress
+        // CustomerOrderAttr
+        
+        $result->setId(new Identity($customerOrderSW->getId(), $customerOrder->getId()->getHost()));
+
+        return $result;
+    }
+
+    protected function deleteOrderData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    {
+        $orderId = (strlen($customerOrder->getId()->getEndpoint()) > 0) ? (int)$customerOrder->getId()->getEndpoint() : null;
+
+        if ($orderId !== null && $orderId > 0) {
+            $orderSW = $this->find($orderId);
+            if ($orderSW !== null) {
+                $this->removeItems($orderSW);
+                $this->removeBilling($orderSW);
+                $this->removeShipping($orderSW);
+
+                $this->Manager()->remove($orderSW);
+                $this->Manager()->flush();
+            }
+        }
+    }
+
+    protected function removeItems(\Shopware\Models\Order\Order &$orderSW)
+    {
+        foreach ($orderSW->getDetails() as $detailSW) {
+            $this->Manager()->remove($detailSW);
+        }
+    }
+
+    protected function removeBilling(\Shopware\Models\Order\Order &$orderSW)
+    {
+        $this->Manager()->remove($orderSW->getBilling());
+    }
+
+    protected function removeShipping(\Shopware\Models\Order\Order &$orderSW)
+    {
+        $this->Manager()->remove($orderSW->getShipping());
+    }
+
+    protected function prepareOrderAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    {
+        $orderId = (strlen($customerOrder->getId()->getEndpoint()) > 0) ? (int)$customerOrder->getId()->getEndpoint() : null;
+
+        if ($orderId !== null && $orderId > 0) {
+            $orderSW = $this->find($orderId);
+        } elseif (strlen($customerOrder->getOrderNumber()) > 0) {
+            $orderSW = Shopware()->Models()->getRepository('Shopware\Models\Order\Order')->findOneBy(array('number' => $customerOrder->getOrderNumber()));
+        }
+
+        if ($orderSW === null) {
+            $orderSW = new \Shopware\Models\Order\Order;
+        }
+
+        // Customer
+        $customerMapper = Mmc::getMapper('Customer');
+        $customer = $customerMapper->find($customerOrder->getCustomerId()->getEndpoint());
+        if ($customer === null) {
+            throw new \Exception(sprintf('Customer with id (%s) not found', $customerOrder->getCustomerId()->getEndpoint()));
+        }
+
+        // CurrencyFactor
+        $currencySW = $this->Manager()->getRepository('Shopware\Models\Shop\Currency')->findOneBy(array('currency' => $customerOrder->getLocaleName()));
+        if ($currencySW === null) {
+            throw new \Exception(sprintf('Currency with iso (%s) not found', $customerOrder->getLocaleName()));
+        }
+
+        // Payment
+        $paymentName = PaymentUtil::mapCode($customerOrder->getPaymentModuleCode());
+        if ($paymentName === null) {
+            throw new \Exception(sprintf('Payment with code (%s) not found', $customerOrder->getPaymentModuleCode()));
+        }
+
+        $paymentSW = $this->Manager()->getRepository('Shopware\Models\Payment\Payment')->findOneBy(array('name' => $paymentName));
+        if ($paymentSW === null) {
+            throw new \Exception(sprintf('Payment with name (%s) not found', $paymentName));
+        }
+
+        // Order Status
+        $status = StatusUtil::mapStatus($customerOrder->getStatus());
+        if ($status === null) {
+            throw new \Exception(sprintf('OrderStatus with status (%s) not found', $customerOrder->getStatus()));
+        }
+
+        $statusSW = $this->Manager()->getRepository('Shopware\Models\Order\Status')->findOneBy(array('id' => $status));
+        if ($statusSW === null) {
+            throw new \Exception(sprintf('OrderStatus with id (%s) not found', $status));
+        }
+
+        $orderSW->setNumber($customerOrder->getOrderNumber())
+            ->setInvoiceAmountNet($customerOrder->getTotalSum())
+            ->setOrderTime($customerOrder->getCreated())
+            ->setCustomerComment($customerOrder->getNote())
+            ->setNet(0)
+            ->setTrackingCode($customerOrder->getTracking())
+            ->setLanguageIso($customerOrder->getLocaleName())
+            ->setCurrency($customerOrder->getCurrencyIso())
+            ->setRemoteAddress($customerOrder->getIp())
+            ->setCustomer($customer)
+            ->setCurrencyFactor($currencySW->getFactor())
+            ->setPayment($paymentSW)
+            ->setDispatch()
+            ->setPaymentStatus()
+            ->setOrderStatus($statusSW)
+            ->setShop()
+            ->setShipping()
+            ->setBilling()
+            ->setHistory()
+            ->setAttribute()
+            ->setPartner()
+            ->setDocuments()
+            ->setEsd()
+            ->setLanguageSubShop()
+            ->setPaymentInstances();
+    }
+
+    protected function prepareItemsAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    {
+        $taxFree = 0;
+        foreach ($customerOrder->getItems() $as $item) {
+            switch ($item->getType()) {
+                case CustomerOrderItem::TYPE_PRODUCT:
+                    break;
+                case CustomerOrderItem::TYPE_SHIPPING:
+                    $orderSW->setInvoiceShipping(Money::AsGross($item->getPrice(), $item->getVat()))
+                        ->setInvoiceShippingNet($item->getPrice());
+                    break;
+            }
+
+            if ($item->getVat() > 0) {
+                $taxFree = 1;
+            }
+        }
+
+        $orderSW->setTaxFree($taxFree);
+    }
+
+    /*
     public function prepareData(CustomerOrderContainer $container)
     {
         $customerOrder = $container->getMainModel();
@@ -157,64 +330,5 @@ class CustomerOrder extends DataMapper
 
         return $data;
     }
-
-    public function save(array $data, $namespace = '\Shopware\Models\Order\Order')
-    {
-        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
-        
-        $resource = \Shopware\Components\Api\Manager::getResource('Order');
-
-        try {
-            if (!$data['id']) {
-                return $this->create($data);
-            } else {
-                return $resource->update($data['id'], $data);
-            }
-        } catch (ApiException\NotFoundException $exc) {
-            return $this->create($data);
-        }
-    }
-
-    protected function create(array $data)
-    {
-        $customerOrder = new OrderModel();
-        $customerOrder->fromArray($data);
-
-        $violations = $this->getManager()->validate($customerOrder);
-        if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
-        }
-
-        $this->Manager()->persist($customerOrder);
-        $this->flush();
-
-        return $customerOrder;
-    }
-
-    /**
-     * @param int $id
-     * @return \Shopware\Models\Customer\Customer
-     * @throws \Shopware\Components\Api\Exception\ParameterMissingException
-     * @throws \Shopware\Components\Api\Exception\NotFoundException
-     */
-    public function delete($id)
-    {
-        $this->checkPrivilege('delete');
-
-        if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
-        }
-
-        /** @var $customer \Shopware\Models\Customer\Customer */
-        $customer = $this->Manager()->getRepository('Shopware\Models\Customer\Customer')->find($id);
-
-        if (!$customer) {
-            throw new ApiException\NotFoundException("Customer by id $id not found");
-        }
-
-        $this->Manager()->remove($customer);
-        $this->flush();
-
-        return $customer;
-    }
+    */
 }

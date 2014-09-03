@@ -8,10 +8,16 @@ namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Core\Logger\Logger;
 use \Shopware\Components\Api\Exception as ApiException;
-use \Shopware\Models\Tax\Tax as TaxModel;
+use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Model\TaxRate as TaxRateModel;
 
 class TaxRate extends DataMapper
 {
+    public function find($id)
+    {
+        return $this->Manager()->getRepository('Shopware\Models\Tax\Tax')->find($id);
+    }
+    
     public function findAll($offset = 0, $limit = 100, $count = false)
     {
         $query = $this->Manager()->createQueryBuilder()->select(
@@ -32,73 +38,42 @@ class TaxRate extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function save(array $data, $namespace = '\Shopware\Models\Tax\Tax')
+    public function save(DataModel $taxRate)
     {
-        Logger::write(print_r($data, 1), Logger::DEBUG, 'database');
-        
-        try {
-            if (!$data['id']) {
-                return $this->create($data);
-            } else {
-                return $this->update($data['id'], $data);
+        $taxRateSW = null;
+
+        $id = (strlen($taxRate->getId()->getEndpoint()) > 0) ? (int)$taxRate->getId()->getEndpoint() : null;
+
+        if ($id > 0) {
+            $taxRateSW = $this->find($id);
+        }
+
+        if ($taxRate->getAction() == DataModel::ACTION_DELETE) {   // Delete
+            if ($taxRateSW !== null) {
+                $this->Manager()->remove($taxRateSW);
+                $this->flush();
             }
-        } catch (ApiException\NotFoundException $exc) {
-            return $this->create($data);
-        }
-    }
+        } else {    // Update or Insert
+            if ($taxRateSW === null) {
+                $taxRateSW = new \Shopware\Models\Tax\Tax;
+            }
 
-    /**
-     * @param int $id
-     * @param array $params
-     * @return \Shopware\Models\Tax\Tax
-     * @throws \Shopware\Components\Api\Exception\ValidationException
-     * @throws \Shopware\Components\Api\Exception\NotFoundException
-     * @throws \Shopware\Components\Api\Exception\ParameterMissingException
-     */
-    protected function update($id, array $params)
-    {
-        if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            $taxRateSW->setTax($taxRate->getRate())
+                ->setName($taxRate->getRate());
+
+            $violations = $this->Manager()->validate($taxRateSW);
+            if ($violations->count() > 0) {
+                throw new ApiException\ValidationException($violations);
+            }
+
+            $this->Manager()->persist($taxRateSW);
+            $this->flush();
         }
 
-        /** @var $Tax \Shopware\Models\Tax\Tax */
-        $tax = $this->Manager()->getRepository('Shopware\Models\Tax\Tax')->find($id);
+        // Result
+        $result = new TaxRateModel;
+        $result->setId(new Identity($taxRateSW->getId(), $taxRate->getId()->getHost()));
 
-        if (!$tax) {
-            throw new ApiException\NotFoundException("Tax by id $id not found");
-        }
-
-        $tax->fromArray($params);
-
-        $violations = $this->Manager()->validate($tax);
-        if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
-        }
-
-        $this->flush();
-
-        return $tax;
-    }
-
-    /**
-     * @param array $params
-     * @return \Shopware\Models\Tax\Tax
-     * @throws \Shopware\Components\Api\Exception\ValidationException
-     */
-    protected function create(array $params)
-    {
-        $tax = new UnitModel();
-
-        $tax->fromArray($params);
-
-        $violations = $this->Manager()->validate($tax);
-        if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
-        }
-
-        $this->Manager()->persist($tax);
-        $this->flush();
-
-        return $tax;
+        return $result;
     }
 }

@@ -26,27 +26,26 @@ class Product extends DataController
     /**
      * Pull
      * 
-     * @params object $params
+     * @param \jtl\Core\Model\QueryFilter $queryFilter
      * @return \jtl\Connector\Result\Action
      */
-    public function pull($params)
+    public function pull(QueryFilter $queryFilter)
     {
         $action = new Action();
         $action->setHandled(true);
 
         try {
             $result = array();
-            $filter = $params;
 
-            $offset = $filter->isOffset() ? $filter->getOffset() : 0;
-            $limit = $filter->isLimit() ?  $filter->getLimit() : 100;
+            $offset = $queryFilter->isOffset() ? $queryFilter->getOffset() : 0;
+            $limit = $queryFilter->isLimit() ?  $queryFilter->getLimit() : 100;
 
-            $fetchChilden = ($filter->isFilter('fetchChilden') && $filter->getFilter('parentId') > 0);
+            $fetchChilden = ($queryFilter->isFilter('fetchChilden') && $queryFilter->getFilter('parentId') > 0);
             $mapper = Mmc::getMapper('Product');
 
             $products = array();
             if ($fetchChilden) {
-                $products = $mapper->findDetails($filter->isFilter('parentId'), $offset, $limit);
+                $products = $mapper->findDetails($queryFilter->isFilter('parentId'), $offset, $limit);
             } else {
                 $products = $mapper->findAll($offset, $limit);
             }

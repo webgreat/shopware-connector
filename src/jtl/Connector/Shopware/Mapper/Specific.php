@@ -10,8 +10,10 @@ use \jtl\Core\Logger\Logger;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Connector\Model\Specific as SpecificModel;
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \jtl\Connector\Shopware\Utilities\Translation as TranslationUtil;
 use \jtl\Connector\Model\Identity;
 use \jtl\Connector\Shopware\Utilities\Locale as LocaleUtil;
+use \jtl\Connector\Model\DataModel;
 
 class Specific extends DataMapper
 {
@@ -47,10 +49,10 @@ class Specific extends DataMapper
             $shopMapper = Mmc::getMapper('Shop');
             $shops = $shopMapper->findAll(null, null);
 
-            $translationReader = new \Shopware_Components_Translation();
+            $translation = new TranslationUtil;
             for ($i = 0; $i < count($options); $i++) {
                 foreach ($shops as $shop) {
-                    $translationOption = $translationReader->read($shop['locale']['id'], 'propertyoption', $options[$i]['id']);
+                    $translationOption = $translation->read($shop['locale']['id'], 'propertyoption', $options[$i]['id']);
                     if (!empty($translationOption)) {
                         $translationOption['shopId'] = $shop['id'];
                         $translationOption['name'] = $translationOption['optionName'];
@@ -59,7 +61,7 @@ class Specific extends DataMapper
 
                     for ($j = 0; $j < count($options[$i]['values']); $j++) {
                         foreach ($shops as $shop) {
-                            $translationValue = $translationReader->read($shop['locale']['id'], 'propertyvalue', $options[$i]['values'][$j]['id']);
+                            $translationValue = $translation->read($shop['locale']['id'], 'propertyvalue', $options[$i]['values'][$j]['id']);
                             if (!empty($translationValue)) {
                                 $translationValue['shopId'] = $shop['id'];
                                 $translationValue['name'] = $translationValue['optionValue'];
@@ -88,52 +90,70 @@ class Specific extends DataMapper
             $optionSW = $this->find(intval($specific->getId()->getEndpoint()));
         }
 
-        if ($optionSW === null) {
-            $optionSW = new \Shopware\Models\Property\Option;
-        }
-
-        // SpecificI18n
-        foreach ($specific->getI18ns() as $i18n) {
-            if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-                $optionSW->setName($i18n->getName());
+        if ($specific->getAction() == DataModel::ACTION_DELETE) { // DELETE
+            if ($optionSW !== null) {
+                $this->deleteTranslationData($optionSW);
+                $this->Manager()->remove($optionSW);
+                $this->Manager()->flush();
             }
-        }
-
-        // SpecificValues
-        foreach ($specific->getValues() as $specificValue) {
-            $valueSW = null;
-
-            if (strlen($specificValue->getId()->getEndpoint()) > 0) {
-                $valueSW = $this->findValue(intval($specificValue->getId()->getEndpoint()));
+        } else { // UPDATE OR INSERT
+            if ($optionSW === null) {
+                $optionSW = new \Shopware\Models\Property\Option;
             }
 
-            if ($valueSW === null) {
-                $valueSW = new \Shopware\Models\Property\Value;
-            }
+            $optionSW->setFilterable(true);
 
-            $valueSW->setPosition($specificValue->getSort())
-                ->setOption($optionSW);
-
-            // SpecificValueI18n
-            foreach ($specificValue->getI18ns() as $i18n) {
+            // SpecificI18n
+            foreach ($specific->getI18ns() as $i18n) {
                 if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-                    $valueSW->setValue($i18n->getValue());
+                    $optionSW->setName($i18n->getName());
                 }
             }
 
-            $this->Manager()->persist($valueSW);
+            // SpecificValues
+            foreach ($specific->getValues() as $specificValue) {
+                $valueSW = null;
+
+                if (strlen($specificValue->getId()->getEndpoint()) > 0) {
+                    $valueSW = $this->findValue(intval($specificValue->getId()->getEndpoint()));
+                }
+
+                if ($specificValue->getAction() == DataModel::ACTION_DELETE) {  // Delete
+                    if ($valueSW !== null) {
+                        $this->deleteValueTranslationData($valueSW);
+                        $this->Manager()->remove($valueSW);
+                    }
+                } else {    // Update or Insert
+                    if ($valueSW === null) {
+                        $valueSW = new \Shopware\Models\Property\Value;
+                    }
+
+                    $valueSW->setPosition($specificValue->getSort())
+                        ->setOption($optionSW);
+
+                    // SpecificValueI18n
+                    foreach ($specificValue->getI18ns() as $i18n) {
+                        if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                            $valueSW->setValue($i18n->getValue());
+                        }
+                    }
+
+                    $this->Manager()->persist($valueSW);
+                }
+            }
+
+            $violations = $this->Manager()->validate($optionSW);
+            if ($violations->count() > 0) {
+                throw new ApiException\ValidationException($violations);
+            }
+
+            // Save
+            $this->Manager()->persist($optionSW);
+            $this->Manager()->flush();
+
+            $this->deleteTranslationData($optionSW);
+            $this->saveTranslationData($specific, $optionSW);
         }
-
-        $violations = $this->Manager()->validate($optionSW);
-        if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
-        }
-
-        // Save
-        $this->Manager()->persist($optionSW);
-        $this->Manager()->flush();
-
-        $this->saveTranslationData($specific, $optionSW);
 
         // Result
         $result->setId(new Identity($optionSW->getId(), $specific->getId()->getHost()));
@@ -144,7 +164,7 @@ class Specific extends DataMapper
     protected function saveTranslationData(DataModel &$specific, \Shopware\Models\Property\Option &$optionSW)
     {
         // SpecificI18n
-        $translation = new \Shopware_Components_Translation;
+        $translation = new TranslationUtil;
         foreach ($specific->getI18ns() as $i18n) {
             $locale = LocaleUtil::getByKey($i18n->getLocaleName());
             if ($locale && $i18n->getLocaleName() != Shopware()->Shop()->getLocale()->getLocale()) {
@@ -182,5 +202,21 @@ class Specific extends DataMapper
                 }
             }
         }
+    }
+
+    protected function deleteTranslationData(\Shopware\Models\Property\Option &$optionSW)
+    {
+        $translation = new TranslationUtil;
+        $translation->delete('propertyoption', $optionSW->getId());
+
+        foreach ($optionSW->getValues() as $valueSW) {
+            $translation->delete('propertyvalue', $valueSW->getId());
+        }
+    }
+
+    protected function deleteValueTranslationData(\Shopware\Models\Property\Value &$valueSW)
+    {
+        $translation = new TranslationUtil;
+        $translation->delete('propertyvalue', $valueSW->getId());
     }
 }

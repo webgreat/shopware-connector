@@ -57,54 +57,60 @@ class Category extends DataMapper
             $categorySW = $this->find($id);
         }
 
-        if ($categorySW === null) {
-            $categorySW = new \Shopware\Models\Category\Category;
-        }
-
-        if ($parentId !== null) {
-            $parentSW = $this->find($parentId);
-
-            if ($parentSW) {
-                $categorySW->setParent($parentSW);
+        if ($category->getAction() == DataModel::ACTION_DELETE) { // DELETE
+            if ($categorySW !== null) {
+                $this->Manager()->remove($categorySW);
+                $this->flush();
             }
-        }
-
-        // I18n
-        foreach ($category->getI18ns() as $i18n) {
-            if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-                $categorySW->setName($i18n->getName());
-                $categorySW->setMetaDescription($i18n->getMetaDescription());
-                $categorySW->setMetaKeywords($i18n->getMetaKeywords());
-                $categorySW->setCmsHeadline('');
-                $categorySW->setCmsText('');
+        } else { // UPDATE or INSERT
+            if ($categorySW === null) {
+                $categorySW = new \Shopware\Models\Category\Category;
             }
-        }
 
-        // Invisibility
-        $customerGroupsSW = new \Doctrine\Common\Collections\ArrayCollection;
-        $customerGroupMapper = Mmc::getMapper('CustomerGroup');
-        $categorySW->setCustomerGroups($customerGroupsSW);
-        foreach ($category->getInvisibilities() as $invisibility) {
-            $customerGroupSW = $customerGroupMapper->find($invisibility->getCustomerGroupId()->getEndpoint());
+            if ($parentId !== null) {
+                $parentSW = $this->find($parentId);
 
-            if ($customerGroupSW) {
-                $customerGroupsSW->add($customerGroupSW);
+                if ($parentSW) {
+                    $categorySW->setParent($parentSW);
+                }
             }
+
+            // I18n
+            foreach ($category->getI18ns() as $i18n) {
+                if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                    $categorySW->setName($i18n->getName());
+                    $categorySW->setMetaDescription($i18n->getMetaDescription());
+                    $categorySW->setMetaKeywords($i18n->getMetaKeywords());
+                    $categorySW->setCmsHeadline('');
+                    $categorySW->setCmsText('');
+                }
+            }
+
+            // Invisibility
+            $customerGroupsSW = new \Doctrine\Common\Collections\ArrayCollection;
+            $customerGroupMapper = Mmc::getMapper('CustomerGroup');
+            $categorySW->setCustomerGroups($customerGroupsSW);
+            foreach ($category->getInvisibilities() as $invisibility) {
+                $customerGroupSW = $customerGroupMapper->find($invisibility->getCustomerGroupId()->getEndpoint());
+                if ($customerGroupSW) {
+                    $customerGroupsSW->add($customerGroupSW);
+                }
+            }
+
+            $categorySW->setCustomerGroups($customerGroupsSW);
+
+            $categorySW->setPosition(1);
+            $categorySW->setNoViewSelect(false);
+
+            $violations = $this->Manager()->validate($categorySW);
+            if ($violations->count() > 0) {
+                throw new ApiException\ValidationException($violations);
+            }
+
+            // Save Category
+            $this->Manager()->persist($categorySW);
+            $this->flush();
         }
-
-        $categorySW->setCustomerGroups($customerGroupsSW);
-
-        $categorySW->setPosition(1);
-        $categorySW->setNoViewSelect(false);
-
-        $violations = $this->Manager()->validate($categorySW);
-        if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
-        }
-
-        // Save Category
-        $this->Manager()->persist($categorySW);
-        $this->flush();
 
         // Result
         $result = new CategoryModel;

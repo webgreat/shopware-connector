@@ -8,16 +8,12 @@ namespace jtl\Connector\Shopware\Controller;
 
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
-use \jtl\Core\Exception\DatabaseException;
-use \Shopware\Components\Api\Manager as ShopwareManager;
-use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataInjector;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 use \jtl\Core\Logger\Logger;
-use \Shopware\Models\Customer\Group as GroupModel;
-use \jtl\Connector\Model\Identity;
+use \jtl\Core\Model\QueryFilter;
 
 /**
  * GlobalData Controller
@@ -28,20 +24,19 @@ class GlobalData extends DataController
     /**
      * Pull
      * 
-     * @params object $params
+     * @param \jtl\Core\Model\QueryFilter $queryFilter
      * @return \jtl\Connector\Result\Action
      */
-    public function pull($params)
+    public function pull(QueryFilter $queryFilter)
     {
         $action = new Action();
         $action->setHandled(true);
         
         try {
             $result = array();
-            $filter = $params;
 
-            $offset = $filter->isOffset() ? $filter->getOffset() : 0;
-            $limit = $filter->isLimit() ?  $filter->getLimit() : 100;
+            $offset = $queryFilter->isOffset() ? $queryFilter->getOffset() : 0;
+            $limit = $queryFilter->isLimit() ?  $queryFilter->getLimit() : 100;
 
             $globalData = Mmc::getModel('GlobalData');
 
@@ -150,49 +145,6 @@ class GlobalData extends DataController
             $result[] = $globalData->getPublic();
 
             $action->setResult($result);
-        }
-        catch (\Exception $exc) {
-            Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
-
-            $err = new Error();
-            $err->setCode($exc->getCode());
-            $err->setMessage($exc->getMessage());
-            $action->setError($err);
-        }
-
-        return $action;
-    }
-
-    public function push($globalData)
-    {
-        $action = new Action();
-        $action->setHandled(true);
-
-        try {
-            $result = new GroupModel;
-
-            // Companies
-            $configMapper = Mmc::getMapper('Config');
-            foreach ($globalData->getCompanies() as $company) {
-                $configMapper->update(array('name', 'company'), $company->getName(), Shopware()->Shop()->getId());
-                $configMapper->update(array('name', 'address'), $company->getStreet(), Shopware()->Shop()->getId());
-                $configMapper->update(array('name', 'mail'), $company->getEMail(), Shopware()->Shop()->getId());
-                $configMapper->update(array('name', 'taxNumber'), $company->getTaxIdNumber(), Shopware()->Shop()->getId());
-                $configMapper->update(array('name', 'vatcheckadvancednumber'), $company->getVatNumber(), Shopware()->Shop()->getId());
-            }
-
-            // CustomerGroups
-            $customerGroupMapper = Mmc::getMapper('CustomerGroup');
-            foreach ($globalData->getCustomerGroups() as $customerGroup) {
-                $customerGroupResult = $customerGroupMapper->save($customerGroup);
-                $result->addCustomerGroup($customerGroupResult);
-            }
-
-            // Units
-            
-            // TaxRates
-
-            $action->setResult($result->getPublic());
         }
         catch (\Exception $exc) {
             Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');

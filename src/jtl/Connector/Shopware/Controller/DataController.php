@@ -14,7 +14,8 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Model\Statistic;
 use \jtl\Core\Utilities\ClassName;
-use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Model\DataModel;
+use \jtl\Core\Model\DataModel as CoreDataModel;
 use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
 
@@ -66,10 +67,10 @@ abstract class DataController extends CoreController
     /**
      * Insert or update
      *
-     * @param \jtl\Connector\Shopware\Model\DataModel $params
+     * @param \jtl\Core\Model\DataModel $model
      * @return \jtl\Connector\Result\Action
      */
-    public function push($params)
+    public function push(CoreDataModel $model)
     {
         $action = new Action();
         $action->setHandled(true);
@@ -78,9 +79,9 @@ abstract class DataController extends CoreController
             $class = ClassName::getFromNS(get_called_class());
 
             $mapper = Mmc::getMapper($class);
-            $model = $mapper->save($params);
+            $res = $mapper->save($model);
             
-            $action->setResult($model->getPublic());
+            $action->setResult($res->getPublic());
         }
         catch (\Exception $exc) {
             Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
@@ -97,17 +98,17 @@ abstract class DataController extends CoreController
     /**
      * Select
      *
-     * @param mixed $params
+     * @param \jtl\Core\Model\QueryFilter $queryFilter
      * @return \jtl\Connector\Result\Action
      */
-    public function pull($params)
+    public function pull(QueryFilter $queryFilter)
     {        
         $action = new Action();
         $action->setHandled(true);
         
         try {
             $result = array();
-            $filter = $params;
+            $filter = $queryFilter;
 
             $offset = 0;
             $limit = 100;
@@ -168,7 +169,7 @@ abstract class DataController extends CoreController
      * @param multiple: mixed $kvs
      * @param multiple: mixed $members
      */
-    protected function addPos(\jtl\Connector\Model\DataModel &$model, $setter, $className, $data, $isSeveral = false)
+    protected function addPos(DataModel &$model, $setter, $className, $data, $isSeveral = false)
     {
         $callableName = get_class($model) . '::' . $setter;
 

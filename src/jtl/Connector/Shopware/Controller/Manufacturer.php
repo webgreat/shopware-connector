@@ -24,27 +24,19 @@ class Manufacturer extends DataController
     /**
      * Pull
      * 
-     * @params object $params
+     * @param \jtl\Core\Model\QueryFilter $queryFilter
      * @return \jtl\Connector\Result\Action
      */
-    public function pull($params)
+    public function pull(QueryFilter $queryFilter)
     {
         $action = new Action();
         $action->setHandled(true);
 
         try {
             $result = array();
-            $filter = $params;
 
-            $offset = 0;
-            $limit = 100;
-            if ($filter->isOffset()) {
-                $offset = $filter->getOffset();
-            }
-
-            if ($filter->isLimit()) {
-                $limit = $filter->getLimit();
-            }
+            $offset = $queryFilter->isOffset() ? $queryFilter->getOffset() : 0;
+            $limit = $queryFilter->isLimit() ?  $queryFilter->getLimit() : 100;
 
             $mapper = Mmc::getMapper('Manufacturer');
             $manufacturers = $mapper->findAll($offset, $limit);
