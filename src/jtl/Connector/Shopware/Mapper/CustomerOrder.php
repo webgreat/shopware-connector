@@ -18,6 +18,7 @@ use \jtl\Core\Logger\Logger;
 use \jtl\Core\Utilities\Money;
 use \jtl\Connector\Shopware\Utilities\Payment as PaymentUtil;
 use \jtl\Connector\Shopware\Utilities\Status as StatusUtil;
+use \jtl\Connector\Shopware\Utilities\PaymentStatus as PaymentStatusUtil;
 
 class CustomerOrder extends DataMapper
 {
@@ -106,6 +107,12 @@ class CustomerOrder extends DataMapper
             $this->deleteOrderData($customerOrder, $orderSW);
         } else { // UPDATE or INSERT
             $this->prepareOrderAssociatedData($customerOrder, $orderSW);
+            $this->prepareCustomerAssociatedData($customerOrder, $orderSW);
+            $this->prepareCurrencyFactorAssociatedData($customerOrder, $orderSW);
+            $this->preparePaymentAssociatedData($customerOrder, $orderSW);
+            $this->prepareStatusAssociatedData($customerOrder, $orderSW);
+            $this->prepareShippingAssociatedData($customerOrder, $orderSW);
+            $this->prepareBillingAssociatedData($customerOrder, $orderSW);
             $this->prepareItemsAssociatedData($customerOrder, $orderSW);
 
             $violations = $this->Manager()->validate($orderSW);
@@ -176,6 +183,29 @@ class CustomerOrder extends DataMapper
             $orderSW = new \Shopware\Models\Order\Order;
         }
 
+        $orderSW->setNumber($customerOrder->getOrderNumber())
+            ->setInvoiceAmountNet($customerOrder->getTotalSum())
+            ->setOrderTime($customerOrder->getCreated())
+            ->setCustomerComment($customerOrder->getNote())
+            ->setNet(0)
+            ->setTrackingCode($customerOrder->getTracking())
+            ->setLanguageIso($customerOrder->getLocaleName())
+            ->setCurrency($customerOrder->getCurrencyIso())
+            ->setRemoteAddress($customerOrder->getIp())
+            ->setShop(Shopware()->Shop());
+
+            /*
+            ->setHistory()
+            ->setAttribute()
+            ->setPartner()
+            ->setDocuments()
+            ->setLanguageSubShop()
+            ->setPaymentInstances();
+            */
+    }
+
+    protected function prepareCustomerAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    {
         // Customer
         $customerMapper = Mmc::getMapper('Customer');
         $customer = $customerMapper->find($customerOrder->getCustomerId()->getEndpoint());
@@ -183,12 +213,22 @@ class CustomerOrder extends DataMapper
             throw new \Exception(sprintf('Customer with id (%s) not found', $customerOrder->getCustomerId()->getEndpoint()));
         }
 
+        $orderSW->setCustomer($customer);
+    }
+
+    protected function prepareCurrencyFactorAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    {
         // CurrencyFactor
         $currencySW = $this->Manager()->getRepository('Shopware\Models\Shop\Currency')->findOneBy(array('currency' => $customerOrder->getLocaleName()));
         if ($currencySW === null) {
             throw new \Exception(sprintf('Currency with iso (%s) not found', $customerOrder->getLocaleName()));
         }
 
+        $orderSW->setCurrencyFactor($currencySW->getFactor());
+    }
+
+    protected function preparePaymentAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    {
         // Payment
         $paymentName = PaymentUtil::mapCode($customerOrder->getPaymentModuleCode());
         if ($paymentName === null) {
@@ -200,54 +240,121 @@ class CustomerOrder extends DataMapper
             throw new \Exception(sprintf('Payment with name (%s) not found', $paymentName));
         }
 
+        $orderSW->setPayment($paymentSW);
+    }
+
+    protected function prepareStatusAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    {
         // Order Status
-        $status = StatusUtil::mapStatus($customerOrder->getStatus());
+        $status = StatusUtil::map($customerOrder->getStatus());
         if ($status === null) {
-            throw new \Exception(sprintf('OrderStatus with status (%s) not found', $customerOrder->getStatus()));
+            throw new \Exception(sprintf('Order status with status (%s) not found', $customerOrder->getStatus()));
         }
 
         $statusSW = $this->Manager()->getRepository('Shopware\Models\Order\Status')->findOneBy(array('id' => $status));
         if ($statusSW === null) {
-            throw new \Exception(sprintf('OrderStatus with id (%s) not found', $status));
+            throw new \Exception(sprintf('Order status with id (%s) not found', $status));
         }
 
-        $orderSW->setNumber($customerOrder->getOrderNumber())
-            ->setInvoiceAmountNet($customerOrder->getTotalSum())
-            ->setOrderTime($customerOrder->getCreated())
-            ->setCustomerComment($customerOrder->getNote())
-            ->setNet(0)
-            ->setTrackingCode($customerOrder->getTracking())
-            ->setLanguageIso($customerOrder->getLocaleName())
-            ->setCurrency($customerOrder->getCurrencyIso())
-            ->setRemoteAddress($customerOrder->getIp())
-            ->setCustomer($customer)
-            ->setCurrencyFactor($currencySW->getFactor())
-            ->setPayment($paymentSW)
-            ->setDispatch()
-            ->setPaymentStatus()
-            ->setOrderStatus($statusSW)
-            ->setShop()
-            ->setShipping()
-            ->setBilling()
-            ->setHistory()
-            ->setAttribute()
-            ->setPartner()
-            ->setDocuments()
-            ->setEsd()
-            ->setLanguageSubShop()
-            ->setPaymentInstances();
+        // Payment Status
+        $paymentStatus = PaymentStatusUtil::map($customerOrder->getPaymentStatus());
+        if ($paymentStatus === null) {
+            throw new \Exception(sprintf('Payment status with status (%s) not found', $customerOrder->getPaymentStatus()));
+        }
+
+        $paymentStatusSW = $this->Manager()->getRepository('Shopware\Models\Order\Status')->findOneBy(array('id' => $paymentStatus));
+        if ($paymentStatusSW === null) {
+            throw new \Exception(sprintf('Payment status with id (%s) not found', $paymentStatus));
+        }
+
+        $orderSW->setPaymentStatus($paymentStatusSW);
+        $orderSW->setOrderStatus($statusSW);
+    }
+
+    protected function prepareShippingAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    {
+        foreach ($customerOrder->getShippingAddress() as $shippingAddress) {
+            $shippingSW = null;
+            $id = (strlen($shippingAddress->getId()->getEndpoint()) > 0) ? (int)$shippingAddress->getId()->getEndpoint() : null;
+
+            if (strlen($id) > 0) {
+                $shippingSW = $this->Manager()->getRepository('Shopware\Models\Order\Shipping')->find((int)$id);
+            }
+
+            if ($shippingSW === null) {
+                $shippingSW = new \Shopware\Models\Order\Shipping;
+            }
+
+            $countrySW = $this->Manager()->getRepository('Shopware\Models\Country\Country')->findOneBy(array('iso' => $shippingAddress->getCountryIso()));
+            if ($countrySW === null) {
+                throw new \Exception(sprintf('Country with iso (%s) not found', $shippingAddress->getCountryIso()));
+            }
+
+            $shippingSW->setCompany($shippingAddress->getCompany())
+                ->setSalutation($shippingAddress->getSalutation())
+                ->setFirstName($shippingAddress->getFirstName())
+                ->setLastName($shippingAddress->getLastName())
+                ->setStreet($shippingAddress->getStreet())
+                ->setZipCode($shippingAddress->getZipCode())
+                ->setCity($shippingAddress->getCity())
+                ->setOrder($orderSW)
+                ->setCountry($countrySW);
+                //->setAttribute();
+            
+            $orderSW->setOrder($orderSW);
+            $orderSW->setCustomer($orderSW->getCustomer());
+            $orderSW->setShipping($billingSW);
+        }
+    }
+
+    protected function prepareBillingAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    {
+        foreach ($customerOrder->getBillingAddress() as $billingAddress) {
+            $billingSW = null;
+            $id = (strlen($billingAddress->getId()->getEndpoint()) > 0) ? (int)$billingAddress->getId()->getEndpoint() : null;
+
+            if (strlen($id) > 0) {
+                $billingSW = $this->Manager()->getRepository('Shopware\Models\Order\Billing')->find((int)$id);
+            }
+
+            if ($billingSW === null) {
+                $billingSW = new \Shopware\Models\Order\Billing;
+            }
+
+            $countrySW = $this->Manager()->getRepository('Shopware\Models\Country\Country')->findOneBy(array('iso' => $billingAddress->getCountryIso()));
+            if ($countrySW === null) {
+                throw new \Exception(sprintf('Country with iso (%s) not found', $billingAddress->getCountryIso()));
+            }
+
+            $billingSW->setCompany($billingAddress->getCompany())
+                ->setSalutation($billingAddress->getSalutation())
+                ->setFirstName($billingAddress->getFirstName())
+                ->setLastName($billingAddress->getLastName())
+                ->setStreet($billingAddress->getStreet())
+                ->setZipCode($billingAddress->getZipCode())
+                ->setCity($billingAddress->getCity())
+                ->setCountry($countrySW);
+                //->setAttribute();
+
+            $orderSW->setCustomer($orderSW->getCustomer());
+            $orderSW->setOrder($orderSW);
+            $orderSW->setBilling($billingSW);
+        }
     }
 
     protected function prepareItemsAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
     {
         $taxFree = 0;
-        foreach ($customerOrder->getItems() $as $item) {
+        $invoiceShipping = 0.0;
+        $invoiceShippingNet = 0.0;
+        foreach ($customerOrder->getItems() as $item) {
             switch ($item->getType()) {
                 case CustomerOrderItem::TYPE_PRODUCT:
+                    $this->prepareItemAssociatedData($item, $orderSW);
                     break;
                 case CustomerOrderItem::TYPE_SHIPPING:
-                    $orderSW->setInvoiceShipping(Money::AsGross($item->getPrice(), $item->getVat()))
-                        ->setInvoiceShippingNet($item->getPrice());
+                    $invoiceShipping += Money::AsGross($item->getPrice(), $item->getVat());
+                    $invoiceShippingNet += $item->getPrice();
                     break;
             }
 
@@ -255,80 +362,49 @@ class CustomerOrder extends DataMapper
                 $taxFree = 1;
             }
         }
-
-        $orderSW->setTaxFree($taxFree);
+        
+        $orderSW->setInvoiceShipping($invoiceShipping)
+            ->setInvoiceShippingNet($invoiceShippingNet)
+            ->setTaxFree($taxFree);
     }
 
-    /*
-    public function prepareData(CustomerOrderContainer $container)
+    protected function prepareItemAssociatedData(DataModel &$item, \Shopware\Models\Order\Order &$orderSW)
     {
-        $customerOrder = $container->getMainModel();
+        $detailSW = null;
+        $id = (strlen($item->getId()->getEndpoint()) > 0) ? (int)$item->getId()->getEndpoint() : null;
 
-        //$customerOrderSW = $this->Manager()->getRepository('Shopware\Models\Order\Order')->find($customerOrder->getId());
-
-        // CustomerOrder
-        $data = DataConverter::toArray(DataModel::map(false, null, $customerOrder));
-
-        if (isset($data['customer']['id']) && intval($data['customer']['id']) > 0) {
-            $data['customerId'] = $data['customer']['id'];
+        if (strlen($id) > 0) {
+            $detailSW = $this->Manager()->getRepository('Shopware\Models\Order\Detail')->find((int)$id);
         }
 
-        // CustomerOrderAttr
-        foreach ($container->getCustomerOrderAttrs() as $i => $customerOrderAttr) {
-            if (!isset($data['attribute'])) {
-                $data['attribute'] = array();
-            }
-
-            $data['attribute']['id'] = $customerOrderAttr->getId();
-            $data['attribute']['orderId'] = $customerOrder->getId();
-            $data['attribute']['attribute' . ($i + 1)] = $customerOrderAttr->getValue();
+        if ($detailSW === null) {
+            $detailSW = new \Shopware\Models\Order\Detail;
         }
 
-        // CustomerOrderItems
-        foreach ($container->getCustomerOrderItems() as $customerOrderItem) {
-            if (!isset($data['details'])) {
-                $data['details'] = array();
-            }
-
-            $detail = new DetailModel();
-            $detail->fromArray(DataConverter::toArray(DataModel::map(false, null, $customerOrderItem)));
-
-            $data['details'][] = $detail;
+        $taxRateMapper = Mmc::getMapper('TaxRate');
+        $taxRateSW = $taxRateMapper->findOneBy(array('tax' => $item->getVat()));
+        if ($taxRateSW === null) {
+            throw new \Exception(sprintf('Tax with rate (%s) not found', $item->getVat()));
         }
 
-        // CustomerOrderBillingAddress
-        if (isset($data['billing']['id']) && intval($data['billing']['id']) > 0) {
-            $billing = Shopware()->Models()->getRepository('Shopware\Models\Order\Billing')->findOneBy(array(
-                'id' => $data['billing']['id']
-            ));
+        $detailSW->setNumber($orderSW->getNumber())
+            ->setArticleId($item->getProductId()->getEndpoint())
+            ->setPrice($item->getPrice())
+            ->setQuantity($item->getQuantity())
+            ->setArticleName($item->getName())
+            ->setShipped(0)
+            ->setShippedGroup(0)
+            //->setReleaseDate()
+            ->setMode(0)
+            ->setEsdArticle(0);
+            //->setConfig();
 
-            if (empty($billing)) {
-                throw new ApiException\NotFoundException(sprintf("Billing by id %s not found", $data['billing']['id']));
-            }
-
-            $data['billing'] = $billing->fromArray($data['billing']);
-        }
-
-        // CustomerOrderShippingAddress
-        if (isset($data['shipping']['id']) && intval($data['shipping']['id']) > 0) {
-            $shipping = Shopware()->Models()->getRepository('Shopware\Models\Order\Shipping')->findOneBy(array(
-                'id' => $data['shipping']['id']
-            ));
-
-            if (empty($shipping)) {
-                throw new ApiException\NotFoundException(sprintf("Shipping by id %s not found", $data['shipping']['id']));
-            }
-
-            $data['shipping'] = $shipping->fromArray($data['shipping']);
-        }
-
-        // getCustomerOrderItems
-
-        // customer_order_item_variation
-
-        // customer_order_payment_info
-
-        return $data;
+        $detailSW->setTaxRate($item->getVat());
+        $detailSW->setArticleNumber($item->getSku());
+        //$detailSW->setAttribute();
+        //$detailSW->setEsd();
+        $detailSW->setTax($taxRateSW);
+        $detailSW->setOrder($orderSW);
+        $detailSW->setStatus(0);
     }
-    */
 }

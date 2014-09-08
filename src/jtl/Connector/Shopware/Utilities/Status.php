@@ -12,23 +12,17 @@ use \jtl\Connector\Model\CustomerOrder;
 final class Status
 {
     private static $_mappings = array(
-        Status::GROUP_STATE => array(
-            CustomerOrder::STATUS_NEW => 0,
-            CustomerOrder::STATUS_PROCESSING => 1,
-            CustomerOrder::STATUS_PAYMENT_COMPLETED => 11,
-            CustomerOrder::STATUS_COMPLETED => 2,
-            CustomerOrder::STATUS_PARTIALLY_SHIPPED => 6,
-            CustomerOrder::STATUS_CANCELLED => 4
-        ),
-        Status::GROUP_PAYMENT => array(
-            
-        )
+        CustomerOrder::STATUS_NEW = 0;
+        CustomerOrder::STATUS_PROCESSING = 1;
+        CustomerOrder::STATUS_COMPLETED = 2;
+        CustomerOrder::STATUS_PARTIALLY_SHIPPED = 6;
+        CustomerOrder::STATUS_CANCELLED = 4;
     );
 
-    public static function mapStatus($orderStatus, $group = Status::GROUP_STATE)
+    public static function map($orderStatus)
     {
-        if (isset($self::$_mappings[$group][$orderStatus])) {
-            return $self::$_mappings[$group][$orderStatus];
+        if (isset($self::$_mappings[$orderStatus])) {
+            return $self::$_mappings[$orderStatus];
         }
 
         return null;

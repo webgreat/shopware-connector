@@ -173,21 +173,21 @@ abstract class DataController extends CoreController
     {
         $callableName = get_class($model) . '::' . $setter;
 
-        if (is_callable(array($model, $setter), false, $callableName) && $data !== null) {
-            if ($isSeveral) {
-                foreach ($data as $swArr) {
-                    $subModel = Mmc::getModel($className);
-                    $subModel->map(true, DataConverter::toObject($swArr, true));
-                    $model->{$setter}($subModel);
-                }
-            }
-            else {
+        if (!is_callable(array($model, $setter), false, $callableName)) {
+            throw new \InvalidArgumentException(sprintf('Method %s in class %s not found', $setter, get_class($model)));
+        }
+            
+        if ($isSeveral) {
+            foreach ($data as $swArr) {
                 $subModel = Mmc::getModel($className);
-                $subModel->map(true, DataConverter::toObject($data, true));
+                $subModel->map(true, DataConverter::toObject($swArr, true));
                 $model->{$setter}($subModel);
             }
-        } else {
-            throw new \InvalidArgumentException(sprintf('Method %s in class %s not found', $setter, get_class($model)));
+        }
+        else {
+            $subModel = Mmc::getModel($className);
+            $subModel->map(true, DataConverter::toObject($data, true));
+            $model->{$setter}($subModel);
         }
     }
 }

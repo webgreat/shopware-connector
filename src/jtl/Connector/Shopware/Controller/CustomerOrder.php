@@ -40,7 +40,7 @@ class CustomerOrder extends DataController
 
             $from = null;
             $until = null;
-            if ($queryFilter->isFrom() && $queryFilter->isUntil()) {
+            if ($queryFilter->isFrom() && $queryFilter->isUntil() && (!($queryFilter->getFrom() == 0 && $queryFilter->getUntil() == 0))) {
                 $from = $queryFilter->getFrom();
                 $until = $queryFilter->getUntil();
             }
@@ -54,7 +54,7 @@ class CustomerOrder extends DataController
                     $order = Mmc::getModel('CustomerOrder');
                     $order->map(true, DataConverter::toObject($orderSW, true));
 
-                    $this->addPos($order, 'addPosition', 'CustomerOrderItem', $orderSW['details'], true);
+                    $this->addPos($order, 'addItem', 'CustomerOrderItem', $orderSW['details'], true);
                     $this->addPos($order, 'addBillingAddress', 'CustomerOrderBillingAddress', $orderSW['billing']);
                     $this->addPos($order, 'addShippingAddress', 'CustomerOrderShippingAddress', $orderSW['shipping']);
 
