@@ -13,7 +13,12 @@ use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Logger\Logger;
+use \jtl\Connector\Model\Identity;
 use \jtl\Connector\Formatter\ExceptionFormatter;
+use \jtl\Connector\Shopware\Utilities\Payment as PaymentUtil;
+use \jtl\Connector\Shopware\Utilities\Status as StatusUtil;
+use \jtl\Connector\Shopware\Utilities\PaymentStatus as PaymentStatusUtil;
+use \jtl\Connector\Shopware\Utilities\Locale as LocaleUtil;
 
 /**
  * CustomerOrder Controller
@@ -54,9 +59,47 @@ class CustomerOrder extends DataController
                     $order = Mmc::getModel('CustomerOrder');
                     $order->map(true, DataConverter::toObject($orderSW, true));
 
+                    // PaymentModuleCode
+                    $paymentModuleCode = PaymentUtil::map(null, $orderSW['payment']['name']);
+                    if ($paymentModuleCode !== null) {
+                        $order->setPaymentModuleCode($paymentModuleCode);
+                    }
+
+                    // CustomerOrderStatus
+                    $customerOrderStatus = StatusUtil::map(null, $orderSW['status']);
+                    if ($customerOrderStatus !== null) {
+                        $order->setStatus($customerOrderStatus);
+                    }
+
+                    // PaymentStatus
+                    $paymentStatus = PaymentStatusUtil::map(null, $orderSW['cleared']);
+                    if ($paymentStatus !== null) {
+                        $order->setPaymentStatus($paymentStatus);
+                    }
+
+                    // Locale
+                    $localeSW = LocaleUtil::get((int)$orderSW['languageIso']);
+                    if ($localeSW !== null) {
+                        $order->setLocaleName($localeSW->getLocale());
+                    }
+
                     $this->addPos($order, 'addItem', 'CustomerOrderItem', $orderSW['details'], true);
                     $this->addPos($order, 'addBillingAddress', 'CustomerOrderBillingAddress', $orderSW['billing']);
                     $this->addPos($order, 'addShippingAddress', 'CustomerOrderShippingAddress', $orderSW['shipping']);
+
+                    // Adding shipping item
+                    if ($orderSW['invoiceShippingNet'] > 0) {
+                        $item = Mmc::getModel('CustomerOrderItem');
+                        $item->setType(\jtl\Connector\Model\CustomerOrderItem::TYPE_SHIPPING)
+                            ->setId(new Identity(sprintf('%s_ship', $orderSW['id'])))
+                            ->setCustomerOrderId($order->getId())
+                            ->setName('Shipping')
+                            ->setPrice($orderSW['invoiceShippingNet'])
+                            ->setQuantity(1)
+                            ->setVat(self::calcShippingVat($order));
+
+                        $order->addItem($item);
+                    }
 
                     // Attributes
                     /*
@@ -94,5 +137,10 @@ class CustomerOrder extends DataController
         }
 
         return $action;
+    }
+
+    public static function calcShippingVat(\jtl\Connector\Shopware\CustomerOrder &$order)
+    {
+        return max(array_map(function($item) { return $item->getVat(); }, $order->getItems()));
     }
 }

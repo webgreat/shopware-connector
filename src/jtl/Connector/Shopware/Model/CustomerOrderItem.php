@@ -15,6 +15,8 @@ use \jtl\Core\Utilities\Money;
  */
 class CustomerOrderItem extends CustomerOrderItemModel
 {
+    protected $type = CustomerOrderItemModel::TYPE_PRODUCT;
+
     protected $fields = array(
         'id' => 'id',
         'productId' => 'articleId',

@@ -17,10 +17,14 @@ final class Payment
         PaymentTypes::TYPE_PREPAYMENT => 'prepayment',
     );
 
-    public static function mapCode($paymentModuleCode)
+    public static function map($paymentModuleCode = null, $swCode = null)
     {
-        if (isset($self::$_mappings[$paymentModuleCode])) {
-            return $self::$_mappings[$paymentModuleCode];
+        if ($paymentModuleCode !== null && isset(self::$_mappings[$paymentModuleCode])) {
+            return self::$_mappings[$paymentModuleCode];
+        } elseif ($swCode !== null) {
+            $connectorType = array_search($swCode, self::$_mappings);
+            
+            return $connectorType ? $connectorType : null;
         }
 
         return null;

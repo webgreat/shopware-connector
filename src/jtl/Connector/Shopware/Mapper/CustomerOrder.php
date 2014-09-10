@@ -9,16 +9,19 @@ namespace jtl\Connector\Shopware\Mapper;
 use \jtl\Connector\ModelContainer\CustomerOrderContainer;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
-use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Model\DataModel;
 use \jtl\Connector\Model\CustomerOrder as CustomerOrderModel;
 use \jtl\Connector\Model\CustomerOrderItem;
 use \Shopware\Models\Order\Order as OrderModel;
 use \Shopware\Models\Order\Detail as DetailModel;
 use \jtl\Core\Logger\Logger;
 use \jtl\Core\Utilities\Money;
+use \jtl\Connector\Model\Identity;
+use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Connector\Shopware\Utilities\Payment as PaymentUtil;
 use \jtl\Connector\Shopware\Utilities\Status as StatusUtil;
 use \jtl\Connector\Shopware\Utilities\PaymentStatus as PaymentStatusUtil;
+use \jtl\Connector\Shopware\Utilities\Locale as LocaleUtil;
 
 class CustomerOrder extends DataMapper
 {
@@ -71,7 +74,8 @@ class CustomerOrder extends DataMapper
                 'shipping',
                 'countryS',
                 'countryB',
-                'history'
+                'history',
+                'payment'
             ))
             ->from('Shopware\Models\Order\Order', 'orders')
             ->leftJoin('orders.customer', 'customer')
@@ -83,6 +87,7 @@ class CustomerOrder extends DataMapper
             ->leftJoin('billing.country', 'countryS')
             ->leftJoin('shipping.country', 'countryB')
             ->leftJoin('orders.history', 'history')
+            ->leftJoin('orders.payment', 'payment')
             ->where('orders.id BETWEEN :first AND :last')
             ->setParameter('first', $es[0]['id'])
             ->setParameter('last', $es[$lastIndex]['id'])
@@ -110,6 +115,8 @@ class CustomerOrder extends DataMapper
             $this->prepareCustomerAssociatedData($customerOrder, $orderSW);
             $this->prepareCurrencyFactorAssociatedData($customerOrder, $orderSW);
             $this->preparePaymentAssociatedData($customerOrder, $orderSW);
+            $this->prepareDispatchAssociatedData($customerOrder, $orderSW);
+            $this->prepareLocaleAssociatedData($customerOrder, $orderSW);
             $this->prepareStatusAssociatedData($customerOrder, $orderSW);
             $this->prepareShippingAssociatedData($customerOrder, $orderSW);
             $this->prepareBillingAssociatedData($customerOrder, $orderSW);
@@ -130,7 +137,7 @@ class CustomerOrder extends DataMapper
         // CustomerOrderBillingAddress
         // CustomerOrderAttr
         
-        $result->setId(new Identity($customerOrderSW->getId(), $customerOrder->getId()->getHost()));
+        $result->setId(new Identity($orderSW->getId(), $customerOrder->getId()->getHost()));
 
         return $result;
     }
@@ -184,24 +191,40 @@ class CustomerOrder extends DataMapper
         }
 
         $orderSW->setNumber($customerOrder->getOrderNumber())
+            ->setInvoiceAmount(Money::AsGross($customerOrder->getTotalSum(), \jtl\Connector\Shopware\Controller\CustomerOrder::calcShippingVat($customerOrder)))
             ->setInvoiceAmountNet($customerOrder->getTotalSum())
             ->setOrderTime($customerOrder->getCreated())
             ->setCustomerComment($customerOrder->getNote())
             ->setNet(0)
             ->setTrackingCode($customerOrder->getTracking())
-            ->setLanguageIso($customerOrder->getLocaleName())
             ->setCurrency($customerOrder->getCurrencyIso())
             ->setRemoteAddress($customerOrder->getIp())
-            ->setShop(Shopware()->Shop());
+            ->setTemporaryId('')
+            ->setTransactionId('')
+            ->setComment('')
+            ->setInternalComment('')
+            ->setReferer('');
 
-            /*
-            ->setHistory()
-            ->setAttribute()
-            ->setPartner()
-            ->setDocuments()
-            ->setLanguageSubShop()
-            ->setPaymentInstances();
-            */
+        $ref = new \ReflectionClass($orderSW);
+
+        // shopId
+        $prop = $ref->getProperty('shopId');
+        $prop->setAccessible(true);
+        $prop->setValue($orderSW, Shopware()->Shop()->getId());
+
+        // partnerId
+        $prop = $ref->getProperty('partnerId');
+        $prop->setAccessible(true);
+        $prop->setValue($orderSW, '');
+
+        /*
+        ->setHistory()
+        ->setAttribute()
+        ->setPartner()
+        ->setDocuments()
+        ->setLanguageSubShop()
+        ->setPaymentInstances();
+        */
     }
 
     protected function prepareCustomerAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
@@ -219,9 +242,9 @@ class CustomerOrder extends DataMapper
     protected function prepareCurrencyFactorAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
     {
         // CurrencyFactor
-        $currencySW = $this->Manager()->getRepository('Shopware\Models\Shop\Currency')->findOneBy(array('currency' => $customerOrder->getLocaleName()));
+        $currencySW = $this->Manager()->getRepository('Shopware\Models\Shop\Currency')->findOneBy(array('currency' => $customerOrder->getCurrencyIso()));
         if ($currencySW === null) {
-            throw new \Exception(sprintf('Currency with iso (%s) not found', $customerOrder->getLocaleName()));
+            throw new \Exception(sprintf('Currency with iso (%s) not found', $customerOrder->getCurrencyIso()));
         }
 
         $orderSW->setCurrencyFactor($currencySW->getFactor());
@@ -230,7 +253,7 @@ class CustomerOrder extends DataMapper
     protected function preparePaymentAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
     {
         // Payment
-        $paymentName = PaymentUtil::mapCode($customerOrder->getPaymentModuleCode());
+        $paymentName = PaymentUtil::map($customerOrder->getPaymentModuleCode());
         if ($paymentName === null) {
             throw new \Exception(sprintf('Payment with code (%s) not found', $customerOrder->getPaymentModuleCode()));
         }
@@ -241,6 +264,27 @@ class CustomerOrder extends DataMapper
         }
 
         $orderSW->setPayment($paymentSW);
+    }
+
+    protected function prepareDispatchAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    {
+        $dispatchSW = $this->Manager()->getRepository('Shopware\Models\Dispatch\Dispatch')->find($customerOrder->getShippingMethodCode());
+        if ($dispatchSW === null) {
+            throw new \Exception(sprintf('Dispatch with code (%s) not found', $customerOrder->getShippingMethodCode()));
+        }
+
+        $orderSW->setDispatch($dispatchSW);
+    }
+
+    protected function prepareLocaleAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    {
+        // Locale
+        $localeSW = LocaleUtil::getByKey($customerOrder->getLocaleName());
+        if ($localeSW === null) {
+            throw new \Exception(sprintf('Locale with iso (%s) not found', $customerOrder->getLocaleName()));
+        }
+
+        $orderSW->setLanguageIso($localeSW->getId());
     }
 
     protected function prepareStatusAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
@@ -296,13 +340,13 @@ class CustomerOrder extends DataMapper
                 ->setLastName($shippingAddress->getLastName())
                 ->setStreet($shippingAddress->getStreet())
                 ->setZipCode($shippingAddress->getZipCode())
-                ->setCity($shippingAddress->getCity())
-                ->setOrder($orderSW)
-                ->setCountry($countrySW);
+                ->setCity($shippingAddress->getCity());
                 //->setAttribute();
             
-            $orderSW->setOrder($orderSW);
-            $orderSW->setCustomer($orderSW->getCustomer());
+            $shippingSW->setCountry($countrySW);
+            $shippingSW->setOrder($orderSW);
+            $shippingSW->setCustomer($orderSW->getCustomer());
+
             $orderSW->setShipping($billingSW);
         }
     }
@@ -336,39 +380,46 @@ class CustomerOrder extends DataMapper
                 ->setCountry($countrySW);
                 //->setAttribute();
 
-            $orderSW->setCustomer($orderSW->getCustomer());
-            $orderSW->setOrder($orderSW);
+            $billingSW->setCustomer($orderSW->getCustomer());
+            $billingSW->setOrder($orderSW);
+
             $orderSW->setBilling($billingSW);
         }
     }
 
     protected function prepareItemsAssociatedData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
     {
-        $taxFree = 0;
+        foreach ($orderSW->getDetails() as $detailSW) {
+            $this->Manager()->remove($detailSW);
+        }
+
+        $taxFree = 1;
         $invoiceShipping = 0.0;
         $invoiceShippingNet = 0.0;
+        $detailsSW = new \Doctrine\Common\Collections\ArrayCollection();
         foreach ($customerOrder->getItems() as $item) {
             switch ($item->getType()) {
                 case CustomerOrderItem::TYPE_PRODUCT:
-                    $this->prepareItemAssociatedData($item, $orderSW);
+                    $this->prepareItemAssociatedData($item, $orderSW, $detailsSW);
                     break;
                 case CustomerOrderItem::TYPE_SHIPPING:
-                    $invoiceShipping += Money::AsGross($item->getPrice(), $item->getVat());
+                    $invoiceShipping += ($item->getVat() > 0) ? Money::AsGross($item->getPrice(), $item->getVat()) : $item->getPrice();
                     $invoiceShippingNet += $item->getPrice();
                     break;
             }
 
             if ($item->getVat() > 0) {
-                $taxFree = 1;
+                $taxFree = 0;
             }
         }
         
         $orderSW->setInvoiceShipping($invoiceShipping)
             ->setInvoiceShippingNet($invoiceShippingNet)
-            ->setTaxFree($taxFree);
+            ->setTaxFree($taxFree)
+            ->setDetails($detailsSW);
     }
 
-    protected function prepareItemAssociatedData(DataModel &$item, \Shopware\Models\Order\Order &$orderSW)
+    protected function prepareItemAssociatedData(DataModel &$item, \Shopware\Models\Order\Order &$orderSW, \Doctrine\Common\Collections\ArrayCollection &$detailsSW)
     {
         $detailSW = null;
         $id = (strlen($item->getId()->getEndpoint()) > 0) ? (int)$item->getId()->getEndpoint() : null;
@@ -405,6 +456,17 @@ class CustomerOrder extends DataMapper
         //$detailSW->setEsd();
         $detailSW->setTax($taxRateSW);
         $detailSW->setOrder($orderSW);
-        $detailSW->setStatus(0);
+        //$detailSW->setStatus(0);
+        
+        $ref = new \ReflectionClass($detailSW);
+
+        // shopId
+        $prop = $ref->getProperty('statusId');
+        $prop->setAccessible(true);
+        $prop->setValue($detailSW, $orderSW->getOrderStatus()->getId());
+
+        $this->Manager()->persist($detailSW);
+
+        $detailsSW->add($detailSW);
     }
 }

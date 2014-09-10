@@ -6,23 +6,26 @@
 
 namespace jtl\Connector\Shopware\Utilities;
 
-use \Shopware\Models\Order\Status;
 use \jtl\Connector\Model\CustomerOrder;
 
 final class Status
 {
     private static $_mappings = array(
-        CustomerOrder::STATUS_NEW = 0;
-        CustomerOrder::STATUS_PROCESSING = 1;
-        CustomerOrder::STATUS_COMPLETED = 2;
-        CustomerOrder::STATUS_PARTIALLY_SHIPPED = 6;
-        CustomerOrder::STATUS_CANCELLED = 4;
+        CustomerOrder::STATUS_NEW => 0,
+        CustomerOrder::STATUS_PROCESSING => 1,
+        CustomerOrder::STATUS_COMPLETED => 2,
+        CustomerOrder::STATUS_PARTIALLY_SHIPPED => 6,
+        CustomerOrder::STATUS_CANCELLED => 4
     );
 
-    public static function map($orderStatus)
+    public static function map($orderStatus = null, $swStatus = null)
     {
-        if (isset($self::$_mappings[$orderStatus])) {
-            return $self::$_mappings[$orderStatus];
+        if ($orderStatus !== null && isset(self::$_mappings[$orderStatus])) {
+            return self::$_mappings[$orderStatus];
+        } elseif ($swStatus !== null) {
+            $connectorStatus = array_search($swStatus, self::$_mappings);
+            
+            return $connectorStatus ? $connectorStatus : null;
         }
 
         return null;

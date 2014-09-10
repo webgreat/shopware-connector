@@ -200,16 +200,6 @@ class Image extends DataController
     }
 
     /**
-     * Push
-     *
-     * @params mixed $params
-     * @return \jtl\Connector\Result\Action
-     */
-    public function push($params) {
-        die(var_dump($params));
-    }
-
-    /**
      * Transaction Commit
      *
      * @param mixed $params
