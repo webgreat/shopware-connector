@@ -11,8 +11,9 @@ use \jtl\Connector\Model\Category as CategoryModel;
 use \jtl\Connector\Model\Identity;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
-use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Model\DataModel;
 use \jtl\Core\Logger\Logger;
+use \Shopware\Models\Category\Category as CategorySW;
 
 class Category extends DataMapper
 {
@@ -49,58 +50,14 @@ class Category extends DataMapper
     public function save(DataModel $category)
     {
         $categorySW = null;
-
-        $id = (strlen($category->getId()->getEndpoint()) > 0) ? (int)$category->getId()->getEndpoint() : null;
-        $parentId = (strlen($category->getParentCategoryId()->getEndpoint()) > 0) ? $category->getParentCategoryId()->getEndpoint() : null;
-
-        if ($id > 0) {
-            $categorySW = $this->find($id);
-        }
+        $result = new CategoryModel;
 
         if ($category->getAction() == DataModel::ACTION_DELETE) { // DELETE
-            if ($categorySW !== null) {
-                $this->Manager()->remove($categorySW);
-                $this->flush();
-            }
+            $this->deleteCategoryData($category);
         } else { // UPDATE or INSERT
-            if ($categorySW === null) {
-                $categorySW = new \Shopware\Models\Category\Category;
-            }
-
-            if ($parentId !== null) {
-                $parentSW = $this->find($parentId);
-
-                if ($parentSW) {
-                    $categorySW->setParent($parentSW);
-                }
-            }
-
-            // I18n
-            foreach ($category->getI18ns() as $i18n) {
-                if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-                    $categorySW->setName($i18n->getName());
-                    $categorySW->setMetaDescription($i18n->getMetaDescription());
-                    $categorySW->setMetaKeywords($i18n->getMetaKeywords());
-                    $categorySW->setCmsHeadline('');
-                    $categorySW->setCmsText('');
-                }
-            }
-
-            // Invisibility
-            $customerGroupsSW = new \Doctrine\Common\Collections\ArrayCollection;
-            $customerGroupMapper = Mmc::getMapper('CustomerGroup');
-            $categorySW->setCustomerGroups($customerGroupsSW);
-            foreach ($category->getInvisibilities() as $invisibility) {
-                $customerGroupSW = $customerGroupMapper->find($invisibility->getCustomerGroupId()->getEndpoint());
-                if ($customerGroupSW) {
-                    $customerGroupsSW->add($customerGroupSW);
-                }
-            }
-
-            $categorySW->setCustomerGroups($customerGroupsSW);
-
-            $categorySW->setPosition(1);
-            $categorySW->setNoViewSelect(false);
+            $this->prepareCategoryAssociatedData($category, $categorySW);
+            $this->prepareI18nAssociatedData($category, $categorySW);
+            $this->prepareInvisibilityAssociatedData($category, $categorySW);
 
             $violations = $this->Manager()->validate($categorySW);
             if ($violations->count() > 0) {
@@ -113,7 +70,6 @@ class Category extends DataMapper
         }
 
         // Result
-        $result = new CategoryModel;
         $result->setId(new Identity($categorySW->getId(), $category->getId()->getHost()));
         
         $categoryI18n = Mmc::getModel('CategoryI18n');
@@ -123,5 +79,73 @@ class Category extends DataMapper
         $result->addI18n($categoryI18n);
 
         return $result;
+    }
+
+    protected function deleteCategoryData(DataModel &$category)
+    {
+        $categoryId = (strlen($category->getId()->getEndpoint()) > 0) ? (int)$category->getId()->getEndpoint() : null;
+
+        if ($categoryId !== null && $categoryId > 0) {
+            $categorySW = $this->find($categoryId);
+            if ($categorySW !== null) {
+                $this->Manager()->remove($categorySW);
+                $this->Manager()->flush();
+            }
+        }
+    }
+
+    protected function prepareCategoryAssociatedData(DataModel &$category, CategorySW &$categorySW)
+    {
+        $categoryId = (strlen($category->getId()->getEndpoint()) > 0) ? (int)$category->getId()->getEndpoint() : null;
+        $parentId = (strlen($category->getParentCategoryId()->getEndpoint()) > 0) ? $category->getParentCategoryId()->getEndpoint() : null;
+
+        if ($categoryId !== null && $categoryId > 0) {
+            $categorySW = $this->find($categoryId);
+        }
+
+        if ($categorySW === null) {
+            $categorySW = new CategorySW;
+        }
+
+        if ($parentId !== null) {
+            $parentSW = $this->find($parentId);
+
+            if ($parentSW) {
+                $categorySW->setParent($parentSW);
+            }
+        }
+
+        $categorySW->setCustomerGroups($customerGroupsSW);
+
+        $categorySW->setPosition(1);
+        $categorySW->setNoViewSelect(false);
+    }
+
+    protected function prepareI18nAssociatedData(DataModel &$category, CategorySW &$categorySW)
+    {
+        // I18n
+        foreach ($category->getI18ns() as $i18n) {
+            if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                $categorySW->setName($i18n->getName());
+                $categorySW->setMetaDescription($i18n->getMetaDescription());
+                $categorySW->setMetaKeywords($i18n->getMetaKeywords());
+                $categorySW->setCmsHeadline('');
+                $categorySW->setCmsText('');
+            }
+        }
+    }
+
+    protected function prepareInvisibilityAssociatedData(DataModel &$category, CategorySW &$categorySW)
+    {
+        // Invisibility
+        $customerGroupsSW = new \Doctrine\Common\Collections\ArrayCollection;
+        $customerGroupMapper = Mmc::getMapper('CustomerGroup');
+        $categorySW->setCustomerGroups($customerGroupsSW);
+        foreach ($category->getInvisibilities() as $invisibility) {
+            $customerGroupSW = $customerGroupMapper->find($invisibility->getCustomerGroupId()->getEndpoint());
+            if ($customerGroupSW) {
+                $customerGroupsSW->add($customerGroupSW);
+            }
+        }
     }
 }

@@ -11,6 +11,7 @@ use \jtl\Connector\Transaction\Handler as TransactionHandler;
 use \jtl\Core\Exception\TransactionException;
 use \jtl\Connector\Result\Action;
 use \jtl\Core\Rpc\Error;
+use \jtl\Core\Logger\Logger;
 use \jtl\Core\Exception\DatabaseException;
 use \jtl\Connector\Drawing\ImageRelationType;
 use \jtl\Core\Model\QueryFilter;

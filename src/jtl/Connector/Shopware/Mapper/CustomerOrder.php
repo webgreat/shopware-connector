@@ -109,7 +109,7 @@ class CustomerOrder extends DataMapper
         $result = new CustomerOrderModel;
 
         if ($customerOrder->getAction() == DataModel::ACTION_DELETE) { // DELETE
-            $this->deleteOrderData($customerOrder, $orderSW);
+            $this->deleteOrderData($customerOrder);
         } else { // UPDATE or INSERT
             $this->prepareOrderAssociatedData($customerOrder, $orderSW);
             $this->prepareCustomerAssociatedData($customerOrder, $orderSW);
@@ -142,7 +142,7 @@ class CustomerOrder extends DataMapper
         return $result;
     }
 
-    protected function deleteOrderData(DataModel &$customerOrder, \Shopware\Models\Order\Order &$orderSW)
+    protected function deleteOrderData(DataModel &$customerOrder)
     {
         $orderId = (strlen($customerOrder->getId()->getEndpoint()) > 0) ? (int)$customerOrder->getId()->getEndpoint() : null;
 
@@ -447,7 +447,8 @@ class CustomerOrder extends DataMapper
             ->setShippedGroup(0)
             //->setReleaseDate()
             ->setMode(0)
-            ->setEsdArticle(0);
+            ->setEsdArticle(0)
+            ->setReleaseDate(new \DateTime('0000-00-00'));
             //->setConfig();
 
         $detailSW->setTaxRate($item->getVat());
@@ -461,9 +462,22 @@ class CustomerOrder extends DataMapper
         $ref = new \ReflectionClass($detailSW);
 
         // shopId
+        $itemStatus = 0;
+        switch ($orderSW->getOrderStatus()->getId()) {
+            case CustomerOrderModel::STATUS_PROCESSING:
+                $itemStatus = 1;
+                break;
+            case CustomerOrderModel::STATUS_CANCELLED:
+                $itemStatus = 2;
+                break;
+            case CustomerOrderModel::STATUS_COMPLETED:
+                $itemStatus = 3;
+                break;
+        }
+
         $prop = $ref->getProperty('statusId');
         $prop->setAccessible(true);
-        $prop->setValue($detailSW, $orderSW->getOrderStatus()->getId());
+        $prop->setValue($detailSW, $itemStatus);
 
         $this->Manager()->persist($detailSW);
 

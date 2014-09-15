@@ -8,8 +8,9 @@ namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Core\Logger\Logger;
 use \Shopware\Components\Api\Exception as ApiException;
-use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Model\DataModel;
 use \jtl\Connector\Model\TaxRate as TaxRateModel;
+use \Shopware\Models\Tax\Tax as TaxRateSW;
 
 class TaxRate extends DataMapper
 {
@@ -46,25 +47,12 @@ class TaxRate extends DataMapper
     public function save(DataModel $taxRate)
     {
         $taxRateSW = null;
-
-        $id = (strlen($taxRate->getId()->getEndpoint()) > 0) ? (int)$taxRate->getId()->getEndpoint() : null;
-
-        if ($id > 0) {
-            $taxRateSW = $this->find($id);
-        }
+        $result = new TaxRateModel;
 
         if ($taxRate->getAction() == DataModel::ACTION_DELETE) {   // Delete
-            if ($taxRateSW !== null) {
-                $this->Manager()->remove($taxRateSW);
-                $this->flush();
-            }
+            $this->deleteTaxRateData($taxRate);
         } else {    // Update or Insert
-            if ($taxRateSW === null) {
-                $taxRateSW = new \Shopware\Models\Tax\Tax;
-            }
-
-            $taxRateSW->setTax($taxRate->getRate())
-                ->setName($taxRate->getRate());
+            $this->prepareTaxRateAssociatedData($taxRate, $taxRateSW);
 
             $violations = $this->Manager()->validate($taxRateSW);
             if ($violations->count() > 0) {
@@ -76,9 +64,37 @@ class TaxRate extends DataMapper
         }
 
         // Result
-        $result = new TaxRateModel;
         $result->setId(new Identity($taxRateSW->getId(), $taxRate->getId()->getHost()));
 
         return $result;
+    }
+
+    protected function deleteTaxRateData(DataModel &$taxRate)
+    {
+        $taxRateId = (strlen($taxRate->getId()->getEndpoint()) > 0) ? (int)$taxRate->getId()->getEndpoint() : null;
+
+        if ($taxRateId !== null && $taxRateId > 0) {
+            $taxRateSW = $this->find($taxRateId);
+            if ($taxRateSW !== null) {
+                $this->Manager()->remove($taxRateSW);
+                $this->Manager()->flush();
+            }
+        }
+    }
+
+    protected function prepareTaxRateAssociatedData(DataModel &$taxRate, TaxRateSW &$taxRateSW)
+    {
+        $taxRateId = (strlen($taxRate->getId()->getEndpoint()) > 0) ? (int)$taxRate->getId()->getEndpoint() : null;
+
+        if ($taxRateId !== null && $taxRateId > 0) {
+            $taxRateSW = $this->find($taxRateId);
+        }
+
+        if ($taxRateSW === null) {
+            $taxRateSW = new TaxRateSW;
+        }
+
+        $taxRateSW->setTax($taxRate->getRate())
+            ->setName($taxRate->getRate());
     }
 }

@@ -12,6 +12,7 @@ use \jtl\Core\Rpc\ResponsePacket;
 use \jtl\Core\Rpc\Error;
 use \jtl\Core\Http\Response;
 use \jtl\Connector\Shopware\Connector;
+use \jtl\Core\Logger\Logger;
 
 define('CONNECTOR_DIR', __DIR__ . '/../vendor/jtl/connector/');
 define('ENDPOINT_DIR', realpath(__DIR__ . '/../'));
@@ -31,6 +32,8 @@ function exception_handler(\Exception $exception)
         ->setData("Exception: " . substr(strrchr(get_class($exception), "\\"), 1) . " - File: {$exception->getFile()} - Line: {$exception->getLine()}")
         ->setMessage($exception->getMessage());
 
+    Logger::write($error->getData(), Logger::ERROR, 'global');
+
     $responsepacket = new ResponsePacket();
     $responsepacket->setError($error)
         ->setJtlrpc("2.0");
@@ -45,24 +48,27 @@ function exception_handler(\Exception $exception)
 function error_handler($errno, $errstr, $errfile, $errline, $errcontext)
 {
     $types = array(
-        E_ERROR => 'E_ERROR',
-        E_WARNING => 'E_WARNING', 
-        E_PARSE => 'E_PARSE', 
-        E_NOTICE => 'E_NOTICE', 
-        E_CORE_ERROR => 'E_CORE_ERROR', 
-        E_CORE_WARNING => 'E_CORE_WARNING', 
-        E_CORE_ERROR => 'E_COMPILE_ERROR', 
-        E_CORE_WARNING => 'E_COMPILE_WARNING', 
-        E_USER_ERROR => 'E_USER_ERROR', 
-        E_USER_WARNING => 'E_USER_WARNING', 
-        E_USER_NOTICE => 'E_USER_NOTICE', 
-        E_STRICT => 'E_STRICT', 
-        E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR', 
-        E_DEPRECATED => 'E_DEPRECATED', 
-        E_USER_DEPRECATED => 'E_USER_DEPRECATED'
+        E_ERROR => array(Logger::ERROR, 'E_ERROR'),
+        E_WARNING => array(Logger::WARNING, 'E_WARNING'), 
+        E_PARSE => array(Logger::WARNING, 'E_PARSE'), 
+        E_NOTICE => array(Logger::NOTICE, 'E_NOTICE'), 
+        E_CORE_ERROR => array(Logger::ERROR, 'E_CORE_ERROR'), 
+        E_CORE_WARNING => array(Logger::WARNING, 'E_CORE_WARNING'), 
+        E_CORE_ERROR => array(Logger::ERROR, 'E_COMPILE_ERROR'), 
+        E_CORE_WARNING => array(Logger::WARNING, 'E_COMPILE_WARNING'), 
+        E_USER_ERROR => array(Logger::ERROR, 'E_USER_ERROR'), 
+        E_USER_WARNING => array(Logger::WARNING, 'E_USER_WARNING'), 
+        E_USER_NOTICE => array(Logger::NOTICE, 'E_USER_NOTICE'), 
+        E_STRICT => array(Logger::NOTICE, 'E_STRICT'), 
+        E_RECOVERABLE_ERROR => array(Logger::ERROR, 'E_RECOVERABLE_ERROR'), 
+        E_DEPRECATED => array(Logger::INFO, 'E_DEPRECATED'), 
+        E_USER_DEPRECATED => array(Logger::INFO, 'E_USER_DEPRECATED')
     );
 
-    file_put_contents("/tmp/shopware_error.log", date("[Y-m-d H:i:s] ") . "(" . $types[$errno] . ") File ({$errfile}, {$errline}): {$errstr}\n", FILE_APPEND);
+    $err = "(" . $types[$errno][1] . ") File ({$errfile}, {$errline}): {$errstr}";
+    Logger::write($err, $types[$errno][0], 'global');
+
+    //file_put_contents("/tmp/shopware_error.log", date("[Y-m-d H:i:s] ") . "{$err}\n", FILE_APPEND);
 }
 
 function shutdown_handler()

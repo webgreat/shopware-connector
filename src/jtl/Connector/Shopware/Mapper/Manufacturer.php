@@ -9,11 +9,11 @@ namespace jtl\Connector\Shopware\Mapper;
 use \jtl\Connector\Model\Manufacturer as ManufacturerModel;
 use \Shopware\Components\Api\Exception as ApiException;
 use \jtl\Core\Utilities\DataConverter;
-use \jtl\Connector\Shopware\Model\DataModel;
-use \Shopware\Models\Article\Supplier as SupplierModel;
+use \jtl\Connector\Model\DataModel;
 use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Model\Identity;
 use \jtl\Connector\Shopware\Utilities\Mmc;
+use \Shopware\Models\Article\Supplier as ManufacturerSW;
 
 class Manufacturer extends DataMapper
 {
@@ -44,52 +44,16 @@ class Manufacturer extends DataMapper
         return $this->findAll($offset, $limit, true);
     }
 
-    public function prepareData(ManufacturerContainer $container)
-    {
-        $manufacturer = $container->getMainModel();
-
-        // Manufacturer
-        $data = DataConverter::toArray(DataModel::map(false, null, $manufacturer));
-
-        // ManufacturerI18n
-        foreach ($container->getManufacturerI18ns() as $manufacturerI18n) {
-            $data = array_merge($data, DataConverter::toArray(DataModel::map(false, null, $manufacturerI18n)));
-        }
-
-        return $data;
-    }
-
     public function save(DataModel $manufacturer)
     {
         $manufacturerSW = null;
-
-        $id = (strlen($manufacturer->getId()->getEndpoint()) > 0) ? (int)$manufacturer->getId()->getEndpoint() : null;
-
-        if ($id > 0) {
-            $manufacturerSW = $this->find($id);
-        }
+        $result = new ManufacturerModel;
 
         if ($manufacturer->getAction() == DataModel::ACTION_DELETE) {   // Delete
-            if ($manufacturerSW !== null) {
-                $this->Manager()->remove($manufacturerSW);
-                $this->flush();
-            }
+            $this->deleteManufacturerData($manufacturer);
         } else {    // Update or Insert
-            if ($manufacturerSW === null) {
-                $manufacturerSW = new SupplierModel;
-            }
-
-            $manufacturerSW->setName($manufacturer->getName())
-                ->setLink($manufacturer->getWww());
-
-            foreach ($manufacturer->getI18ns() as $i18n) {
-                if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
-                    $manufacturerSW->setDescription($i18n->getDescription());
-                    $manufacturerSW->setMetaTitle($i18n->getTitleTag());
-                    $manufacturerSW->setMetaDescription($i18n->getMetaDescription());
-                    $manufacturerSW->setMetaKeywords($i18n->getMetaKeywords());
-                }
-            }
+            $this->prepareManufacturerAssociatedData($manufacturer, $manufacturerSW);
+            $this->prepareI18nAssociatedData($manufacturer, $manufacturerSW);
 
             $violations = $this->Manager()->validate($manufacturerSW);
             if ($violations->count() > 0) {
@@ -101,9 +65,49 @@ class Manufacturer extends DataMapper
         }
 
         // Result
-        $result = new ManufacturerModel;
         $result->setId(new Identity($manufacturerSW->getId(), $manufacturer->getId()->getHost()));
 
         return $result;
+    }
+
+    protected function deleteManufacturerData(DataModel &$manufacturer)
+    {
+        $manufacturerId = (strlen($manufacturer->getId()->getEndpoint()) > 0) ? (int)$manufacturer->getId()->getEndpoint() : null;
+
+        if ($manufacturerId !== null && $manufacturerId > 0) {
+            $manufacturerSW = $this->find($manufacturerId);
+            if ($manufacturerSW !== null) {
+                $this->Manager()->remove($manufacturerSW);
+                $this->Manager()->flush();
+            }
+        }
+    }
+
+    protected function prepareManufacturerAssociatedData(DataModel &$manufacturer, ManufacturerSW &$manufacturerSW)
+    {
+        $manufacturerId = (strlen($manufacturer->getId()->getEndpoint()) > 0) ? (int)$manufacturer->getId()->getEndpoint() : null;
+
+        if ($manufacturerId !== null && $manufacturerId > 0) {
+            $manufacturerSW = $this->find($manufacturerId);
+        }
+
+        if ($manufacturerSW === null) {
+            $manufacturerSW = new ManufacturerSW;
+        }
+
+        $manufacturerSW->setName($manufacturer->getName())
+            ->setLink($manufacturer->getWww());
+    }
+
+    protected function prepareI18nAssociatedData(DataModel &$manufacturer, ManufacturerSW &$manufacturerSW)
+    {
+        foreach ($manufacturer->getI18ns() as $i18n) {
+            if ($i18n->getLocaleName() == Shopware()->Shop()->getLocale()->getLocale()) {
+                $manufacturerSW->setDescription($i18n->getDescription());
+                $manufacturerSW->setMetaTitle($i18n->getTitleTag());
+                $manufacturerSW->setMetaDescription($i18n->getMetaDescription());
+                $manufacturerSW->setMetaKeywords($i18n->getMetaKeywords());
+            }
+        }
     }
 }

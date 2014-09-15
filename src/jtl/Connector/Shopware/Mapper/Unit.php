@@ -8,8 +8,9 @@ namespace jtl\Connector\Shopware\Mapper;
 
 use \jtl\Core\Logger\Logger;
 use \Shopware\Components\Api\Exception as ApiException;
-use \jtl\Connector\Shopware\Model\DataModel;
+use \jtl\Connector\Model\DataModel;
 use \jtl\Connector\Model\Unit as UnitModel;
+use \Shopware\Models\Article\Unit as UnitSW;
 
 class Unit extends DataMapper
 {
@@ -41,22 +42,12 @@ class Unit extends DataMapper
     public function save(DataModel $unit)
     {
         $unitSW = null;
-
-        $id = (strlen($unit->getId()->getEndpoint()) > 0) ? (int)$unit->getId()->getEndpoint() : null;
-
-        if ($id > 0) {
-            $unitSW = $this->find($id);
-        }
+        $result = new UnitModel;
 
         if ($unit->getAction() == DataModel::ACTION_DELETE) {   // Delete
-            if ($unitSW !== null) {
-                $this->Manager()->remove($unitSW);
-                $this->flush();
-            }
+            $this->deleteUnitData($unit);
         } else {    // Update or Insert
-            if ($unitSW === null) {
-                $unitSW = new \Shopware\Models\Article\Unit;
-            }
+           $this->prepareUnitAssociatedData($unit, $unitSW);
 
             // @todo: waiting for entity
             /*
@@ -74,9 +65,34 @@ class Unit extends DataMapper
         }
 
         // Result
-        $result = new UnitModel;
         $result->setId(new Identity($unitSW->getId(), $unit->getId()->getHost()));
 
         return $result;
+    }
+
+    protected function deleteUnitData(DataModel &$unit)
+    {
+        $unitId = (strlen($unit->getId()->getEndpoint()) > 0) ? (int)$unit->getId()->getEndpoint() : null;
+
+        if ($unitId !== null && $unitId > 0) {
+            $unitSW = $this->find($unitId);
+            if ($unitSW !== null) {
+                $this->Manager()->remove($unitSW);
+                $this->Manager()->flush();
+            }
+        }
+    }
+
+    protected function prepareUnitAssociatedData(DataModel &$unit, UnitSW &$unitSW)
+    {
+        $unitId = (strlen($unit->getId()->getEndpoint()) > 0) ? (int)$unit->getId()->getEndpoint() : null;
+
+        if ($unitId !== null && $unitId > 0) {
+            $unitSW = $this->find($unitId);
+        }
+
+        if ($unitSW === null) {
+            $unitSW = new UnitSW;
+        }
     }
 }
