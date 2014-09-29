@@ -95,7 +95,7 @@ class GlobalData extends DataController
                 $customerGroup->map(true, DataConverter::toObject($customerGroupSW, true));
 
                 $customerGroupI18n = Mmc::getModel('CustomerGroupI18n');
-                $customerGroup->map(true, DataConverter::toObject($customerGroupSW, true));
+                $customerGroupI18n->map(true, DataConverter::toObject($customerGroupSW, true));
 
                 $customerGroup->addI18n($customerGroupI18n);
                 $globalData->addCustomerGroup($customerGroup);

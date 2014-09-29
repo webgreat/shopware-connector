@@ -40,19 +40,19 @@ class Product extends DataController
             $offset = $queryFilter->isOffset() ? $queryFilter->getOffset() : 0;
             $limit = $queryFilter->isLimit() ?  $queryFilter->getLimit() : 100;
 
-            $fetchChilden = ($queryFilter->isFilter('fetchChilden') && $queryFilter->getFilter('parentId') > 0);
+            $fetchChildren = ($queryFilter->isFilter('fetchChildren') && $queryFilter->isFilter('parentId'));
             $mapper = Mmc::getMapper('Product');
 
             $products = array();
-            if ($fetchChilden) {
-                $products = $mapper->findDetails($queryFilter->isFilter('parentId'), $offset, $limit);
+            if ($fetchChildren) {
+                $products = $mapper->findDetails((int)$queryFilter->getFilter('parentId'), $offset, $limit);
             } else {
                 $products = $mapper->findAll($offset, $limit);
             }
 
             foreach ($products as $productSW) {
                 try {
-                    $result[] = $this->buildProduct($productSW, $fetchChilden);
+                    $result[] = $this->buildProduct($productSW, $fetchChildren);
                 } catch (\Exception $exc) {
                     Logger::write(ExceptionFormatter::format($exc), Logger::WARNING, 'controller');
                 }
@@ -85,6 +85,9 @@ class Product extends DataController
         $productSW = $data;
         if ($isDetail) {
             $productSW = $data['article'];
+            $productSW['masterProductId'] = $data['articleId'];
+            $productSW['id'] = sprintf('%s_%s', $data['id'], $data['articleId']);
+            $productSW['name'] = $data['additionalText'];
 
             $productSW['mainDetail'] = array();
             foreach (array_keys($data) as $key) {
@@ -122,6 +125,11 @@ class Product extends DataController
         for ($i = 0; $i < count($productSW['mainDetail']['prices']); $i++) {
             $customerGroup = CustomerGroupUtil::getByKey($productSW['mainDetail']['prices'][$i]['customerGroupKey']);
             $productSW['mainDetail']['prices'][$i]['customerGroupId'] = $customerGroup->getId();
+
+            if ($isDetail) {
+                $productSW['mainDetail']['prices'][$i]['articleId'] = sprintf('%s_%s', $productSW['mainDetail']['prices'][$i]['id'], 
+                    $productSW['mainDetail']['prices'][$i]['articleId']);
+            }
         }
 
         $this->addPos($product, 'addPrice', 'ProductPrice', $productSW['mainDetail']['prices'], true);

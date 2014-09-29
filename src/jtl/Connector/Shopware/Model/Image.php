@@ -7,6 +7,7 @@
 namespace jtl\Connector\Shopware\Model;
 
 use \jtl\Connector\Model\Image as ImageModel;
+use \jtl\Connector\Drawing\ImageRelationType;
 
 /**
  * Image Model
@@ -30,5 +31,17 @@ class Image extends ImageModel
     public function map($toWawi = false, \stdClass $obj = null)
     {
         return DataModel::map($toWawi, $obj, $this);
+    }
+
+    public static function generateId($relationType, $id, $mediaId)
+    {
+        switch($relationType) {
+            case ImageRelationType::TYPE_PRODUCT:
+                return sprintf('a_%s_%s', $id, $mediaId);
+            case ImageRelationType::TYPE_CATEGORY:
+                return sprintf('c_%s_%s', $id, $mediaId);
+            case ImageRelationType::TYPE_MANUFACTURER:
+                return sprintf('s_%s_%s', $id, $mediaId);
+        }
     }
 }

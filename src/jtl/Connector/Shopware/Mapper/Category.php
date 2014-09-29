@@ -17,6 +17,11 @@ use \Shopware\Models\Category\Category as CategorySW;
 
 class Category extends DataMapper
 {
+    public function findOneBy(array $kv)
+    {
+        return $this->Manager()->getRepository('Shopware\Models\Category\Category')->findOneBy($kv);
+    }
+
     public function find($id)
     {
         return $this->Manager()->find('Shopware\Models\Category\Category', $id);
@@ -107,12 +112,15 @@ class Category extends DataMapper
             $categorySW = new CategorySW;
         }
 
+        $parentSW = null;
         if ($parentId !== null) {
             $parentSW = $this->find($parentId);
+        } else {
+            $parentSW = $this->findOneBy(array('parent' => null));
+        }
 
-            if ($parentSW) {
-                $categorySW->setParent($parentSW);
-            }
+        if ($parentSW) {
+            $categorySW->setParent($parentSW);
         }
 
         $categorySW->setCustomerGroups($customerGroupsSW);

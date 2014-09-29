@@ -11,6 +11,7 @@ use \jtl\Core\Rpc\Error;
 use \jtl\Connector\Shopware\Utilities\Mmc;
 use \jtl\Core\Logger\Logger;
 use \jtl\Connector\Formatter\ExceptionFormatter;
+use \jtl\Core\Model\QueryFilter;
 
 /**
  * Connector Controller
@@ -19,10 +20,12 @@ use \jtl\Connector\Formatter\ExceptionFormatter;
 class Connector extends DataController
 {
     /**
-     * (non-PHPdoc)
-     * @see \jtl\Core\Controller\IController::statistic()
+     * Statistic
+     *
+     * @param \jtl\Core\Model\QueryFilter $queryFilter
+     * @return \jtl\Connector\Result\Action
      */
-    public function statistic($params)
+    public function statistic(QueryFilter $queryFilter)
     {
         $action = new Action();
         $action->setHandled(true);
@@ -47,12 +50,12 @@ class Connector extends DataController
         );
 
         // Only Main Controller
-        if ($params !== null && $params) {
+        if ($queryFilter !== null && $queryFilter) {
             foreach ($mainControllers as $mainController) {
                 try {
                     if (!in_array($mainController, $excludes)) {
                         $controller = Mmc::getController($mainController);
-                        $result = $controller->statistic($params);
+                        $result = $controller->statistic($queryFilter);
                         if ($result !== null && $result->isHandled() && !$result->isError()) {
                             $results[] = $result->getResult();
                         }
@@ -71,7 +74,7 @@ class Connector extends DataController
                     $class = str_replace(array($path, '.php'), '', $filename);
                     if (!in_array($class, $excludes)) {
                         $controller = Mmc::getController(str_replace(array($path, '.php'), '', $filename));
-                        $result = $controller->statistic($params);
+                        $result = $controller->statistic($queryFilter);
                         if ($result !== null && $result->isHandled() && !$result->isError()) {
                             $results[] = $result->getResult();
                         }

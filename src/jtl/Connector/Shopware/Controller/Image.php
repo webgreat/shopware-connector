@@ -14,6 +14,7 @@ use \jtl\Core\Rpc\Error;
 use \jtl\Core\Logger\Logger;
 use \jtl\Core\Exception\DatabaseException;
 use \jtl\Connector\Drawing\ImageRelationType;
+use \jtl\Connector\Shopware\Model\Image as ImageModel;
 use \jtl\Core\Model\QueryFilter;
 use \jtl\Core\Utilities\DataConverter;
 use \jtl\Connector\Shopware\Utilities\Mmc;
@@ -55,8 +56,7 @@ class Image extends DataController
                 $relationTypes = array(
                     ImageRelationType::TYPE_PRODUCT,
                     ImageRelationType::TYPE_CATEGORY,
-                    ImageRelationType::TYPE_MANUFACTURER,
-                    ImageRelationType::TYPE_PRODUCT_VARIATION_VALUE
+                    ImageRelationType::TYPE_MANUFACTURER
                 );
 
                 foreach ($relationTypes as $relationType) {
@@ -68,32 +68,30 @@ class Image extends DataController
                 foreach ($models as $modelSW) {
                     switch ($relationType) {
                         case ImageRelationType::TYPE_PRODUCT:
-                            if (!isset($modelSW['images'])) continue;
+                            $model = Mmc::getModel('Image');
 
-                            foreach ($modelSW['images'] as $imageSW) {
-                                $model = Mmc::getModel('Image');
+                            $id = ImageModel::generateId(ImageRelationType::TYPE_PRODUCT, $modelSW['id'], $modelSW['media']['id']);
+                            $foreignKey = $modelSW['articleId'];
+                            $path = $modelSW['media']['path'];
 
-                                $model->setId(new Identity($imageSW['id']));
-
-                                if (intval($modelSW['parentId']) > 0) {
-                                    $model->setMasterImageId(new Identity($modelSW['parentId']));
-                                }
-
-                                $model->setRelationType($relationType)
-                                    ->setForeignKey(new Identity($imageSW['articleId']))
-                                    ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $imageSW['media']['path']));
-
-                                $result[] = $model->getPublic();
+                            // Child?
+                            if (isset($modelSW['parent']) && $modelSW['parent'] !== null) {
+                                $id = ImageModel::generateId(ImageRelationType::TYPE_PRODUCT, $modelSW['id'], $modelSW['parent']['media']['id']);
+                                $foreignKey = sprintf('%s_%s', $modelSW['articleDetailId'], $modelSW['parent']['articleId']);
+                                $path = $modelSW['parent']['media']['path'];     
                             }
+
+                            $model->setId(new Identity($id));
+                            $model->setRelationType($relationType)
+                                ->setForeignKey(new Identity($foreignKey))
+                                ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $path));
+
+                            $result[] = $model->getPublic();
                             break;
                         case ImageRelationType::TYPE_CATEGORY:
                             $model = Mmc::getModel('Image');
                             
-                            $model->setId(new Identity($modelSW['media']['id']));
-
-                            if (intval($modelSW['parentId']) > 0) {
-                                 $model->setMasterImageId(new Identity($modelSW['parentId']));
-                            }
+                            $model->setId(new Identity(ImageModel::generateId(ImageRelationType::TYPE_CATEGORY, $modelSW['id'], $modelSW['media']['id'])));
 
                             $model->setRelationType($relationType)
                                 ->setForeignKey(new Identity($modelSW['id']))
@@ -106,11 +104,7 @@ class Image extends DataController
 
                             $model = Mmc::getModel('Image');
 
-                            $model->setId(new Identity($modelSW['media']['id']));
-
-                            if (intval($modelSW['parentId']) > 0) {
-                                 $model->setMasterImageId(new Identity($modelSW['parentId']));
-                            }
+                            $model->setId(new Identity(ImageModel::generateId(ImageRelationType::TYPE_MANUFACTURER, $modelSW['id'], $modelSW['media']['id'])));
                             
                             $model->setRelationType($relationType)
                                 ->setForeignKey(new Identity($modelSW['id']))
@@ -118,16 +112,13 @@ class Image extends DataController
 
                             $result[] = $model->getPublic();
                             break;
+                        /*
                         case ImageRelationType::TYPE_PRODUCT_VARIATION_VALUE:
                             $model = Mmc::getModel('Image');
 
                             // Work Around
                             // id = s_article_img_mapping_rules.id
                             $model->setId(new Identity('option_' . $modelSW['id']));
-
-                            if (intval($modelSW['masterImageId']) > 0) {
-                                 $model->setMasterImageId(new Identity($modelSW['masterImageId']));
-                            }
                             
                             $model->setRelationType($relationType)
                                 ->setForeignKey(new Identity($modelSW['articleID'] . '_' . $modelSW['group_id'] . '_' . $modelSW['foreignKey']))
@@ -135,6 +126,7 @@ class Image extends DataController
 
                             $result[] = $model->getPublic();
                             break;
+                        */
                     }
                 }
             }
@@ -154,26 +146,22 @@ class Image extends DataController
     /**
      * Statistic
      *
-     * @params mixed $params
+     * @param \jtl\Core\Model\QueryFilter $queryFilter
      * @return \jtl\Connector\Result\Action
      */
-    public function statistic($params)
+    public function statistic(QueryFilter $queryFilter)
     {
         $action = new Action();
         $action->setHandled(true);
 
         try {
-            $filter = new QueryFilter();
-            $filter->set($params);
-            
             $mapper = Mmc::getMapper('Image');
 
             $statModel = new Statistic();
             $statModel->setControllerName('image');
 
-            if ($filter->getFilter('relationType') !== null) {  
-
-                $statModel->setAvailable($mapper->fetchCount(null, null, $filter->getFilter('relationType')));
+            if ($queryFilter->isFilter('relationType')) {
+                $statModel->setAvailable($mapper->fetchCount(null, null, $queryFilter->getFilter('relationType')));
             }
             else {
                 // Get all images
@@ -197,37 +185,6 @@ class Image extends DataController
             $action->setError($err);
         }
         
-        return $action;
-    }
-
-    /**
-     * Transaction Commit
-     *
-     * @param mixed $params
-     * @return \jtl\Connector\Result\Action
-     */
-    public function commit($params, $trid)
-    {
-        $action = new Action();
-        $action->setHandled(true);
-
-        try {
-            $container = TransactionHandler::getContainer($this->getMethod()->getController(), $trid);
-            $result = $this->insert($container);
-
-            if ($result !== null) {
-                $action->setResult($result->getPublic());
-            }
-        }
-        catch (\Exception $exc) {
-            $message = (strlen($exc->getMessage()) > 0) ? $exc->getMessage() : ExceptionFormatter::format($exc);
-
-            $err = new Error();
-            $err->setCode($exc->getCode());
-            $err->setMessage($message);
-            $action->setError($err);
-        }
-
         return $action;
     }
 }

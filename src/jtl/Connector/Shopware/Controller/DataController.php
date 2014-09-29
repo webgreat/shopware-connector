@@ -28,10 +28,10 @@ abstract class DataController extends CoreController
     /**
      * Statistic
      *
-     * @param mixed $params
+     * @param \jtl\Core\Model\QueryFilter $queryFilter
      * @return \jtl\Connector\Result\Action
      */
-    public function statistic($params)
+    public function statistic(QueryFilter $queryFilter)
     {
         $action = new Action();
         $action->setHandled(true);
@@ -108,17 +108,9 @@ abstract class DataController extends CoreController
         
         try {
             $result = array();
-            $filter = $queryFilter;
 
-            $offset = 0;
-            $limit = 100;
-            if ($filter->isOffset()) {
-                $offset = $filter->getOffset();
-            }
-
-            if ($filter->isLimit()) {
-                $limit = $filter->getLimit();
-            }
+            $offset = $queryFilter->isOffset() ? $queryFilter->getOffset() : 0;
+            $limit = $queryFilter->isLimit() ?  $queryFilter->getLimit() : 100;
 
             $class = ClassName::getFromNS(get_called_class());
 

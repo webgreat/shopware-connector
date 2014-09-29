@@ -16,7 +16,7 @@ class Product extends ProductModel
 {
     protected $fields = array(
         'id' => 'id',
-        'masterProductId' => '',
+        'masterProductId' => 'masterProductId',
         'manufacturerId' => 'supplierId',
         'deliveryStatusId' => '',
         //'unitId' => array('mainDetail', 'unitId'),

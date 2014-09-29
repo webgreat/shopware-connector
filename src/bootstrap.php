@@ -18,7 +18,7 @@ define('CONNECTOR_DIR', __DIR__ . '/../vendor/jtl/connector/');
 define('ENDPOINT_DIR', realpath(__DIR__ . '/../'));
 
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
 
 function exception_handler(\Exception $exception)
 {
