@@ -383,7 +383,7 @@ class Image extends DataMapper
 
         if ($imageId !== null) {
             list($type, $id, $mediaId) = explode('_', $image->getId()->getEndpoint());
-            $imageSW = $this->Manager()->getRepository('Shopware\Models\Article\Image')->find($imageId);
+            $imageSW = $this->Manager()->getRepository('Shopware\Models\Article\Image')->find((int)$id);
         }
 
         if ($imageSW === null) {

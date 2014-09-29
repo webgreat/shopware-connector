@@ -84,7 +84,8 @@ class Image extends DataController
                             $model->setId(new Identity($id));
                             $model->setRelationType($relationType)
                                 ->setForeignKey(new Identity($foreignKey))
-                                ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $path));
+                                ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $path))
+                                ->setSort($modelSW['position']);
 
                             $result[] = $model->getPublic();
                             break;
