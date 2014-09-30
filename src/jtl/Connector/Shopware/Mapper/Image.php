@@ -330,28 +330,31 @@ class Image extends DataMapper
                     break;
             }
 
-            $mediaSW = new MediaSW;
-            $mediaSW->setAlbumId($albumId)
-                ->setDescription('');
-
             $albumSW = $this->Manager()->getRepository('Shopware\Models\Media\Album')->find($albumId);
             if ($albumSW === null) {
                 throw new \Exception(sprintf('Album with id (%s) not found', $albumId));
             }
 
-            $mediaSW->setAlbum($albumSW);
+            $mediaSW = new MediaSW;
+            $mediaSW->setExtension(strtolower($infos['extension']))
+                ->setAlbumId($albumId)
+                ->setDescription('')
+                ->setName($infos['filename'])
+                ->setCreated(new \DateTime())
+                ->setFileSize($stats['size'])
+                ->setFile($file)
+                ->setType(MediaSW::TYPE_IMAGE)
+                ->setUserId(0)
+                ->setAlbum($albumSW);
         } else {
-
-            $file = $file->move($this->getUploadDir(), $mediaSW->getFileName());
+            if ($this->generadeMD5($mediaSW->getPath()) != md5_file($image->getFilename())) {
+                $file = $file->move($this->getUploadDir(), $mediaSW->getFileName());
+                $mediaSW->setFileSize($stats['size'])
+                    ->setExtension(strtolower($infos['extension']))
+                    ->setCreated(new \DateTime())
+                    ->setFile($file);
+            }
         }
-
-        $mediaSW->setExtension(strtolower($infos['extension']))
-            ->setName($infos['filename'])
-            ->setCreated(new \DateTime())
-            ->setFileSize($stats['size'])
-            ->setFile($file)
-            ->setType(MediaSW::TYPE_IMAGE)
-            ->setUserId(0);
 
         $this->prepareTypeSwitchAssociateData($image, $mediaSW, $imageSW);
     }
@@ -376,52 +379,123 @@ class Image extends DataMapper
         }
     }
 
-    protected function prepareProductImageAssociateData(DataModel &$image, MediaSW &$mediaSW, \Shopware\Components\Model\ModelEntity &$imageSW = null)
+    protected function prepareProductImageAssociateData(DataModel &$image, MediaSW &$mediaSW, ArticleImageSW &$imageSW = null)
+    {
+        // Child?
+        if ($this->isChild($image)) {
+            $this->prepareChildImageAssociateData($image, $mediaSW, $imageSW);
+        } else {
+            $imageId = (strlen($image->getId()->getEndpoint()) > 0) ? $image->getId()->getEndpoint() : null;
+            $foreignId = (strlen($image->getForeignKey()->getEndpoint()) > 0) ? $image->getForeignKey()->getEndpoint() : null;
+
+            // Try to load Image
+            if ($imageId !== null) {
+                list($type, $id, $mediaId) = explode('_', $image->getId()->getEndpoint());
+                $imageSW = $this->Manager()->getRepository('Shopware\Models\Article\Image')->find((int)$id);
+            }
+
+            // New Image
+            if ($imageSW === null) {
+                $imageSW = new ArticleImageSW;
+                $imageSW->setHeight(0);
+                $imageSW->setDescription('');
+                $imageSW->setWidth(0);
+                $imageSW->setExtension($mediaSW->getExtension());
+
+                if ($foreignId === null) {
+                    throw new \Exception('ForeignKey cannot be null');
+                }
+                
+                $productMapper = Mmc::getMapper('Product');
+                $productSW = $productMapper->find((int)$image->getForeignKey()->getEndpoint());
+                if ($productSW === null) {
+                    throw new \Exception(sprintf('Cannot find product with id (%s)', $image->getForeignKey()->getEndpoint()));
+                }
+
+                $imageSW->setArticle($productSW);
+            }
+
+            $imageSW->setPosition($image->getSort());
+            $main = ($image->getSort() == 1) ? 1 : 2;
+            $imageSW->setMain($main);
+            $imageSW->setPath($mediaSW->getName());
+            $imageSW->setMedia($mediaSW);
+        }
+    }
+
+    protected function prepareChildImageAssociateData(DataModel &$image, MediaSW &$mediaSW, ArticleImageSW &$imageSW = null)
     {
         $imageId = (strlen($image->getId()->getEndpoint()) > 0) ? $image->getId()->getEndpoint() : null;
         $foreignId = (strlen($image->getForeignKey()->getEndpoint()) > 0) ? $image->getForeignKey()->getEndpoint() : null;
 
+        // Try to load Image
         if ($imageId !== null) {
             list($type, $id, $mediaId) = explode('_', $image->getId()->getEndpoint());
             $imageSW = $this->Manager()->getRepository('Shopware\Models\Article\Image')->find((int)$id);
         }
 
+        // New Image?
         if ($imageSW === null) {
             $imageSW = new ArticleImageSW;
             $imageSW->setHeight(0);
             $imageSW->setDescription('');
             $imageSW->setWidth(0);
 
-            if ($foreignId !== null) {
-                $productMapper = Mmc::getMapper('Product');
+            if ($foreignId === null) {
+                throw new \Exception('ForeignKey cannot be null');
+            }
 
-                if ($this->isChild($image)) {
-                    list($detailId, $articleId) = explode('_', $image->getForeignKey()->getEndpoint());
-                    $detailSW = $productMapper->findDetail((int)$detailId);
-                    if ($detailSW === null) {
-                        throw new \Exception(sprintf('Cannot find child with id (%s)', $detailId));
-                    }
+            $productMapper = Mmc::getMapper('Product');
+            list($detailId, $articleId) = explode('_', $image->getForeignKey()->getEndpoint());
+            $detailSW = $productMapper->findDetail((int)$detailId);
+            if ($detailSW === null) {
+                throw new \Exception(sprintf('Cannot find child with id (%s)', $detailId));
+            }
 
-                    $imageSW->setParent();
-                    $imageSW->setArticleDetail($detailSW);
-                } else {
-                    $productSW = $productMapper->find((int)$image->getForeignKey()->getEndpoint());
-                    if ($productSW === null) {
-                        throw new \Exception(sprintf('Cannot find product with id (%s)', $image->getForeignKey()->getEndpoint()));
-                    }
+            $imageSW->setArticleDetail($detailSW);
 
-                    $imageSW->setArticle($productSW);
-                }
+            // Create new Parent
+            $this->createParentImageData($image, $mediaSW, $imageSW);
+        } else {
+            // Update Image
+            $parentImageSW = $imageSW->getParent();
+
+            if ($this->generadeMD5($parentImageSW->getMedia()->getPath()) != $this->generadeMD5($mediaSW->getPath())) {
+                $this->createParentImageData($image, $mediaSW, $imageSW);
             }
         }
 
         $imageSW->setExtension($mediaSW->getExtension());
-        $imageSW->setMedia($mediaSW);
-        $imageSW->setPath($mediaSW->getName());
         $imageSW->setPosition($image->getSort());
-
         $main = ($image->getSort() == 1) ? 1 : 2;
         $imageSW->setMain($main);
+    }
+
+    protected function createParentImageData(DataModel &$image, MediaSW &$mediaSW, ArticleImageSW &$imageSW)
+    {
+        $productMapper = Mmc::getMapper('Product');
+
+        // Create new Parent
+        $parentImageSW = new ArticleImageSW;
+        $parentImageSW->setHeight(0);
+        $parentImageSW->setDescription('');
+        $parentImageSW->setWidth(0);
+        $parentImageSW->setExtension($mediaSW->getExtension());
+        $parentImageSW->setMedia($mediaSW);
+        $parentImageSW->setPosition($image->getSort());
+        $parentImageSW->setPath($mediaSW->getName());
+        $main = ($image->getSort() == 1) ? 1 : 2;
+        $parentImageSW->setMain($main);
+
+        $productSW = $productMapper->find((int)$image->getForeignKey()->getEndpoint());
+        if ($productSW === null) {
+            throw new \Exception(sprintf('Cannot find product with id (%s)', $image->getForeignKey()->getEndpoint()));
+        }
+
+        $parentImageSW->setArticle($productSW);
+
+        $this->Manager()->persist($parentImageSW);
+        $imageSW->setParent($parentImageSW);
     }
 
     protected function isChild(DataModel &$image)
@@ -433,5 +507,10 @@ class Image extends DataMapper
     {
         // the absolute directory path where uploaded documents should be saved
         return Shopware()->DocPath('media_' . strtolower(MediaSW::TYPE_IMAGE));
+    }
+
+    protected function generadeMD5($path)
+    {
+        return md5_file(sprintf('%s%s', Shopware()->DocPath(), $path));
     }
 }
