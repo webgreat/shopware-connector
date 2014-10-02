@@ -27,18 +27,6 @@ class Image extends DataMapper
     {
         $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
 
-        /*
-        switch ($relationType) {
-            case ImageRelationType::TYPE_PRODUCT_VARIATION_VALUE:
-                return Shopware()->Db()->fetchAll('SELECT r.id, r.option_id as foreignKey, i.img as path, i.parent_id as masterImageId, i.extension, i.articleID, o.group_id
-                                                    FROM s_article_img_mapping_rules AS r
-                                                    JOIN s_article_img_mappings AS m ON m.id = r.mapping_id
-                                                    JOIN s_articles_img AS i ON i.id = m.image_id
-                                                    JOIN s_article_configurator_options AS o ON o.id = r.option_id
-                                                    GROUP BY r.option_id');
-        }
-        */
-
         $query = $this->buildQuery($offset, $limit, $relationType);
 
         if ($count) {
@@ -60,7 +48,6 @@ class Image extends DataMapper
         $count = 0;
         switch ($relationType) {
             case ImageRelationType::TYPE_PRODUCT:
-                //$query = Shopware()->Models()->createNativeQuery('SELECT count(*) as count FROM s_articles_img WHERE main = 1', $rsm);
                 $query = Shopware()->Models()->createNativeQuery('SELECT count(*) as count FROM s_articles_img', $rsm);
                 break;
             case ImageRelationType::TYPE_CATEGORY:
@@ -69,19 +56,6 @@ class Image extends DataMapper
             case ImageRelationType::TYPE_MANUFACTURER:
                 $query = Shopware()->Models()->createNativeQuery('SELECT count(*) as count FROM s_articles_supplier WHERE LENGTH(img) > 0', $rsm);
                 break;
-            /*
-            case ImageRelationType::TYPE_PRODUCT_VARIATION_VALUE:
-                $query = Shopware()->Models()->createNativeQuery('SELECT count(*) as count
-                                                                    FROM
-                                                                    (
-                                                                        SELECT r.option_id
-                                                                        FROM s_article_img_mapping_rules AS r
-                                                                        JOIN s_article_img_mappings AS m ON m.id = r.mapping_id
-                                                                        JOIN s_articles_img AS i ON i.id = m.image_id
-                                                                        GROUP BY r.option_id
-                                                                    ) as x', $rsm);
-                break;
-            */
         }
 
         if ($query !== null) {
@@ -90,8 +64,6 @@ class Image extends DataMapper
                 $count = (int)$result[0]['count'];
             }
         }
-
-        //$this->initBuilder();
 
         return $count;
     }
@@ -124,32 +96,6 @@ class Image extends DataMapper
                         'alias' => 'pmedia'
                     )
                 )
-                /*
-                'select' => array(
-                    'article',
-                    'images',
-                    'media'
-                ),
-                'from' => array(
-                    'model' => 'Shopware\Models\Article\Article',
-                    'alias' => 'article'
-                ),
-                'innerJoin' => array(
-                    array(
-                        'join' => 'article.images',
-                        'alias' => 'images'
-                    )
-                ),
-                'leftJoin' => array(
-                    array(
-                        'join' => 'images.media',
-                        'alias' => 'media'
-                    )
-                ),
-                'where' => array(
-                    'images.main = 1'
-                )
-                */
             ),
             ImageRelationType::TYPE_CATEGORY => array(
                 'select' => array(
@@ -160,7 +106,7 @@ class Image extends DataMapper
                     'model' => 'Shopware\Models\Category\Category',
                     'alias' => 'category'
                 ),
-                'innerJoin' => array(
+                'join' => array(
                     array(
                         'join' => 'category.media',
                         'alias' => 'media'
@@ -168,12 +114,18 @@ class Image extends DataMapper
                 )
             ),
             ImageRelationType::TYPE_MANUFACTURER => array(
-                'select' => array(
-                    'supplier'
-                ),
+                'select' => 'supplier.id, media.id as mediaId, media.path as path',
                 'from' => array(
                     'model' => 'Shopware\Models\Article\Supplier',
                     'alias' => 'supplier'
+                ),
+                'join' => array(
+                    array(
+                        'join' => 'Shopware\Models\Media\Media',
+                        'alias' => 'media',
+                        'conditionType' => \Doctrine\ORM\Query\Expr\Join::WITH,
+                        'condition' => 'media.path = supplier.image'
+                    )
                 ),
                 'where' => array(
                     'supplier.image != \'\''
@@ -190,15 +142,21 @@ class Image extends DataMapper
         $builder->select($data[$relationType]['select'])
             ->from($data[$relationType]['from']['model'], $data[$relationType]['from']['alias']);
 
-        if (isset($data[$relationType]['innerJoin'])) {
-            foreach ($data[$relationType]['innerJoin'] as $innerJoin) {
-                $builder->innerJoin($innerJoin['join'], $innerJoin['alias']);
+        if (isset($data[$relationType]['join'])) {
+            foreach ($data[$relationType]['join'] as $join) {
+                $conditionType = isset($join['conditionType']) ? $join['conditionType'] : null;
+                $condition = isset($join['condition']) ? $join['condition'] : null;
+
+                $builder->join($join['join'], $join['alias'], $conditionType, $condition);
             }
         }
 
         if (isset($data[$relationType]['leftJoin'])) {
             foreach ($data[$relationType]['leftJoin'] as $leftJoin) {
-                $builder->leftJoin($leftJoin['join'], $leftJoin['alias']);
+                $conditionType = isset($leftJoin['conditionType']) ? $leftJoin['conditionType'] : null;
+                $condition = isset($leftJoin['condition']) ? $leftJoin['condition'] : null;
+
+                $builder->leftJoin($leftJoin['join'], $leftJoin['alias'], $conditionType, $condition);
             }
         }
 
@@ -348,7 +306,10 @@ class Image extends DataMapper
                 ->setAlbum($albumSW);
         } else {
             if ($this->generadeMD5($mediaSW->getPath()) != md5_file($image->getFilename())) {
-                $file = $file->move($this->getUploadDir(), $mediaSW->getFileName());
+                $manager = Shopware()->Container()->get('thumbnail_manager');
+                $manager->removeMediaThumbnails($mediaSW);
+                @unlink(sprintf('%s%s', Shopware()->DocPath(), $mediaSW->getPath()));
+                $file = $file->move($this->getUploadDir(), $image->getFilename());
                 $mediaSW->setFileSize($stats['size'])
                     ->setExtension(strtolower($infos['extension']))
                     ->setCreated(new \DateTime())
@@ -366,16 +327,11 @@ class Image extends DataMapper
                 $this->prepareProductImageAssociateData($image, $mediaSW, $imageSW);
                 break;
             case ImageRelationType::TYPE_CATEGORY:
-                
+                $this->prepareCategoryImageAssociateData($image, $mediaSW, $imageSW);
                 break;
             case ImageRelationType::TYPE_MANUFACTURER:
-                
+                $this->prepareManufacturerImageAssociateData($image, $mediaSW, $imageSW);
                 break;
-            /*
-            case ImageRelationType::TYPE_PRODUCT_VARIATION_VALUE:
-                
-                break;
-            */
         }
     }
 
@@ -496,6 +452,40 @@ class Image extends DataMapper
 
         $this->Manager()->persist($parentImageSW);
         $imageSW->setParent($parentImageSW);
+    }
+
+    protected function prepareManufacturerImageAssociateData(DataModel &$image, MediaSW &$mediaSW, ArticleImageSW &$imageSW)
+    {
+        $foreignId = (strlen($image->getForeignKey()->getEndpoint()) > 0) ? (int)$image->getForeignKey()->getEndpoint() : null;
+
+        if ($foreignId !== null) {
+            $imageSW = $this->Manager()->getRepository('Shopware\Models\Article\Supplier')->find((int)$foreignId);
+        } else {
+            throw new \Exception('Manufacturer foreign key cannot be null');
+        }
+
+        if ($imageSW === null) {
+            throw new \Exception(sprintf('Cannot find manufacturer with id (%s)', $foreignId));
+        }
+
+        $imageSW->setImage($mediaSW->getPath());
+    }
+
+    protected function prepareCategoryImageAssociateData(DataModel &$image, MediaSW &$mediaSW, ArticleImageSW &$imageSW)
+    {
+        $foreignId = (strlen($image->getForeignKey()->getEndpoint()) > 0) ? (int)$image->getForeignKey()->getEndpoint() : null;
+
+        if ($foreignId !== null) {
+            $imageSW = $this->Manager()->getRepository('Shopware\Models\Category\Category')->find((int)$foreignId);
+        } else {
+            throw new \Exception('Category foreign key cannot be null');
+        }
+
+        if ($imageSW === null) {
+            throw new \Exception(sprintf('Cannot find category with id (%s)', $foreignId));
+        }
+
+        $imageSW->setMedia($mediaSW);
     }
 
     protected function isChild(DataModel &$image)

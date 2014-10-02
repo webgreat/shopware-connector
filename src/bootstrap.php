@@ -65,10 +65,12 @@ function error_handler($errno, $errstr, $errfile, $errline, $errcontext)
         E_USER_DEPRECATED => array(Logger::INFO, 'E_USER_DEPRECATED')
     );
 
-    $err = "(" . $types[$errno][1] . ") File ({$errfile}, {$errline}): {$errstr}";
-    Logger::write($err, $types[$errno][0], 'global');
-
-    //file_put_contents("/tmp/shopware_error.log", date("[Y-m-d H:i:s] ") . "{$err}\n", FILE_APPEND);
+    if (isset($types[$errno])) {
+        $err = "(" . $types[$errno][1] . ") File ({$errfile}, {$errline}): {$errstr}";
+        Logger::write($err, $types[$errno][0], 'global');
+    } else {
+        Logger::write("File ({$errfile}, {$errline}): {$errstr}", Logger::ERROR, 'global');
+    }
 }
 
 function shutdown_handler()

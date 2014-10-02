@@ -101,15 +101,13 @@ class Image extends DataController
                             $result[] = $model->getPublic();
                             break;
                         case ImageRelationType::TYPE_MANUFACTURER:
-                            if (!isset($modelSW['image']) || strlen(trim($modelSW['image'])) == 0) continue;
-
                             $model = Mmc::getModel('Image');
 
-                            $model->setId(new Identity(ImageModel::generateId(ImageRelationType::TYPE_MANUFACTURER, $modelSW['id'], $modelSW['media']['id'])));
+                            $model->setId(new Identity(ImageModel::generateId(ImageRelationType::TYPE_MANUFACTURER, $modelSW['id'], $modelSW['mediaId'])));
                             
                             $model->setRelationType($relationType)
                                 ->setForeignKey(new Identity($modelSW['id']))
-                                ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['media']['path']));
+                                ->setFilename(sprintf('http://%s%s/%s', Shopware()->Shop()->getHost(), Shopware()->Shop()->getBaseUrl(), $modelSW['path']));
 
                             $result[] = $model->getPublic();
                             break;
