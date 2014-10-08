@@ -139,7 +139,7 @@ class CustomerOrder extends DataController
         return $action;
     }
 
-    public static function calcShippingVat(\jtl\Connector\Shopware\CustomerOrder &$order)
+    public static function calcShippingVat(\jtl\Connector\Shopware\Model\CustomerOrder &$order)
     {
         return max(array_map(function($item) { return $item->getVat(); }, $order->getItems()));
     }

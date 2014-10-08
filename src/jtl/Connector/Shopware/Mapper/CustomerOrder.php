@@ -438,9 +438,11 @@ class CustomerOrder extends DataMapper
             throw new \Exception(sprintf('Tax with rate (%s) not found', $item->getVat()));
         }
 
+        $price = ($item->getVat() > 0) ? Money::AsGross($item->getPrice(), $item->getVat()) : $item->getPrice();
+
         $detailSW->setNumber($orderSW->getNumber())
             ->setArticleId($item->getProductId()->getEndpoint())
-            ->setPrice($item->getPrice())
+            ->setPrice($price)
             ->setQuantity($item->getQuantity())
             ->setArticleName($item->getName())
             ->setShipped(0)
